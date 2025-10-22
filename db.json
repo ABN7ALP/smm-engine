@@ -1,0 +1,128 @@
+{
+  "services": [
+    {
+      "id": 1,
+      "name": "متابعين انستا حقيقين",
+      "category": "انستا",
+      "type": "quantity",
+      "rate": 14,
+      "min": 1009,
+      "max": 1000000
+    },
+    {
+      "id": 2,
+      "name": "متابعين انستا",
+      "category": "انستا",
+      "type": "quantity",
+      "rate": 44,
+      "min": 100,
+      "max": 1000000
+    },
+    {
+      "id": 3,
+      "name": "متابعين يوتيوب",
+      "category": "يوتيوب",
+      "type": "quantity",
+      "rate": 88,
+      "min": 100,
+      "max": 1000000
+    },
+    {
+      "id": 4,
+      "name": "متابعين فيس بوك",
+      "category": "فيس بوك",
+      "type": "quantity",
+      "rate": 55,
+      "min": 100,
+      "max": 1000000
+    },
+    {
+      "id": 5,
+      "name": "متابعين تيك توك",
+      "category": "تيك توك",
+      "type": "quantity",
+      "rate": 33,
+      "min": 100,
+      "max": 1999999
+    },
+    {
+      "id": 6,
+      "name": "متابعين تويتر",
+      "category": "تويتر",
+      "type": "quantity",
+      "rate": 33,
+      "min": 100,
+      "max": 10000000
+    },
+    {
+      "id": 7,
+      "name": "توثيق حساب تيك توك",
+      "category": "مميز",
+      "type": "fixed",
+      "price": 40
+    },
+    {
+      "id": 8,
+      "name": "مشاهدات تيك توك",
+      "category": "تيك توك",
+      "type": "quantity",
+      "rate": 0.18,
+      "min": 10000,
+      "max": 100000000
+    },
+    {
+      "id": 10,
+      "name": "متابعين تيليجرام",
+      "category": "تيليجرام",
+      "type": "quantity",
+      "rate": 32,
+      "min": 100,
+      "max": 1000000
+    },
+    {
+      "id": 11,
+      "name": "بث الأغاني الموجهة",
+      "category": "سبوتيفي",
+      "type": "quantity",
+      "rate": 11.8,
+      "min": 500,
+      "max": 20000000
+    },
+    {
+      "id": 12,
+      "name": "مشاهدات البث المباشر",
+      "category": "كواي",
+      "type": "quantity",
+      "rate": 62.65,
+      "min": 50,
+      "max": 10000
+    },
+    {
+      "id": 13,
+      "name": "متابعين سناب شات",
+      "category": "سناب شات",
+      "type": "quantity",
+      "rate": 1269.17,
+      "min": 1,
+      "max": 15000
+    },
+    {
+      "id": 14,
+      "name": "عضو الخادم | ديسكورد",
+      "category": "ديسكورد",
+      "type": "quantity",
+      "rate": 632.25,
+      "min": 10,
+      "max": 4000
+    },
+    {
+      "id": 15,
+      "name": "متابعون | مشاهدات البث المباشر",
+      "category": "ركلة",
+      "type": "quantity",
+      "rate": 6125,
+      "min": 10,
+      "max": 1000
+    }
+  ]
+}
