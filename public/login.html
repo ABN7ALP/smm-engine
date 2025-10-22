@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>تسجيل الدخول - لوحة التحكم</title>
+
+  <!-- Cairo Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+  
+  <!-- Main Stylesheet (Correct Path ) -->
+  <link rel="stylesheet" href="/style.css">
+
+</head>
+<body>
+  <div class="login-container">
+    <h1>تسجيل الدخول</h1>
+    <form id="loginForm">
+      <div class="mb-3">
+        <input name="username" class="form-control" placeholder="اسم المستخدم" required>
+      </div>
+      <div class="mb-3">
+        <input name="password" type="password" class="form-control" placeholder="كلمة السر" required>
+      </div>
+      <div class="d-grid">
+        <button type="submit" class="btn btn-primary">دخول</button>
+      </div>
+    </form>
+    <div id="alert-box" class="mt-3"></div>
+  </div>
+
+<script>
+const form = document.getElementById('loginForm');
+const alertBox = document.getElementById('alert-box');
+
+function show(msg, type = 'error') {
+  const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+  alertBox.innerHTML = `<div class="alert ${alertClass}">${msg}</div>`;
+  setTimeout(() => alertBox.innerHTML = '', 4000);
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(form);
+  const data = Object.fromEntries(fd.entries());
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'خطأ في تسجيل الدخول' }));
+      show(err.error || 'خطأ في تسجيل الدخول');
+      return;
+    }
+    const j = await res.json();
+    localStorage.setItem('authToken', j.token);
+    window.location.href = '/admin.html';
+  } catch (err) {
+    show('تعذر الاتصال بالخادم');
+  }
+});
+</script>
+</body>
+</html>

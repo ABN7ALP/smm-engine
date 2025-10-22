@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SMM Engine | المرشد الرقمي</title>
+
+  <!-- المكتبات الخارجية -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <!-- ملف التصميم الرئيسي -->
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container-page">
+
+    <!-- الخطوة 1: اختيار الفئة -->
+    <div id="step1" class="step">
+        <div class="text-center mb-3">
+          <h1 class="fw-bold">ابدأ من هنا</h1>
+          <p class="small-muted">اختر المنصة التي تريد دعمها</p>
+        </div>
+        <div id="categories-grid" class="row g-3 justify-content-center"></div>
+    </div>
+
+    <!-- الخطوة 2: الواجهة الذكية -->
+    <div id="step2" class="step" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 id="order-category-title" class="fw-bold mb-0"></h2>
+            <button class="btn btn-outline-secondary" id="backBtn"><i class="fas fa-arrow-right me-2"></i>الرجوع</button>
+        </div>
+        <div class="row g-4">
+            <!-- العمود الأيمن: نموذج الطلب -->
+            <div class="col-lg-7">
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <!-- 1. اختيار الخدمة -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">1. اختر الخدمة:</label>
+                            <select id="service-select" class="form-select form-select-lg"></select>
+                        </div>
+                        <!-- 2. تحليل الرابط -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">2. ضع الرابط:</label>
+                            <div class="input-group">
+                                <input id="link-input" class="form-control form-control-lg" placeholder="https://www.example.com/...">
+                                <button id="analyzeBtn" class="btn btn-primary">
+                                    <i class="fas fa-magic me-1"></i> تحليل
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- حاوية عرض نتائج التحليل -->
+                        <div id="analysis-container" class="mt-3"></div>
+
+                        <!-- 3. تحديد الكمية -->
+                        <div id="quantity-container" class="mb-3" style="display:none;">
+                            <label class="form-label fw-bold">3. الكمية:</label>
+                            <input id="quantity-input" type="number" class="form-control form-control-lg" placeholder="1000" min="1">
+                            <div id="limits-info" class="form-text mt-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- العمود الأيسر: السعر والإجراءات -->
+            <div class="col-lg-5">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body text-center p-4">
+                        <h6 class="text-muted mb-2">التكلفة الإجمالية</h6>
+                        <div id="total-price" class="display-5 fw-bolder text-primary mb-3">$0.00</div>
+                        <div class="d-grid">
+                            <button id="confirmOrderBtn" class="btn btn-primary btn-lg fw-bold"><i class="fas fa-check-circle me-2"></i>تأكيد الطلب</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="orderStatusBox"></div>
+
+                  <!-- Track Order Card -->
+                  <div class="card shadow-sm">
+                      <div class="card-body p-4">
+                          <h5 class="card-title fw-bold mb-3"><i class="fas fa-search text-primary me-2"></i>متابعة طلب</h5>
+                          <div class="input-group">
+                              <input id="orderIdInput" type="text" class="form-control" placeholder="أدخل رقم الطلب">
+                              <button id="trackBtn" class="btn btn-outline-primary">بحث</button>
+                          </div>
+                          <div id="orderResult" class="mt-3"></div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+   
+    
+      
+  // =================================================================
+//  السكريبت الكامل والنهائي لـ user.html (v7 - محصّن ضد الأخطاء)
+// =================================================================
+
+/* ===================== إعدادات سريعة ===================== */
+const PHONE_NUMBER = "905367893256";
+/* ======================================================== */
+
+// --- 1. تعريف كل العناصر التي سنتعامل معها ---
+const step1 = document.getElementById('step1');
+const step2 = document.getElementById('step2');
+const categoriesGrid = document.getElementById('categories-grid');
+const orderCategoryTitle = document.getElementById('order-category-title');
+const serviceSelect = document.getElementById('service-select');
+const linkInput = document.getElementById('link-input');
+const quantityContainer = document.getElementById('quantity-container');
+const quantityInput = document.getElementById('quantity-input');
+const limitsInfo = document.getElementById('limits-info');
+const totalPriceDisplay = document.getElementById('total-price');
+const confirmOrderBtn = document.getElementById('confirmOrderBtn');
+const orderStatusBox = document.getElementById('orderStatusBox');
+const orderIdInput = document.getElementById('orderIdInput');
+const trackBtn = document.getElementById('trackBtn');
+const orderResult = document.getElementById('orderResult');
+const backBtn = document.getElementById('backBtn');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const analysisContainer = document.getElementById('analysis-container');
+
+let allServices = [];
+let servicesByCategory = {};
+
+// --- 2. قاموس المنصات للتحقق من الروابط ---
+const platformKeywords = {
+  'يوتيوب': ['youtube.com', 'youtu.be'],
+  'انستا': ['instagram.com'],
+  'تيك توك': ['tiktok.com'],
+  'فيس بوك': ['facebook.com', 'fb.watch'],
+  'تويتر': ['twitter.com', 'x.com'],
+  'تيليجرام': ['t.me'],
+  'سبوتيفي': ['spotify.com'],
+  'كواي': ['kwai.com'],
+  'ديسكورد': ['discord.gg', 'discord.com/invite'],
+  'سناب شات': ['snapchat.com'],
+  'ركلة': ['kick.com'],
+};
+
+// --- 3. أيقونات الفئات ---
+const categoryIcons = {
+  'instagram':'https://storage.perfectcdn.com/kgcodj/jobdmcyfy04m4y2j.gif','انستغرام':'https://storage.perfectcdn.com/kgcodj/jobdmcyfy04m4y2j.gif','انستا':'https://storage.perfectcdn.com/kgcodj/jobdmcyfy04m4y2j.gif','tiktok':'https://storage.perfectcdn.com/kgcodj/ucyfuh8bjadfcbka.gif','تيك توك':'https://storage.perfectcdn.com/kgcodj/ucyfuh8bjadfcbka.gif','facebook':'https://storage.perfectcdn.com/kgcodj/3z7kylkenb7i121g.gif','فيس بوك':'https://storage.perfectcdn.com/kgcodj/3z7kylkenb7i121g.gif','twitter':'https://storage.perfectcdn.com/kgcodj/xgyjzbkog3f6k18m.gif','تويتر':'https://storage.perfectcdn.com/kgcodj/xgyjzbkog3f6k18m.gif','يوتيوب':'https://storage.perfectcdn.com/kgcodj/0y8fkhw1iiheqocr.gif','youtube':'https://storage.perfectcdn.com/kgcodj/0y8fkhw1iiheqocr.gif','telegram':'https://storage.perfectcdn.com/kgcodj/zfcqfa652rzd4bam.gif','تيليجرام':'https://storage.perfectcdn.com/kgcodj/zfcqfa652rzd4bam.gif','مميز':'https://storage.perfectcdn.com/kgcodj/ozorw4pm8q3muxj9.png', 'سبوتيفي': 'https://storage.perfectcdn.com/api/icons/spotify.png', 'كواي': 'https://storage.perfectcdn.com/api/icons/kwai.png', 'ديسكورد': 'https://storage.perfectcdn.com/api/icons/discord.png', 'سناب شات': 'https://storage.perfectcdn.com/api/icons/snapchat.png', 'ركلة': 'https://storage.perfectcdn.com/api/icons/kick.png'
+};
+
+// --- 4. دوال الموقع (منظمة ومرتبة) ---
+
+// دالة مساعدة لتنسيق الأرقام بأمان
+// دالة مساعدة لعرض الأرقام بجمالية (12345 -> 12.3 ألف)
+function formatNumber(num) {
+    if (num === null || num === undefined || num === '') return '0';
+    num = Number(num);
+    if (isNaN(num)) return '0';
+    
+    // استخدام toFixed(1) للحفاظ على رقم عشري واحد للأرقام الكبيرة
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + ' م';
+    }
+    if (num >= 1000) {
+        // ✅ هذا هو الجزء الذي يضمن ظهور (66.9 ألف)
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + ' ألف';
+    }
+    // ✅ هذا الجزء يضمن عرض الأرقام الصغيرة كما هي (مثل 800)
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+ 
+// user.html - إضافة دالة جديدة لتوليد التوصية الذكية
+function getSmartRecommendation(platform, data) {
+    const views = Number(data.views) || 0;
+    const likes = Number(data.likes) || 0;
+    const comments = Number(data.comments) || 0;
+    const followers = Number(data.followers) || 0;
+
+    if (platform === 'YouTube') {
+        const likeToViewRatio = (likes / views) * 100;
+        if (likeToViewRatio > 3.0) {
+            return 'الفيديو يتمتع بنسبة تفاعل ممتازة. نقترح تعزيزه بباقة مشاهدات لزيادة انتشاره في خوارزمية يوتيوب.';
+        } else if (likeToViewRatio < 1.0) {
+            return 'الفيديو يحظى بمشاهدات جيدة ولكن التفاعل منخفض. ننصح بزيادة الإعجابات والتعليقات لتحسين جودة التفاعل.';
+        }
+        return 'الفيديو متوازن التفاعل. يمكنك اختياره لدعم شامل (مشاهدات، إعجابات، تعليقات) حسب ميزانيتك.';
+    } else if (platform === 'TikTok') {
+        const engagementRatio = ((likes + comments) / views) * 100;
+        if (engagementRatio < 1.0) {
+            return 'تفاعل الفيديو منخفض جداً مقارنة بالمشاهدات. نقترح فوراً رفع الإعجابات والتعليقات لزيادة فرصة ظهوره في صفحة "لك" (For You Page).';
+        } else if (comments / views > 0.005) {
+            return 'الفيديو يثير النقاش! حافظ على التعليقات وزدها لجعله ترند. كما نقترح إضافة مشاهدات قوية لدعم الزخم الحالي.';
+        }
+        return 'الفيديو يتمتع بتفاعل جيد ومتوازن. لضمان الانتشار، ابدأ بباقة مشاهدات قوية مع القليل من الإعجابات.';
+    } else if (platform === 'Instagram') {
+        let advice = 'الحساب جاهز للدعم. نقترح بدء بمتابعين حقيقيين!';
+        if (followers > 50000) {
+            advice = 'حساب كبير ونشط! مثالي لزيادة التفاعل والمتابعين بشكل مستمر.';
+        } else if (followers > 1000) {
+            advice = 'حساب نشط! مثالي لزيادة التفاعل والمتابعين.';
+        }
+        if (data.isPrivate) {
+            advice += ' (تنبيه: الحساب خاص - يحتاج قبول المتابعة)';
+        }
+        return advice;
+    }
+    return data.message || 'تم تحليل الرابط بنجاح.';
+}
+  
+  
+
+// دالة التحليل الذكي (النسخة المحصّنة)
+analyzeBtn.addEventListener('click', async () => {
+  const url = linkInput.value.trim();
+  if (!url) {
+    analysisContainer.innerHTML = `<div class="alert alert-warning">الرجاء إدخال رابط أولاً.</div>`;
+    return;
+  }
+
+  const categoryTitle = orderCategoryTitle.textContent.replace('طلب خدمات', '').trim().toLowerCase();
+  const allowedKeywords = platformKeywords[categoryTitle];
+  if (allowedKeywords && !allowedKeywords.some(keyword => url.includes(keyword))) {
+    analysisContainer.innerHTML = `<div class="alert alert-danger">❌ هذا الرابط لا ينتمي إلى منصة "${categoryTitle}".</div>`;
+    return;
+  }
+
+  analysisContainer.innerHTML = `<div class="d-flex align-items-center text-primary p-3"><div class="spinner-border me-3" role="status"></div><strong>جاري تحليل الرابط...</strong></div>`;
+  analyzeBtn.disabled = true;
+
+  try {
+    const res = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ url })
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) {
+        throw new Error(data.message || `فشل التحليل من الخادم (Status: ${res.status})`);
+    }
+
+    // user.html - داخل analyzeBtn.addEventListener
+// ...
+    let analysisHTML = '<div class="alert alert-info">';
+    analysisHTML += '<h5 class="alert-heading">📊 تقرير التحليل الفوري</h5>';
+
+    // ================================================================
+    //  ✅ منطق عرض الصورة الموحد: للـ thumbnail أو الـ profilePic
+    // ================================================================
+    if (data.thumbnail || data.profilePic) {
+        const imgSrc = data.thumbnail || data.profilePic;
+        // استخدام تنسيق دائري لصورة الملف الشخصي في Instagram
+        const imgStyle = (data.platform === 'Instagram' && data.profilePic) 
+            ? 'max-height: 100px; width: 100px;' 
+            : 'max-height: 150px; width: auto;';
+        const imgClass = (data.platform === 'Instagram' && data.profilePic) 
+            ? 'rounded-circle' : 'rounded';
+            
+        analysisHTML += `<div class="mb-3 text-center">
+            <img src="${imgSrc}" alt="معاينة" class="img-fluid ${imgClass} shadow-sm" style="${imgStyle}">
+        </div>
+        <hr>`;
+    }
+    // ================================================================
+
+    analysisHTML += '<ul class="list-unstyled mb-0">';
+
+    //  ✅ المنطق الجديد والمحصّن: يعالج كل الحالات بأمان
+    // ================================================================
+    // user.html - استبدل الـ switch بالكامل (داخل analyzeBtn.addEventListener)
+
+    switch (data.platform) {
+      case 'YouTube':
+        analysisHTML += `<li><strong><i class="fab fa-youtube text-danger"></i> القناة:</strong> ${data.channel || 'غير متاح'}</li>`;
+        analysisHTML += `<li><strong><i class="fas fa-eye"></i> المشاهدات:</strong> ${formatNumber(data.views)}</li>`;
+        analysisHTML += `<li><strong><i class="fas fa-thumbs-up"></i> الإعجابات:</strong> ${formatNumber(data.likes)}</li>`;
+        analysisHTML += '</ul><hr>';
+        const youtubeAdvice = getSmartRecommendation('YouTube', data);
+        analysisHTML += `<p class="mb-0"><strong>توصية المرشد الرقمي:</strong> ${youtubeAdvice}</p>`;
+        break;
+
+      case 'TikTok':
+        analysisHTML += `<li><strong><i class="fab fa-tiktok"></i> الحساب:</strong> @${data.authorUsername || 'غير متاح'}</li>`; // ✅ تصحيح: استخدام authorUsername
+        analysisHTML += `<li><strong><i class="fas fa-eye"></i> المشاهدات:</strong> ${formatNumber(data.views)}</li>`;
+        analysisHTML += `<li><strong><i class="fas fa-heart text-danger"></i> الإعجابات:</strong> ${formatNumber(data.likes)}</li>`;
+        analysisHTML += `<li><strong><i class="fas fa-comment"></i> التعليقات:</strong> ${formatNumber(data.comments)}</li>`;
+        analysisHTML += '</ul><hr>';
+        const tiktokAdvice = getSmartRecommendation('TikTok', data);
+        analysisHTML += `<p class="mb-0"><strong>توصية المرشد الرقمي:</strong> ${tiktokAdvice}</p>`;
+        break;
+        
+      // ✅ إضافة حالة إنستجرام
+    case 'Instagram':
+    analysisHTML += `<li><strong><i class="fab fa-instagram text-danger"></i> النوع:</strong> ${data.isVideo ? '🎬 Reel فيديو' : '👤 حساب شخصي'}</li>`;
+    analysisHTML += `<li><strong><i class="fas fa-user"></i> المعرف:</strong> @${data.username || 'إنستجرام'}</li>`;
+    analysisHTML += `<li><strong><i class="fas fa-check-circle text-success"></i> الحالة:</strong> ${data.message || 'تم التحقق من الرابط'}</li>`;
+    analysisHTML += '</ul><hr>';
+    
+    // عرض المعاينة البصرية
+    analysisHTML += `<div class="text-center mb-3">`;
+    
+    if (data.thumbnail && data.isVideo) {
+      // معاينة الـ Reel مع زر تشغيل
+      analysisHTML += `<div class="position-relative" style="display: inline-block;">`;
+      analysisHTML += `<img src="${data.thumbnail}" alt="معاينة الـ Reel" class="img-fluid rounded shadow border" style="max-height: 250px; max-width: 100%;">`;
+      analysisHTML += `<div class="position-absolute top-50 start-50 translate-middle">`;
+      analysisHTML += `<div class="bg-primary rounded-circle p-3 shadow" style="opacity: 0.9;">`;
+      analysisHTML += `<i class="fas fa-play text-white fa-lg"></i>`;
+      analysisHTML += `</div></div>`;
+      analysisHTML += `</div>`;
+      analysisHTML += `<div class="mt-2"><small class="text-muted"><i class="fas fa-video"></i> معاينة Reel</small></div>`;
+    } else if (data.profilePic) {
+      // صورة البروفايل للحسابات
+      analysisHTML += `<img src="${data.profilePic}" alt="صورة البروفايل" class="img-fluid rounded-circle shadow border" style="width: 100px; height: 100px; object-fit: cover;">`;
+      analysisHTML += `<div class="mt-2"><small class="text-muted"><i class="fas fa-user-circle"></i> صورة البروفايل</small></div>`;
+    } else {
+      analysisHTML += `<div class="bg-light rounded p-4">`;
+      analysisHTML += `<i class="fab fa-instagram fa-3x text-muted mb-2"></i>`;
+      analysisHTML += `<div><small class="text-muted">معاينة غير متوفرة</small></div>`;
+      analysisHTML += `</div>`;
+    }
+    
+    analysisHTML += `</div><hr>`;
+    
+    analysisHTML += `<div class="d-grid gap-2">`;
+    analysisHTML += `<a href="${data.previewUrl || `https://www.instagram.com/${data.username || ''}`}" target="_blank" class="btn btn-outline-primary">`;
+    analysisHTML += `<i class="fas fa-external-link-alt me-1"></i>فتح على إنستجرام</a>`;
+    analysisHTML += `</div>`;
+    
+    analysisHTML += '<p class="mt-3 mb-0"><strong>توصية المرشد الرقمي:</strong> رابط إنستجرام صالح وجاهز للطلب.</p>';
+    break;
+
+        
+
+// ✅ إضافة حالة فيسبوك (النسخة الجديدة - معاينة فقط)
+case 'Facebook':
+    if (data.error) {
+        analysisHTML += `<div class="alert alert-danger">❌ فشل التحليل: ${data.message}</div>`;
+        break;
+    }
+
+    // فتح قائمة خاصة بفيسبوك
+    analysisHTML += `<ul class="list-unstyled mb-0">`;
+
+    analysisHTML += `<li><strong><i class="fab fa-facebook-square text-primary"></i> العنوان:</strong> ${data.title || 'رابط فيسبوك'}</li>`;
+    if (data.description) {
+        analysisHTML += `<li><strong><i class="fas fa-info-circle"></i> الوصف:</strong> ${data.description.substring(0, 150)}...</li>`;
+    }
+
+    // ✅ ترتيب العناصر بشكل ثابت ومتناظر
+    analysisHTML += `<li><strong><i class="fas fa-eye text-success"></i> المشاهدات:</strong> ${formatNumber(data.views)}</li>`;
+    analysisHTML += `<li><strong><i class="fas fa-thumbs-up text-primary"></i> الإعجابات:</strong> ${formatNumber(data.likes)}</li>`;
+    analysisHTML += `<li><strong><i class="fas fa-comment text-secondary"></i> التعليقات:</strong> ${formatNumber(data.comments)}</li>`;
+
+    // إغلاق القائمة
+    analysisHTML += `</ul><hr>`;
+
+    // بناء التوصية
+    let fbAdvice = 'منشور فيسبوك جاهز للدعم. ';
+    const engagement = ((data.likes + data.comments) / (data.views || 1)) * 100;
+    if (engagement > 3) {
+        fbAdvice += 'التفاعل ممتاز! يمكنك دعمه بمشاهدات إضافية لتوسيع الانتشار.';
+    } else if (engagement > 1) {
+        fbAdvice += 'التفاعل جيد، ننصح بدعم الإعجابات والتعليقات.';
+    } else {
+        fbAdvice += 'التفاعل ضعيف، الأفضل دعم المنشور بإعجابات وتعليقات لتعزيز ظهوره.';
+    }
+
+    analysisHTML += `<p class="mb-3"><strong>توصية المرشد الرقمي:</strong> ${fbAdvice}</p>`;
+
+    analysisHTML += `<div class="d-grid gap-2">`;
+    analysisHTML += `<a href="${linkInput.value}" target="_blank" class="btn btn-outline-primary">
+                      <i class="fas fa-external-link-alt me-1"></i> فتح الرابط الأصلي
+                    </a>`;
+    analysisHTML += `</div>`;
+    
+    break;
+
+        // في user.html - تحديث حالة Telegram
+case 'Telegram':
+  // إنشاء بطاقة معاينة Telegram المحسّنة
+  const telegramCardHTML = `
+    <div class="card shadow-sm border-light mt-3">
+      <div class="card-header bg-white d-flex align-items-center py-2">
+        <i class="fab fa-telegram fa-2x text-primary me-2"></i>
+        <strong>معاينة تيليجرام - ${
+  (data.type || '').trim().toLowerCase() === 'channel' ? 'قناة' :
+  (data.type || '').trim().toLowerCase() === 'group' ? 'مجموعة' :
+  (data.type || '').trim().toLowerCase() === 'post' ? 'منشور' :
+  'محتوى'
+}</strong>
+      </div>
+
+      <div class="row g-0">
+        <div class="col-md-4 d-flex align-items-center justify-content-center p-3 bg-light">
+          <img src="${data.profilePic || data.thumbnail || 'https://cdn-icons-png.flaticon.com/512/2111/2111646.png'}"
+               class="img-fluid rounded shadow-sm"
+               alt="صورة تيليجرام"
+               style="max-height:180px; object-fit:cover; border:2px solid #0088cc;">
+        </div>
+
+        <div class="col-md-8">
+          <div class="card-body">
+            <h6 class="card-title fw-bold mb-2">
+              ${data.title || 'قناة تيليجرام'}
+            </h6>
+
+            ${data.username ? `
+              <p class="card-text small text-muted mb-2">
+                <i class="fas fa-at me-1"></i>@${data.username}
+                <span class="badge ${
+                  data.type === 'channel' ? 'bg-primary' :
+                  data.type === 'group' ? 'bg-success' :
+                  data.type === 'post' ? 'bg-info' :
+                  'bg-secondary'
+                } ms-2">${data.type === 'channel' ? 'قناة' :
+                        data.type === 'group' ? 'مجموعة' :
+                        data.type === 'post' ? 'منشور' :
+                        data.type === 'bot' ? 'بوت' : 'رابط'}
+                </span>
+              </p>` : ''
+            }
+
+            ${data.description ? `
+              <p class="card-text small text-muted">${data.description}</p>
+            ` : ''}
+
+            <!-- إحصائيات Telegram -->
+            <div class="d-flex justify-content-around mt-3 pt-3 border-top flex-wrap text-center">
+              ${data.members ? `
+                <div>
+                  <div class="text-primary fw-bold" style="font-size:1.1rem;">${formatNumber(data.members)}</div>
+                  <small class="text-muted">أعضاء</small>
+                </div>` : ''
+              }
+
+              ${data.views ? `
+                <div>
+                  <div class="text-success fw-bold" style="font-size:1.1rem;">${formatNumber(data.views)}</div>
+                  <small class="text-muted">مشاهدات</small>
+                </div>` : ''
+              }
+
+              <div>
+                <div class="${data.isPrivate ? 'text-danger' : 'text-success'} fw-bold">
+                  <i class="fas ${data.isPrivate ? 'fa-lock' : 'fa-globe'} fa-lg"></i>
+                </div>
+                <small class="text-muted">${data.isPrivate ? 'خاص' : 'عام'}</small>
+              </div>
+            </div>
+
+            ${data.postText ? `
+              <div class="mt-3 p-3 bg-light rounded small border">
+                <strong>📝 نص المنشور:</strong>
+                <p class="mb-0 mt-1">${data.postText}</p>
+              </div>` : ''
+            }
+
+            ${data.error ? `
+              <div class="alert alert-warning mt-3 small p-2">
+                ⚠️ ${data.message || 'لم يمكن تحليل هذا الرابط. قد يكون خاصًا أو محميًا.'}
+              </div>` : ''
+            }
+
+            <p class="mt-3 small text-info">
+              <strong>💡 توصية المرشد الرقمي:</strong> 
+              ${data.recommendation || 'المحتوى جاهز للدعم. يمكنك زيادة التفاعل والمشاهدات.'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer bg-white text-center">
+        <a href="${data.url || linkInput.value}" target="_blank" class="btn btn-sm btn-primary">
+          <i class="fab fa-telegram me-1"></i> فتح في تيليجرام
+        </a>
+        ${data.members ? `<span class="ms-2 small text-muted">👥 ${formatNumber(data.members)} عضو</span>` : ''}
+      </div>
+    </div>
+  `;
+
+  analysisContainer.innerHTML = telegramCardHTML;
+  return;
+              
+    // في user.html - داخل analyzeBtn.addEventListener - إضافة حالة Twitter
+case 'Twitter':
+    // بناء بطاقة معاينة Twitter احترافية
+    const twitterCardHTML = `
+      <div class="card shadow-sm border-light mt-3">
+        <div class="card-header bg-white d-flex align-items-center py-2">
+            <i class="fab fa-twitter fa-2x text-info me-2"></i>
+            <strong>معاينة تويتر (X)</strong>
+        </div>
+        <div class="row g-0">
+          <div class="col-md-4 d-flex align-items-center justify-content-center p-3 bg-light">
+            <img src="${data.thumbnail}" class="img-fluid rounded shadow-sm" alt="معاينة تويتر" style="max-height: 180px; object-fit: cover;">
+          </div>
+          <div class="col-md-8">
+            <div class="card-body">
+              <h6 class="card-title fw-bold mb-2">${data.title || 'تغريدة تويتر'}</h6>
+              <p class="card-text small text-muted mb-2">
+                <i class="fas fa-user me-1"></i>بواسطة: @${data.authorUsername || 'مستخدم'}
+              </p>
+              ${data.description ? `<p class="card-text small text-muted">${data.description.substring(0, 120)}...</p>` : ''}
+              
+              <!-- إحصائيات Twitter -->
+              <div class="d-flex justify-content-between gap-2 mt-3 pt-3 border-top">
+                <div class="text-center">
+                  <div class="text-primary fw-bold">${formatNumber(data.likes)}</div>
+                  <small class="text-muted">إعجاب</small>
+                </div>
+                <div class="text-center">
+                  <div class="text-success fw-bold">${formatNumber(data.retweets)}</div>
+                  <small class="text-muted">إعادة تغريد</small>
+                </div>
+                <div class="text-center">
+                  <div class="text-info fw-bold">${formatNumber(data.replies)}</div>
+                  <small class="text-muted">ردود</small>
+                </div>
+                <div class="text-center">
+                  <div class="text-warning fw-bold">${formatNumber(data.views)}</div>
+                  <small class="text-muted">مشاهدات</small>
+                </div>
+              </div>
+              
+              <p class="mt-3 small"><strong>توصية المرشد الرقمي:</strong> ${data.recommendation || 'التغريدة جاهزة للدعم.'}</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer bg-white text-center">
+            <a href="${linkInput.value}" target="_blank" class="btn btn-sm btn-outline-info">
+                <i class="fab fa-twitter me-1"></i> فتح على تويتر
+            </a>
+        </div>
+      </div>
+    `;
+    
+    analysisContainer.innerHTML = twitterCardHTML;
+    return;
+    }
+        
+    analysisHTML += '</div>';
+    analysisContainer.innerHTML = analysisHTML;
+  } catch (err) {
+    analysisContainer.innerHTML = `<div class="alert alert-danger">حدث خطأ فني: ${err.message}</div>`;
+    console.error(err);
+  } finally {
+    analyzeBtn.disabled = false;
+  }
+});
+
+// --- (بقية الدوال تبقى كما هي بدون تغيير) ---
+
+// دالة الرجوع للخطوة الأولى
+backBtn.addEventListener('click', () => {
+  step2.style.display = 'none';
+  step1.style.display = 'block';
+  orderStatusBox.innerHTML = '';
+});
+
+// دالة عرض الفئات
+function populateCategories() {
+  servicesByCategory = allServices.reduce((acc, s) => {
+    if (!s.category) return acc;
+    const key = String(s.category).toLowerCase().trim();
+    (acc[key] = acc[key] || []).push(s);
+    return acc;
+  }, {});
+  categoriesGrid.innerHTML = '';
+  for (const cat in servicesByCategory) {
+    const icon = categoryIcons[cat] || categoryIcons['مميز'];
+    const col = document.createElement('div');
+    col.className = 'col-lg-3 col-md-4 col-sm-6';
+    col.innerHTML = `<div class="category-card p-3" data-cat="${cat}"><img src="${icon}" class="category-icon" alt="${cat}" /><strong class="d-block mt-2 text-capitalize">${cat}</strong></div>`;
+    col.querySelector('.category-card').addEventListener('click', () => goToStep(2, cat));
+    categoriesGrid.appendChild(col);
+  }
+}
+
+// دالة الانتقال بين الخطوات
+function goToStep(stepNumber, category = null) {
+  if (stepNumber === 1) {
+    step1.style.display = 'block';
+    step2.style.display = 'none';
+  } else if (stepNumber === 2 && category) {
+    step1.style.display = 'none';
+    step2.style.display = 'block';
+    populateOrderMachine(category);
+  }
+}
+
+// دالة ملء نموذج الطلب
+function populateOrderMachine(category) {
+  orderCategoryTitle.textContent = `طلب خدمات ${category}`;
+  const services = servicesByCategory[category] || [];
+  serviceSelect.innerHTML = `<option value="" selected disabled>اختر خدمة...</option>`;
+  services.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = s.name + (s.type === 'fixed' ? ` — سعر ثابت $${s.price || 0}` : ` — ${s.rate || 0}$ / 1k`);
+    serviceSelect.appendChild(opt);
+  });
+  resetOrderForm();
+}
+
+// دالة تحديث السعر
+function updatePrice() {
+  const serviceId = serviceSelect.value;
+  if (!serviceId) { totalPriceDisplay.textContent = '$0.00'; return; }
+  const service = allServices.find(s => String(s.id) === String(serviceId));
+  if (!service) return;
+  if (service.type === 'fixed') {
+    totalPriceDisplay.textContent = `$${parseFloat(service.price || 0).toFixed(2)}`;
+  } else {
+    const q = parseInt(quantityInput.value) || 0;
+    const pricePerOne = (parseFloat(service.rate || 0) / 1000);
+    const total = pricePerOne * q;
+    totalPriceDisplay.textContent = `$${total.toFixed(2)}`;
+  }
+}
+
+// دالة إعادة تعيين النموذج
+function resetOrderForm() {
+  quantityInput.value = '';
+  linkInput.value = '';
+  analysisContainer.innerHTML = '';
+  limitsInfo.textContent = '';
+  totalPriceDisplay.textContent = '$0.00';
+  quantityContainer.style.display = 'none';
+}
+
+// حدث تغيير الخدمة
+serviceSelect.addEventListener('change', () => {
+  const sid = serviceSelect.value;
+  const svc = allServices.find(s => String(s.id) === String(sid));
+  if (!svc) { quantityContainer.style.display = 'none'; limitsInfo.textContent = ''; updatePrice(); return; }
+  if (svc.type === 'quantity') {
+    quantityContainer.style.display = 'block';
+    limitsInfo.textContent = `الحد الأدنى: ${svc.min || 0} | الحد الأقصى: ${svc.max || 'غير محدد'}`;
+  } else {
+    quantityContainer.style.display = 'none';
+    limitsInfo.textContent = '';
+  }
+  updatePrice();
+});
+
+// حدث تغيير الكمية
+quantityInput.addEventListener('input', updatePrice);
+
+// دالة تأكيد الطلب (مع التحقق من الرابط)
+confirmOrderBtn.addEventListener('click', async () => {
+  const serviceId = serviceSelect.value;
+  const link = linkInput.value.trim();
+  const quantity = quantityInput.value ? Number(quantityInput.value) : null;
+
+  if (!serviceId || !link) {
+    orderStatusBox.innerHTML = `<div class="alert alert-warning">⚠️ الرجاء اختيار خدمة وإدخال رابط صحيح.</div>`;
+    return;
+  }
+
+  const service = allServices.find(s => String(s.id) === String(serviceId));
+  if (!service) { orderStatusBox.innerHTML = `<div class="alert alert-danger">❌ الخدمة غير صالحة.</div>`; return; }
+
+  const category = String(service.category).toLowerCase().trim();
+  const allowedKeywords = platformKeywords[category];
+  if (allowedKeywords && !allowedKeywords.some(keyword => link.includes(keyword))) {
+    orderStatusBox.innerHTML = `<div class="alert alert-danger">❌ الرابط الذي أدخلته لا ينتمي إلى منصة "${category}". الرجاء إدخال رابط صحيح.</div>`;
+    return;
+  }
+
+  if (service.type === 'quantity') {
+    if (!quantity || quantity <= 0) {
+      orderStatusBox.innerHTML = `<div class="alert alert-warning">⚠️ الرجاء إدخال كمية صحيحة.</div>`; return;
+    }
+    if (service.min && quantity < service.min) {
+      orderStatusBox.innerHTML = `<div class="alert alert-warning">⚠️ الكمية أقل من الحد الأدنى ${service.min}.</div>`; return;
+    }
+    if (service.max && quantity > service.max) {
+      orderStatusBox.innerHTML = `<div class="alert alert-warning">⚠️ الكمية أكبر من الحد الأقصى ${service.max}.</div>`; return;
+    }
+  }
+  
+  let price = 0;
+  if (service.type === 'fixed') price = parseFloat(service.price || 0);
+  else price = ((parseFloat(service.rate || 0) / 1000) * (quantity || 0));
+
+  orderStatusBox.innerHTML = `<div class="d-flex align-items-center"><div class="spinner-border me-3" role="status"></div> جاري إرسال الطلب...</div>`;
+
+  try {
+    const res = await fetch('/api/orders', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ serviceId, link, quantity, price })
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(()=>({error:'خطأ'}));
+      throw new Error(e.error || 'فشل إنشاء الطلب');
+    }
+
+    const order = await res.json();
+    const msgText = `طلب جديد 🛒%0Aرقم الطلب: ${order.id}%0Aالخدمة: ${service.name}%0Aالرابط: ${order.link}%0Aالكمية: ${order.quantity||'—'}%0Aالتكلفة: $${order.price.toFixed(2)}`;
+    if (PHONE_NUMBER && PHONE_NUMBER.length > 5) {
+      window.open(`https://wa.me/${PHONE_NUMBER}?text=${msgText}`, '_blank');
+    }
+
+    orderStatusBox.innerHTML = `
+      <div class="alert alert-success">
+        ✅ تم إنشاء الطلب بنجاح. رقم الطلب: <strong>${order.id}</strong>  
+        <p class="mb-1">الحالة: <strong>${order.status}</strong></p>
+        <div class="mt-2">
+          <button onclick="navigator.clipboard.writeText('${order.id}'); alert('تم نسخ رقم الطلب');" class="btn btn-sm btn-outline-secondary">نسخ رقم الطلب</button>
+          <button onclick="document.getElementById('orderIdInput').value = '${order.id}'; trackOrder();" class="btn btn-sm btn-outline-primary">عرض حالة الطلب</button>
+        </div>
+      </div>
+    `;
+    resetOrderForm();
+  } catch (err) {
+    console.error(err);
+    orderStatusBox.innerHTML = `<div class="alert alert-danger">❌ ${err.message}.</div>`;
+  }
+});
+
+// دالة تتبع الطلب
+async function trackOrder() {
+  const id = orderIdInput.value.trim();
+  if (!id) {
+    orderResult.innerHTML = `<div class="alert alert-warning">⚠️ أدخل رقم الطلب.</div>`;
+    return;
+  }
+  orderResult.innerHTML = `<div class="d-flex align-items-center"><div class="spinner-border me-3" role="status"></div> جاري البحث...</div>`;
+  try {
+    const res = await fetch('/api/orders/public/' + encodeURIComponent(id));
+    if (res.status === 404) { orderResult.innerHTML = `<div class="alert alert-danger">❌ لم يتم العثور على طلب بهذا الرقم.</div>`; return; }
+    if (!res.ok) { orderResult.innerHTML = `<div class="alert alert-danger">❌ فشل البحث.</div>`; return; }
+    
+    const order = await res.json();
+    const service = allServices.find(s => String(s.id) === String(order.serviceId));
+    const svcName = service ? service.name : `خدمة رقم ${order.serviceId}`;
+    const statusMap = {
+        pending: "⏳ قيد الانتظار",
+        processing: "⚙️ قيد التنفيذ",
+        completed: "✅ مكتمل",
+        rejected: "❌ مرفوض"
+    };
+    const statusLabel = statusMap[order.status] || order.status;
+
+    orderResult.innerHTML = `
+      <div class="card p-3 bg-light border">
+        <p><strong>رقم الطلب:</strong> ${order.id}</p>
+        <p><strong>الخدمة:</strong> ${svcName}</p>
+        <p><strong>الرابط:</strong> <a href="${order.link}" target="_blank" rel="noopener">${order.link}</a></p>
+        <p><strong>الكمية:</strong> ${order.quantity || '—'}</p>
+        <p><strong>السعر:</strong> $${order.price ? order.price.toFixed(2) : '0.00'}</p>
+        <p><strong>الحالة:</strong> ${statusLabel}</p>
+        <p class="small text-muted mb-0">تاريخ الإنشاء: ${new Date(order.createdAt).toLocaleString() || '—'}</p>
+      </div>
+    `;
+  } catch (err) {
+    console.error(err);
+    orderResult.innerHTML = `<div class="alert alert-danger">❌ خطأ أثناء البحث.</div>`;
+  }
+}
+
+trackBtn.addEventListener('click', trackOrder);
+orderIdInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') trackOrder(); });
+
+// دالة التشغيل الأولية
+async function initialize() {
+  try {
+    const res = await fetch('/api/services');
+    if (!res.ok) throw new Error('فشل تحميل الخدمات من الخادم.');
+    allServices = await res.json();
+    populateCategories();
+  } catch (err) {
+    console.error(err);
+    categoriesGrid.innerHTML = `<div class="alert alert-danger p-3">${err.message} حاول تحديث الصفحة.</div>`;
+  }
+}
+
+// بدء تشغيل السكريبت عند تحميل الصفحة
+initialize();
+        
+</script>
+</body>
+</html>

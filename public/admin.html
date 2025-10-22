@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Dashboard</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h1>لوحة الإدارة</h1>
+      <div>
+        <button id="logoutBtn" class="btn btn-danger">تسجيل خروج</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="dashboard" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;">
+      <div class="card stat-card">📋 الخدمات: <strong id="total-services">0</strong></div>
+      <div class="card stat-card">📈 الطلبات الكليّة: <strong id="total-orders">0</strong></div>
+      <div class="card stat-card">⏳ طلبات معلقة: <strong id="pending-orders">0</strong></div>
+      <div class="card stat-card">💰 متوسط السعر: <strong id="avg-price">0</strong></div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">
+      <button id="refreshBtn" class="btn btn-secondary">🔄 تحديث البيانات</button>
+      <button id="exportServices" class="btn btn-info">📥 تحميل قائمة الخدمات</button>
+      <button id="exportOrders" class="btn btn-info">📥 تحميل قائمة الطلبات</button>
+    </div>
+
+    <!-- Accordion for Services and Orders -->
+    <div class="accordion mt-4" id="adminAccordion">
+
+      <!-- Services Section -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingServices">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseServices" aria-expanded="true" aria-controls="collapseServices">
+            إدارة الخدمات
+          </button>
+        </h2>
+        <div id="collapseServices" class="accordion-collapse collapse show" aria-labelledby="headingServices" data-bs-parent="#adminAccordion">
+          <div class="accordion-body">
+            <input id="searchServices" class="search-input" placeholder="🔍 ابحث عن خدمة بالاسم أو الفئة...">
+            <div class="table-responsive">
+              <table id="services-table" class="table table-striped table-hover">
+                <thead><tr><th>ID</th><th>الاسم</th><th>الفئة</th><th>النوع</th><th>السعر</th><th>إجراءات</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Orders Section -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOrders">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOrders" aria-expanded="false" aria-controls="collapseOrders">
+            إدارة الطلبات
+          </button>
+        </h2>
+        <div id="collapseOrders" class="accordion-collapse collapse" aria-labelledby="headingOrders" data-bs-parent="#adminAccordion">
+          <div class="accordion-body">
+            <input id="searchOrders" class="search-input" placeholder="🔍 ابحث عن طلب بالرقم أو الرابط...">
+            <div class="table-responsive">
+              <table id="orders-table" class="table table-striped table-hover">
+                <thead><tr><th>ID</th><th>الخدمة</th><th>الرابط</th><th>كمية</th><th>السعر</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- End of Accordion -->
+
+
+    <!-- ADD/EDIT SERVICE FORM -->
+    <h2 style="margin-top:25px;">إضافة / تعديل خدمة</h2>
+    <form id="serviceForm" class="p-3 border rounded bg-light">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <input name="name" class="form-control" placeholder="اسم الخدمة" required>
+        </div>
+        <div class="col-md-6">
+          <input name="category" class="form-control" placeholder="الفئة (مثال: instagram)" required>
+        </div>
+        <div class="col-md-12">
+          <select name="type" id="typeSelect" class="form-select">
+            <option value="quantity">كمية (لكل 1000)</option>
+            <option value="fixed">سعر ثابت</option>
+          </select>
+        </div>
+        <div id="priceContainer" class="col-md-12">
+          <input name="rate" type="number" step="0.01" class="form-control" placeholder="السعر لكل 1000" required>
+        </div>
+        <div id="qtyContainer" class="col-md-12" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <input name="min" type="number" class="form-control" placeholder="أدنى كمية" required>
+          <input name="max" type="number" class="form-control" placeholder="أقصى كمية" required>
+        </div>
+        <input type="hidden" name="id" id="serviceIdInput">
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary">حفظ</button>
+          <button type="button" id="clearFormBtn" class="btn btn-outline-secondary">تفريغ النموذج</button>
+        </div>
+      </div>
+    </form>
+    
+
+    <!-- LOGS (preview latest) -->
+    <h2 style="margin-top:25px;">آخر التغييرات (Logs)</h2>
+    <div id="logsBox" style="max-height:200px;overflow:auto;border:1px solid var(--border-color);padding:8px;border-radius:6px;background-color:#fff;"></div>
+
+    <div id="alert-box" style="margin-top:12px;"></div>
+  </div>
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+  const token = localStorage.getItem('authToken' );
+  if (!token) window.location.href = '/login.html';
+
+  const headers = { 'Content-Type': 'application/json', 'x-auth-token': token };
+  const alertBox = document.getElementById('alert-box');
+
+  function show(msg, type='success'){
+    alertBox.innerHTML = '<div class="alert '+(type==='success'?'alert-success':'alert-error')+'">'+msg+'</div>';
+    setTimeout(()=>alertBox.innerHTML='',3500);
+  }
+
+  async function fetchWithAuth(url, options={}) {
+    options.headers = {...headers, ...(options.headers||{})};
+    const r = await fetch(url, options);
+    if (r.status === 401) {
+      alert("انتهت صلاحية الجلسة. يرجى تسجيل الدخول.");
+      localStorage.removeItem('authToken');
+      window.location.href = '/login.html';
+      return null;
+    }
+    return r;
+  }
+
+  document.getElementById('logoutBtn').onclick = async ()=>{
+    await fetchWithAuth('/api/auth/logout', { method:'POST' });
+    localStorage.removeItem('authToken'); 
+    window.location.href = '/login.html';
+  };
+
+  // --------- STATS ----------
+  async function loadStats(){
+    const r = await fetchWithAuth('/api/stats');
+    if (!r) return;
+    const s = await r.json();
+    document.getElementById('total-services').textContent = s.totalServices;
+    document.getElementById('total-orders').textContent = s.totalOrders;
+    document.getElementById('pending-orders').textContent = s.pendingOrders;
+    document.getElementById('avg-price').textContent = '$' + s.avgPrice;
+  }
+
+  // --------- SERVICES ----------
+  let allServicesData = []; // Cache for services data
+  async function loadServices(){
+    const r = await fetchWithAuth('/api/services');
+    if (!r) return;
+    allServicesData = await r.json();
+    renderServices(allServicesData);
+  }
+
+  function renderServices(list) {
+    const tbody = document.querySelector('#services-table tbody'); tbody.innerHTML='';
+    list.forEach(s=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td data-label="ID">${s.id}</td><td data-label="الاسم">${s.name}</td><td data-label="الفئة">${s.category}</td><td data-label="النوع">${s.type}</td><td data-label="السعر">${s.type==='fixed' ? '$'+(s.price||'') : '$'+(s.rate||'')+' /1k'}</td>
+      <td data-label="إجراءات">
+        <button onclick="editService(${s.id})" class="btn btn-sm btn-primary edit-btn">تعديل</button>
+        <button onclick="deleteService(${s.id})" class="btn btn-sm btn-danger delete-btn">حذف</button>
+      </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // --------- ORDERS ----------
+  const statusMap = {
+    pending: "⏳ قيد الانتظار",
+    processing: "⚙️ قيد التنفيذ",
+    completed: "✅ مكتمل",
+    rejected: "❌ مرفوض"
+  };
+  let allOrdersData = []; // Cache for orders data
+  async function loadOrders(){
+    const r = await fetchWithAuth('/api/orders');
+    if (!r) return;
+    allOrdersData = await r.json();
+    const servicesRes = await fetchWithAuth('/api/services');
+    if (!servicesRes) return;
+    const services = await servicesRes.json();
+    const svcMap = {}; services.forEach(s=>svcMap[s.id]=s);
+    renderOrders(allOrdersData, svcMap);
+  }
+
+  function renderOrders(list, svcMap) {
+    const tbody = document.querySelector('#orders-table tbody'); tbody.innerHTML='';
+    list.forEach(o=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td data-label="ID">${o.id}</td>
+        <td data-label="الخدمة">${svcMap[o.serviceId] ? svcMap[o.serviceId].name : o.serviceId}</td>
+        <td data-label="الرابط"><a href="${o.link}" target="_blank" rel="noopener">${o.link.substring(0, 30)}...</a></td>
+        <td data-label="كمية">${o.quantity||''}</td><td data-label="السعر">$${o.price||''}</td>
+        <td data-label="الحالة">${statusMap[o.status]||o.status}</td>
+        <td data-label="إجراءات" class="d-flex flex-wrap gap-1">
+          <button onclick="updateOrderStatus(${o.id},'processing')" class="btn btn-sm btn-warning">⏳</button>
+          <button onclick="updateOrderStatus(${o.id},'completed')" class="btn btn-sm btn-success">✅</button>
+          <button onclick="updateOrderStatus(${o.id},'rejected')" class="btn btn-sm btn-danger">❌</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function updateOrderStatus(id, status) {
+    if (!confirm(`تأكيد تحديث حالة الطلب إلى "${statusMap[status]}"؟`)) return;
+    const res = await fetchWithAuth('/api/orders/' + id, { method:'PUT', body:JSON.stringify({ status }) });
+    if (res && res.ok) { show('تم تحديث حالة الطلب'); reloadAll(); } 
+    else show('فشل التحديث','error');
+  }
+
+  // --------- LOGS ----------
+  async function loadLogs(){
+    const r = await fetchWithAuth('/api/logs');
+    if (!r) return;
+    const logs = await r.json();
+    const box = document.getElementById('logsBox'); 
+    box.innerHTML = logs.slice(0,50).map(l=>`<div><small class="text-muted">[${new Date(l.time).toLocaleString()}]</small> <strong>${l.user}</strong> ${l.action} <span class="text-info">${JSON.stringify(l.meta)}</span></div>`).join('');
+  }
+
+    // --------- SERVICE FORM ----------
+    const form = document.getElementById('serviceForm');
+    const typeSelect = document.getElementById('typeSelect');
+
+    typeSelect.addEventListener('change', ()=> {
+      if (typeSelect.value === 'fixed') {
+        document.getElementById('priceContainer').innerHTML = '<input name="price" type="number" step="0.01" class="form-control" placeholder="السعر الإجمالي" required>';
+        document.getElementById('qtyContainer').style.display='none';
+        document.querySelector('[name=min]')?.removeAttribute('required');
+        document.querySelector('[name=max]')?.removeAttribute('required');
+      } else {
+        document.getElementById('priceContainer').innerHTML = '<input name="rate" type="number" step="0.01" class="form-control" placeholder="السعر لكل 1000" required>';
+        document.getElementById('qtyContainer').style.display='grid';
+        document.querySelector('[name=min]')?.setAttribute('required', 'required');
+        document.querySelector('[name=max]')?.setAttribute('required', 'required');
+      }
+    });
+
+    document.getElementById('clearFormBtn').addEventListener('click', ()=>{
+      form.reset(); 
+      document.getElementById('serviceIdInput').value='';
+      typeSelect.dispatchEvent(new Event('change'));
+    });
+
+    form.addEventListener('submit', async e=>{
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form).entries());
+      const id = data.id;
+      // Clean up data based on type
+      if (data.type === 'fixed') {
+        delete data.rate; delete data.min; delete data.max;
+      } else {
+        delete data.price;
+      }
+
+      if (id) {
+        delete data.id;
+        const res = await fetchWithAuth('/api/services/' + id, { method:'PUT', body:JSON.stringify(data) });
+        if (res && res.ok) { show('✅ تم تعديل الخدمة'); form.reset(); document.getElementById('serviceIdInput').value=''; reloadAll(); }
+        else show('❌ فشل تعديل الخدمة','error');
+      } else {
+        const res = await fetchWithAuth('/api/services', { method:'POST', body:JSON.stringify(data) });
+        if (res && res.ok) { show('✅ تم إضافة الخدمة'); form.reset(); reloadAll(); }
+        else show('❌ فشل إضافة الخدمة','error');
+      }
+    });
+
+    // --------- EDIT / DELETE SERVICE ----------
+    window.editService = async function(id){
+      const s = allServicesData.find(x=>x.id===id);
+      if (!s) return;
+      document.querySelector('[name=name]').value = s.name || '';
+      document.querySelector('[name=category]').value = s.category || '';
+      document.getElementById('serviceIdInput').value = s.id;
+      typeSelect.value = s.type;
+      typeSelect.dispatchEvent(new Event('change')); // Trigger change to show/hide fields
+      if (s.type==='fixed') {
+        document.querySelector('[name=price]').value = s.price || '';
+      } else {
+        document.querySelector('[name=rate]').value = s.rate || '';
+        document.querySelector('[name=min]').value = s.min || '';
+        document.querySelector('[name=max]').value = s.max || '';
+      }
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    };
+
+    window.deleteService = async function(id){
+      if (!confirm('⚠️ تأكيد حذف الخدمة؟ سيتم حذفها نهائياً.')) return;
+      const res = await fetchWithAuth('/api/services/' + id, { method:'DELETE' });
+      if (res && res.ok) { show('✅ تم حذف الخدمة'); reloadAll(); }
+      else show('❌ فشل حذف الخدمة','error');
+    };
+
+    // --------- SEARCH FUNCTIONALITY ----------
+    document.getElementById('searchServices').addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase();
+      const filtered = allServicesData.filter(s => 
+        s.name.toLowerCase().includes(query) || 
+        s.category.toLowerCase().includes(query)
+      );
+      renderServices(filtered);
+    });
+
+    document.getElementById('searchOrders').addEventListener('input', async (e) => {
+      const query = e.target.value.toLowerCase();
+      const servicesRes = await fetchWithAuth('/api/services');
+      if (!servicesRes) return;
+      const services = await servicesRes.json();
+      const svcMap = {}; services.forEach(s=>svcMap[s.id]=s);
+      const filtered = allOrdersData.filter(o => 
+        String(o.id).includes(query) || 
+        o.link.toLowerCase().includes(query) ||
+        (svcMap[o.serviceId] && svcMap[o.serviceId].name.toLowerCase().includes(query))
+      );
+      renderOrders(filtered, svcMap);
+    });
+
+
+    document.getElementById('refreshBtn').onclick = async ()=> {
+      await reloadAll();
+      show('✅ تم تحديث البيانات');
+    };
+
+  // --------- RELOAD ----------
+  async function reloadAll(){ 
+    await Promise.all([loadStats(), loadServices(), loadOrders(), loadLogs()]); 
+  }
+
+
+    // --------- EXPORT CSV WITH AUTH ----------
+    async function downloadCSV(endpoint, filename) {
+      const r = await fetchWithAuth(endpoint);
+      if (!r || !r.ok) { show('❌ فشل تحميل الملف','error'); return; }
+      const text = await r.text();
+      const blob = new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8;" });
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    }
+    
+    document.getElementById('exportServices').onclick = ()=> {
+      downloadCSV('/api/export/services.csv','الخدمات.csv');
+    };
+    document.getElementById('exportOrders').onclick = ()=> {
+      downloadCSV('/api/export/orders.csv','الطلبات.csv');
+    };
+
+  reloadAll();
+  </script>
+
+</body>
+</html>
