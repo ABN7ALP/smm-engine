@@ -1,5 +1,6 @@
 /* =================================================================
    Global Styles & Variables - الأنماط العامة والمتغيرات
+   هذه الأنماط ستعمل على كل من واجهة المستخدم ولوحة التحكم
    ================================================================= */
 :root {
   --primary-color: #5f27cd; /* اللون الأساسي البنفسجي */
@@ -17,7 +18,7 @@
 
 body {
   font-family: 'Cairo', sans-serif;
-  background: var(--light-bg);
+  background-color: var(--light-bg);
   color: var(--text-color);
   margin: 0;
   padding: 20px;
@@ -26,29 +27,21 @@ body {
 }
 
 .container-page {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: auto;
 }
 
-.page-wrapper {
-  position: relative;
-  min-height: 80vh;
+.small-muted {
+  color: var(--text-muted);
+  font-size: 0.95rem;
 }
 
 /* =================================================================
    User Page Styles (user.html) - أنماط صفحة المستخدم
+   هذه هي الأنماط القديمة التي يجب أن نحافظ عليها
    ================================================================= */
 
-/* Step container */
-.step {
-  padding: 30px;
-  background: var(--card-bg);
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  margin-bottom: 18px;
-}
-
-/* Category cards */
+/* Category cards from old design */
 .category-card {
   cursor: pointer;
   border-radius: 14px;
@@ -71,244 +64,7 @@ body {
   margin-bottom: 10px;
 }
 
-/* Order machine */
-.order-machine {
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid var(--border-color);
-}
-
-.order-header {
-  background: var(--primary-color);
-  color: white;
-  padding: 18px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.order-body {
-  padding: 20px;
-  background: var(--card-bg);
-}
-
-#preview-container {
-  display: none;
-  background: var(--light-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 12px;
-  margin-top: 10px;
-}
-
-.price-display {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  padding: 12px;
-  border-radius: 8px;
-  text-align: center;
-}
-
-.price-value {
-  font-weight: 900;
-  color: var(--primary-color);
-  font-size: 1.6rem;
-}
-
-.small-muted {
-  color: var(--text-muted);
-  font-size: 0.95rem;
-}
-
-/* =================================================================
-   Admin & Login Page Styles - أنماط لوحة التحكم وتسجيل الدخول
-   ================================================================= */
-
-.admin-container {
-  max-width: 1100px;
-  margin: auto;
-  padding: 20px;
-}
-
-.login-container {
-  max-width: 420px;
-  margin: 60px auto;
-  padding: 30px;
-  background: var(--card-bg);
-  border-radius: 10px;
-  box-shadow: var(--shadow);
-}
-
-h1, h2 {
-  color: var(--primary-color);
-  border-bottom: 2px solid var(--border-color);
-  padding-bottom: 8px;
-  margin-bottom: 1rem;
-}
-
-.login-container h1 {
-  text-align: center;
-  border-bottom: none;
-}
-
-/* Admin stats cards */
-.stat-card {
-  padding: 15px;
-  border-radius: 8px;
-  background: var(--card-bg);
-  box-shadow: 0 0 10px rgba(0,0,0,0.03);
-  border: 1px solid var(--border-color);
-  flex-grow: 1;
-  text-align: center;
-}
-
-.stat-card strong {
-  display: block;
-  font-size: 1.5rem;
-  color: var(--primary-color);
-}
-
-/* Tables */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 12px;
-  background: var(--card-bg);
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-}
-
-thead th {
-  background: var(--primary-color);
-  color: #fff;
-  padding: 12px;
-  text-align: right;
-}
-
-td, th {
-  padding: 12px;
-  border-bottom: 1px solid var(--border-color);
-  text-align: right;
-  vertical-align: middle;
-}
-
-tbody tr:nth-child(even) {
-  background: var(--light-bg);
-}
-
-/* Forms & Buttons */
-input, select, .form-control, .form-select {
-  padding: 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-button, .btn {
-  padding: 8px 16px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  background: var(--primary-color);
-  color: #fff;
-  font-weight: bold;
-  transition: background-color 0.2s;
-}
-
-button:hover, .btn:hover {
-  background: var(--primary-hover);
-  color: #fff;
-}
-
-button.delete-btn, .btn-danger {
-  background: var(--danger-color);
-}
-button.edit-btn, .btn-primary {
-  background: var(--primary-color);
-}
-
-/* Alerts */
-.alert {
-  padding: 12px;
-  border-radius: 6px;
-  margin-top: 10px;
-  border: 1px solid transparent;
-}
-.alert-success {
-  background: #d1e7dd;
-  color: #0f5132;
-  border-color: #badbcc;
-}
-.alert-danger, .alert-error {
-  background: #f8d7da;
-  color: #842029;
-  border-color: #f5c2c7;
-}
-
-/* Admin Accordion */
-.accordion-button:not(.collapsed) {
-  color: #fff;
-  background-color: var(--primary-color);
-}
-.accordion-button:focus {
-  box-shadow: 0 0 0 0.25rem rgba(95, 39, 205, 0.25);
-}
-.search-input {
-  padding: 8px;
-  margin-bottom: 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  width: 100%;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .category-card { padding: 16px; }
-  .dashboard { flex-direction: column; }
-
-  /* Responsive table */
-  table, thead, tbody, tr, td, th { display: block; }
-  thead { display: none; }
-  tr { margin-bottom: 15px; border: 1px solid var(--border-color); border-radius: 8px; }
-  td { position: relative; padding-left: 50% !important; text-align: left !important; }
-  td:before {
-    position: absolute;
-    left: 12px;
-    top: 12px;
-    font-weight: 700;
-    content: attr(data-label);
-    text-align: right;
-    width: calc(50% - 24px);
-    padding-right: 10px;
-  }
-}
-/* =================================
-   New Step 2 Design Enhancements
-   ================================= */
-
-/* Card styles for better separation */
-.card {
-  border: none;
-  border-radius: 1rem; /* Softer corners */
-  transition: all 0.3s ease-in-out;
-}
-
-.card.shadow-sm {
-   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075 ) !important;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
-}
-
-.card-title i {
-  font-size: 1.1rem;
-}
-
-/* Input field enhancements */
+/* Input field enhancements from old design */
 .form-control-lg, .form-select-lg {
   font-size: 1rem;
   padding: 0.75rem 1.25rem;
@@ -319,65 +75,96 @@ button.edit-btn, .btn-primary {
   border: 1px solid #ced4da;
 }
 
-/* Price display enhancements */
+/* Price display enhancements from old design */
 #total-price {
   color: var(--primary-color);
   letter-spacing: -1px;
 }
 
-/* Preview container style */
-#preview-container {
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 0.75rem;
-  padding: 1rem;
-}
-
-/* Order result card style */
+/* Order result card style from old design */
 #orderResult .card {
-  background-color: var(--primary-color-light);
-  border: 1px solid var(--primary-color);
-  color: var(--primary-color-dark);
+  background-color: var(--light-bg); /* Adjusted for consistency */
+  border: 1px solid var(--border-color);
 }
 #orderResult .card:hover {
   transform: none;
   box-shadow: none !important;
 }
-/* =================================
-   Responsive Fixes for Mobile
-   ================================= */
 
+/* Responsive Fixes for Mobile from old design */
 @media (max-width: 991px) {
-  /* 
-    عندما تكون الشاشة أصغر من 992 بكسل (أجهزة التابلت والهواتف),
-    اجعل الأعمدة تحت بعضها البعض بدلاً من أن تكون بجانب بعضها.
-  */
+  /* Make columns stack on tablet and mobile */
   #step2 .col-lg-7,
   #step2 .col-lg-5 {
     width: 100%;
   }
-
-  /* أضف مسافة بين بطاقة السعر وبطاقة متابعة الطلب على الهاتف */
+  /* Add space between cards on mobile */
   #step2 .card.mb-4 {
     margin-bottom: 1.5rem !important;
   }
 }
 
 @media (max-width: 576px) {
-  /* تحسينات إضافية للشاشات الصغيرة جداً */
+  /* Extra small screen adjustments */
   .step {
-    padding: 20px 15px; /* تقليل الحشو الداخلي للصفحة */
+    padding: 20px 15px;
   }
-
   .card-body.p-4 {
-    padding: 1.5rem !important; /* تقليل الحشو داخل البطاقات */
+    padding: 1.5rem !important;
   }
-
   #total-price {
-    font-size: 2.5rem; /* تصغير حجم خط السعر قليلاً */
+    font-size: 2.5rem;
   }
-
   #backBtn {
-    font-size: 0.9rem; /* تصغير حجم زر الرجوع */
+    font-size: 0.9rem;
   }
 }
+
+/* =================================================================
+   Login Page Styles - أنماط صفحة تسجيل الدخول
+   ================================================================= */
+.login-container {
+  max-width: 420px;
+  margin: 60px auto;
+  padding: 30px;
+  background: var(--card-bg);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+}
+
+.login-container h1 {
+  text-align: center;
+  border-bottom: none;
+  color: var(--primary-color);
+}
+
+/* =================================================================
+   Alert Styles - أنماط التنبيهات
+   ================================================================= */
+.alert {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
+  border: 1px solid transparent;
+}
+.alert-success {
+  background-color: #d1e7dd;
+  color: #0f5132;
+  border-color: #badbcc;
+}
+.alert-danger, .alert-error {
+  background-color: #f8d7da;
+  color: #842029;
+  border-color: #f5c2c7;
+}
+
+/* =================================================================
+   AdminKit Customizations (admin.html)
+   هذه هي الأنماط الجديدة الخاصة بلوحة التحكم المطورة
+   ================================================================= */
+
+/* This section can be left empty if all customizations are done inline 
+   or if the default AdminKit styles are sufficient.
+   The custom styles for the admin page are already included 
+   in the <style> tag within admin.html for better encapsulation.
+*/
