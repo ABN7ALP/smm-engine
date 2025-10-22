@@ -1,66 +1,85 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>تسجيل الدخول - لوحة التحكم</title>
-
-  <!-- Cairo Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
-  
-  <!-- Main Stylesheet (Correct Path ) -->
-  <link rel="stylesheet" href="/style.css">
-
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>تسجيل الدخول | لوحة التحكم</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/adminkit-pro@4.0.0/dist/css/app.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+    </style>
 </head>
+
 <body>
-  <div class="login-container">
-    <h1>تسجيل الدخول</h1>
-    <form id="loginForm">
-      <div class="mb-3">
-        <input name="username" class="form-control" placeholder="اسم المستخدم" required>
-      </div>
-      <div class="mb-3">
-        <input name="password" type="password" class="form-control" placeholder="كلمة السر" required>
-      </div>
-      <div class="d-grid">
-        <button type="submit" class="btn btn-primary">دخول</button>
-      </div>
-    </form>
-    <div id="alert-box" class="mt-3"></div>
-  </div>
+    <main class="d-flex w-100 h-100">
+        <div class="container d-flex flex-column">
+            <div class="row vh-100">
+                <div class="col-sm-10 col-md-8 col-lg-6 col-xl-5 mx-auto d-table h-100">
+                    <div class="d-table-cell align-middle">
 
-<script>
-const form = document.getElementById('loginForm');
-const alertBox = document.getElementById('alert-box');
+                        <div class="text-center mt-4">
+                            <h1 class="h2">أهلاً بك</h1>
+                            <p class="lead">سجل الدخول للمتابعة إلى لوحة التحكم</p>
+                        </div>
 
-function show(msg, type = 'error') {
-  const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-  alertBox.innerHTML = `<div class="alert ${alertClass}">${msg}</div>`;
-  setTimeout(() => alertBox.innerHTML = '', 4000);
-}
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="m-sm-3">
+                                    <form id="loginForm">
+                                        <div class="mb-3">
+                                            <label class="form-label">اسم المستخدم</label>
+                                            <input class="form-control form-control-lg" type="text" name="username" placeholder="أدخل اسم المستخدم" required />
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">كلمة المرور</label>
+                                            <input class="form-control form-control-lg" type="password" name="password" placeholder="أدخل كلمة المرور" required />
+                                        </div>
+                                        <div class="d-grid gap-2 mt-3">
+                                            <button type="submit" class="btn btn-lg btn-primary">تسجيل الدخول</button>
+                                        </div>
+                                    </form>
+                                    <div id="alert-box" class="mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const fd = new FormData(form);
-  const data = Object.fromEntries(fd.entries());
-  try {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'خطأ في تسجيل الدخول' }));
-      show(err.error || 'خطأ في تسجيل الدخول');
-      return;
-    }
-    const j = await res.json();
-    localStorage.setItem('authToken', j.token);
-    window.location.href = '/admin.html';
-  } catch (err) {
-    show('تعذر الاتصال بالخادم');
-  }
-});
-</script>
+    <script>
+        const form = document.getElementById('loginForm');
+        const alertBox = document.getElementById('alert-box');
+
+        function show(msg, type = 'danger') {
+            alertBox.innerHTML = `<div class="alert alert-${type} alert-dismissible" role="alert"><div class="alert-message">${msg}</div></div>`;
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(form).entries());
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (!res.ok) {
+                    show(result.error || 'خطأ في تسجيل الدخول');
+                    return;
+                }
+                localStorage.setItem('authToken', result.token);
+                window.location.href = '/admin.html';
+            } catch (err) {
+                show('تعذر الاتصال بالخادم');
+            }
+        });
+    </script>
 </body>
 </html>
