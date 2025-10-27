@@ -1,0 +1,202 @@
+/* =================================================================
+   Modern SMM Dashboard & Login Style - by ابن حلب
+   ================================================================= */
+:root {
+  --primary-color: #5f27cd;
+  --primary-hover: #341f97;
+  --bg-light: #f8f9fc;
+  --card-bg: #ffffff;
+  --text-color: #1e1e2d;
+  --text-muted: #6c757d;
+  --border-color: #dee2e6;
+  --shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  --transition: all 0.3s ease;
+}
+
+/* الوضع الليلي */
+body.dark-mode {
+  --bg-light: #121212;
+  --card-bg: #1e1e1e;
+  --text-color: #f1f1f1;
+  --border-color: #2d2d2d;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* الأساسيات */
+body {
+  font-family: 'Cairo', sans-serif;
+  background: var(--bg-light);
+  color: var(--text-color);
+  margin: 0;
+  padding: 0;
+  transition: var(--transition);
+  direction: rtl;
+}
+
+/* زر تبديل الوضع */
+.theme-toggle {
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: var(--card-bg);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  font-size: 20px;
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  z-index: 1000;
+}
+.theme-toggle:hover {
+  transform: scale(1.08);
+  background: var(--primary-color);
+  color: #fff;
+}
+
+/* حاوية تسجيل الدخول */
+.login-container {
+  max-width: 420px;
+  margin: 80px auto;
+  padding: 40px 30px;
+  background: var(--card-bg);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+.login-container h1 {
+  text-align: center;
+  color: var(--primary-color);
+  margin-bottom: 24px;
+  font-weight: 700;
+}
+.login-container input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 1rem;
+  transition: var(--transition);
+}
+.login-container input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(95, 39, 205, 0.15);
+}
+.login-container button {
+  width: 100%;
+  background: var(--primary-color);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 0;
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.login-container button:hover {
+  background: var(--primary-hover);
+}
+
+/* لوحة التحكم */
+.admin-container {
+  max-width: 1150px;
+  margin: 40px auto;
+  padding: 20px;
+}
+
+/* بطاقات الإحصاء */
+.stat-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 18px;
+  text-align: center;
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+}
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(95, 39, 205, 0.1);
+}
+.stat-card strong {
+  color: var(--primary-color);
+  font-size: 1.6rem;
+}
+
+/* الجداول */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-bg);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+thead th {
+  background: var(--primary-color);
+  color: #fff;
+  padding: 12px;
+  text-align: right;
+}
+td, th {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+  text-align: right;
+}
+tbody tr:hover {
+  background: rgba(95, 39, 205, 0.05);
+}
+
+/* الأزرار */
+button, .btn {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: var(--transition);
+}
+.btn-primary {
+  background: var(--primary-color);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+.btn-danger {
+  background: #dc3545;
+  color: #fff;
+}
+.btn-danger:hover {
+  background: #bb2d3b;
+}
+
+/* الوضع الليلي في الجداول والبطاقات */
+body.dark-mode .stat-card:hover {
+  box-shadow: 0 8px 20px rgba(95, 39, 205, 0.2);
+}
+body.dark-mode thead th {
+  background: #2f2f3a;
+}
+body.dark-mode tbody tr:hover {
+  background: #222;
+}
+
+/* استجابة الهواتف */
+@media (max-width: 768px) {
+  .login-container {
+    margin: 40px 16px;
+    padding: 30px 20px;
+  }
+  .theme-toggle {
+    top: 12px;
+    left: 12px;
+  }
+}
