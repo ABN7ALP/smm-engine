@@ -271,15 +271,26 @@
         </section>
         
         <!-- قسم السجلات -->
-        <section id="logs" class="content-section">
-          <div class="section-header">
-            <h2 class="section-title"><i class="fas fa-history"></i>سجلات النظام</h2>
-          </div>
-          
-          <div class="logs-container">
-            <div id="logsBox" class="logs-list"></div>
-          </div>
-        </section>
+<section id="logs" class="content-section">
+  <div class="section-header">
+    <h2 class="section-title"><i class="fas fa-history"></i>سجلات النظام</h2>
+    <div class="section-actions">
+      <button class="btn btn-info" onclick="loadLogs()">
+        <i class="fas fa-sync-alt"></i> تحديث
+      </button>
+    </div>
+  </div>
+  
+  <div class="logs-container">
+    <div class="table-header">
+      <h3 class="table-title"><i class="fas fa-list"></i>آخر النشاطات</h3>
+      <div class="table-actions">
+        <span class="text-muted">إظهار آخر 50 سجل</span>
+      </div>
+    </div>
+    <div id="logsBox" class="logs-list"></div>
+  </div>
+</section>
       </div>
     </main>
   </div>
@@ -506,26 +517,43 @@
   }
 
   // --------- LOGS ----------
-  async function loadLogs(){
-    try {
-      const r = await fetchWithAuth('/api/logs');
-      if (!r) return;
-      const logs = await r.json();
-      const box = document.getElementById('logsBox');
-      if (!box) return;
+async function loadLogs(){
+  try {
+    const r = await fetchWithAuth('/api/logs');
+    if (!r) return;
+    const logs = await r.json();
+    const box = document.getElementById('logsBox');
+    if (!box) return;
+    
+    // تنظيف وعرض السجلات بشكل منظم
+    box.innerHTML = logs.slice(0, 50).map(l => {
+      const time = new Date(l.time).toLocaleString('ar-EG');
+      const user = l.user || 'غير معروف';
+      const action = l.action || 'لا يوجد وصف';
+      const meta = l.meta ? JSON.stringify(l.meta) : '{}';
       
-      box.innerHTML = logs.slice(0, 50).map(l => `
+      return `
         <div class="log-entry">
-          <div class="log-time">[${new Date(l.time).toLocaleString('ar-EG')}]</div>
-          <div class="log-user">${l.user}</div>
-          <div class="log-action">${l.action}</div>
-          <div class="log-meta">${JSON.stringify(l.meta)}</div>
+          <div class="log-time">${time}</div>
+          <div class="log-user">${user}</div>
+          <div class="log-action">${action}</div>
+          <div class="log-meta">${meta}</div>
         </div>
-      `).join('');
-    } catch (error) {
-      console.error('Error loading logs:', error);
+      `;
+    }).join('');
+    
+    // إذا لم توجد سجلات
+    if (logs.length === 0) {
+      box.innerHTML = '<div class="text-center text-muted p-4">لا توجد سجلات حالياً</div>';
+    }
+  } catch (error) {
+    console.error('Error loading logs:', error);
+    const box = document.getElementById('logsBox');
+    if (box) {
+      box.innerHTML = '<div class="text-center text-danger p-4">فشل في تحميل السجلات</div>';
     }
   }
+}
 
  // --------- SERVICE FORM ----------
   const form = document.getElementById('serviceForm');
@@ -722,83 +750,97 @@
   };
 
   // --------- SIDEBAR CONTROL ----------
-  document.addEventListener('DOMContentLoaded', function() {
-    const sidebar = document.getElementById('sidebar');
-    const toggleBtn = document.getElementById('toggleSidebar');
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const navItems = document.querySelectorAll('.nav-item');
-    const contentSections = document.querySelectorAll('.content-section');
-    
-    // تبديل القائمة الجانبية على الهواتف
-    if (mobileMenuBtn) {
-      mobileMenuBtn.addEventListener('click', function() {
-        sidebar.classList.add('mobile-open');
-      });
-    }
-    
-    // إغلاق القائمة الجانبية
-    if (toggleBtn) {
-      toggleBtn.addEventListener('click', function() {
-        sidebar.classList.remove('mobile-open');
-      });
-    }
-    
-    // التحكم في عرض الأقسام
-    navItems.forEach(item => {
-      item.addEventListener('click', function(e) {
-        e.preventDefault();
-        
-        // إزالة النشاط من جميع العناصر
-        navItems.forEach(nav => nav.classList.remove('active'));
-        contentSections.forEach(section => section.classList.remove('active'));
-        
-        // إضافة النشاط للعنصر المحدد
-        this.classList.add('active');
-        
-        // عرض القسم المناسب
-        const targetSection = this.getAttribute('data-section');
-        const sectionToShow = document.getElementById(targetSection);
-        if (sectionToShow) {
-          sectionToShow.classList.add('active');
-        }
-        
-        // تحديث عنوان الصفحة
-        updatePageTitle(this.querySelector('.nav-text').textContent);
-        
-        // إغلاق القائمة الجانبية على الهواتف
-        if (window.innerWidth <= 1024) {
-          sidebar.classList.remove('mobile-open');
-        }
-      });
+document.addEventListener('DOMContentLoaded', function() {
+  const sidebar = document.getElementById('sidebar');
+  const toggleBtn = document.getElementById('toggleSidebar');
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const navItems = document.querySelectorAll('.nav-item');
+  const contentSections = document.querySelectorAll('.content-section');
+  
+  // تبديل القائمة الجانبية على الهواتف
+  if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', function() {
+      sidebar.classList.add('mobile-open');
+      // منع التمرير عند فتح القائمة
+      document.body.style.overflow = 'hidden';
     });
-    
-    // تحديث عنوان الصفحة
-    function updatePageTitle(title) {
-      const pageTitle = document.querySelector('.page-title');
-      if (pageTitle) {
-        pageTitle.textContent = title;
-      }
-    }
-    
-    // إغلاق القائمة عند النقر خارجها (للهواتف)
-    document.addEventListener('click', function(e) {
-      if (window.innerWidth <= 1024 && 
-          !sidebar.contains(e.target) && 
-          !mobileMenuBtn.contains(e.target)) {
-        sidebar.classList.remove('mobile-open');
-      }
+  }
+  
+  // إغلاق القائمة الجانبية
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', function() {
+      sidebar.classList.remove('mobile-open');
+      // إعادة التمرير
+      document.body.style.overflow = '';
     });
-    
-    // تهيئة القسم النشط افتراضياً
-    const activeNavItem = document.querySelector('.nav-item.active');
-    if (activeNavItem) {
-      const targetSection = activeNavItem.getAttribute('data-section');
+  }
+  
+  // التحكم في عرض الأقسام
+  navItems.forEach(item => {
+    item.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // إزالة النشاط من جميع العناصر
+      navItems.forEach(nav => nav.classList.remove('active'));
+      contentSections.forEach(section => section.classList.remove('active'));
+      
+      // إضافة النشاط للعنصر المحدد
+      this.classList.add('active');
+      
+      // عرض القسم المناسب
+      const targetSection = this.getAttribute('data-section');
       const sectionToShow = document.getElementById(targetSection);
       if (sectionToShow) {
         sectionToShow.classList.add('active');
       }
+      
+      // تحديث عنوان الصفحة
+      updatePageTitle(this.querySelector('.nav-text').textContent);
+      
+      // إغلاق القائمة الجانبية على الهواتف
+      if (window.innerWidth <= 1024) {
+        sidebar.classList.remove('mobile-open');
+        document.body.style.overflow = '';
+      }
+    });
+  });
+  
+  // تحديث عنوان الصفحة
+  function updatePageTitle(title) {
+    const pageTitle = document.querySelector('.page-title');
+    if (pageTitle) {
+      pageTitle.textContent = title;
+    }
+  }
+  
+  // إغلاق القائمة عند النقر خارجها (للهواتف)
+  document.addEventListener('click', function(e) {
+    if (window.innerWidth <= 1024 && 
+        !sidebar.contains(e.target) && 
+        !mobileMenuBtn.contains(e.target)) {
+      sidebar.classList.remove('mobile-open');
+      document.body.style.overflow = '';
     }
   });
+  
+  // إغلاق القائمة عند التمرير (للهواتف)
+  window.addEventListener('scroll', function() {
+    if (window.innerWidth <= 1024 && sidebar.classList.contains('mobile-open')) {
+      sidebar.classList.remove('mobile-open');
+      document.body.style.overflow = '';
+    }
+  });
+  
+  // تهيئة القسم النشط افتراضياً
+  const activeNavItem = document.querySelector('.nav-item.active');
+  if (activeNavItem) {
+    const targetSection = activeNavItem.getAttribute('data-section');
+    const sectionToShow = document.getElementById(targetSection);
+    if (sectionToShow) {
+      sectionToShow.classList.add('active');
+    }
+  }
+});
 
   // بدء التحميل بعد تهيئة الصفحة
   setTimeout(() => {
