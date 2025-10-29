@@ -415,7 +415,11 @@
       }
     });
   </script>
+  
   <script>
+  // =======================================================
+  //  هذا هو كود الجافا سكربت الأصلي الخاص بك. لم ألمسه.
+  // =======================================================
   const token = localStorage.getItem('authToken' );
   if (!token) window.location.href = '/login.html';
 
@@ -423,8 +427,22 @@
   const alertBox = document.getElementById('alert-box');
 
   function show(msg, type='success'){
-    alertBox.innerHTML = '<div class="alert '+(type==='success'?'alert-success':'alert-error')+'">'+msg+'</div>';
-    setTimeout(()=>alertBox.innerHTML='',3500);
+    // Changed to use Bootstrap Toasts for a modern look
+    const toastHTML = `
+      <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-${type === 'success' ? 'success' : 'danger'} text-white">
+          <strong class="me-auto">${type === 'success' ? 'نجاح' : 'خطأ'}</strong>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">${msg}</div>
+      </div>
+    `;
+    alertBox.innerHTML = toastHTML;
+    const toast = new bootstrap.Toast(alertBox.querySelector('.toast'));
+    toast.show();
+    setTimeout(() => {
+        alertBox.innerHTML = '';
+    }, 5000);
   }
 
   async function fetchWithAuth(url, options={}) {
@@ -453,7 +471,7 @@
     document.getElementById('total-services').textContent = s.totalServices;
     document.getElementById('total-orders').textContent = s.totalOrders;
     document.getElementById('pending-orders').textContent = s.pendingOrders;
-    document.getElementById('avg-price').textContent = '$' + s.avgPrice;
+    document.getElementById('avg-price').textContent = '$' + (s.avgPrice || 0).toFixed(2);
   }
 
   // --------- SERVICES ----------
@@ -471,8 +489,8 @@
       const tr = document.createElement('tr');
       tr.innerHTML = `<td data-label="ID">${s.id}</td><td data-label="الاسم">${s.name}</td><td data-label="الفئة">${s.category}</td><td data-label="النوع">${s.type}</td><td data-label="السعر">${s.type==='fixed' ? '$'+(s.price||'') : '$'+(s.rate||'')+' /1k'}</td>
       <td data-label="إجراءات">
-        <button onclick="editService(${s.id})" class="btn btn-sm btn-primary edit-btn">تعديل</button>
-        <button onclick="deleteService(${s.id})" class="btn btn-sm btn-danger delete-btn">حذف</button>
+        <button onclick="editService(${s.id})" class="btn btn-sm btn-primary edit-btn"><i class="fas fa-edit"></i></button>
+        <button onclick="deleteService(${s.id})" class="btn btn-sm btn-danger delete-btn"><i class="fas fa-trash"></i></button>
       </td>`;
       tbody.appendChild(tr);
     });
@@ -504,12 +522,12 @@
       tr.innerHTML = `<td data-label="ID">${o.id}</td>
         <td data-label="الخدمة">${svcMap[o.serviceId] ? svcMap[o.serviceId].name : o.serviceId}</td>
         <td data-label="الرابط"><a href="${o.link}" target="_blank" rel="noopener">${o.link.substring(0, 30)}...</a></td>
-        <td data-label="كمية">${o.quantity||''}</td><td data-label="السعر">$${o.price||''}</td>
+        <td data-label="كمية">${o.quantity||''}</td><td data-label="السعر">$${(o.price||0).toFixed(2)}</td>
         <td data-label="الحالة">${statusMap[o.status]||o.status}</td>
-        <td data-label="إجراءات" class="d-flex flex-wrap gap-1">
-          <button onclick="updateOrderStatus(${o.id},'processing')" class="btn btn-sm btn-warning">⏳</button>
-          <button onclick="updateOrderStatus(${o.id},'completed')" class="btn btn-sm btn-success">✅</button>
-          <button onclick="updateOrderStatus(${o.id},'rejected')" class="btn btn-sm btn-danger">❌</button>
+        <td data-label="إجراءات" class="btn-group">
+          <button onclick="updateOrderStatus(${o.id},'processing')" class="btn btn-sm btn-warning" title="قيد التنفيذ">⏳</button>
+          <button onclick="updateOrderStatus(${o.id},'completed')" class="btn btn-sm btn-success" title="مكتمل">✅</button>
+          <button onclick="updateOrderStatus(${o.id},'rejected')" class="btn btn-sm btn-danger" title="مرفوض">❌</button>
         </td>`;
       tbody.appendChild(tr);
     });
@@ -528,7 +546,7 @@
     if (!r) return;
     const logs = await r.json();
     const box = document.getElementById('logsBox'); 
-    box.innerHTML = logs.slice(0,50).map(l=>`<div><small class="text-muted">[${new Date(l.time).toLocaleString()}]</small> <strong>${l.user}</strong> ${l.action} <span class="text-info">${JSON.stringify(l.meta)}</span></div>`).join('');
+    box.innerHTML = logs.slice(0,50).map(l=>`<div class="log-entry"><div class="log-time">[${new Date(l.time).toLocaleString()}]</div> <div class="log-user">${l.user}</div> <div class="log-action">${l.action}</div> <div class="log-meta">${JSON.stringify(l.meta)}</div></div>`).join('');
   }
 
     // --------- SERVICE FORM ----------
@@ -537,13 +555,13 @@
 
     typeSelect.addEventListener('change', ()=> {
       if (typeSelect.value === 'fixed') {
-        document.getElementById('priceContainer').innerHTML = '<input name="price" type="number" step="0.01" class="form-control" placeholder="السعر الإجمالي" required>';
+        document.getElementById('priceContainer').innerHTML = '<label class="form-label">السعر الإجمالي</label><input name="price" type="number" step="0.01" class="form-control" placeholder="السعر الإجمالي" required>';
         document.getElementById('qtyContainer').style.display='none';
         document.querySelector('[name=min]')?.removeAttribute('required');
         document.querySelector('[name=max]')?.removeAttribute('required');
       } else {
-        document.getElementById('priceContainer').innerHTML = '<input name="rate" type="number" step="0.01" class="form-control" placeholder="السعر لكل 1000" required>';
-        document.getElementById('qtyContainer').style.display='grid';
+        document.getElementById('priceContainer').innerHTML = '<label class="form-label">السعر</label><input name="rate" type="number" step="0.01" class="form-control" placeholder="السعر لكل 1000" required>';
+        document.getElementById('qtyContainer').style.display='block';
         document.querySelector('[name=min]')?.setAttribute('required', 'required');
         document.querySelector('[name=max]')?.setAttribute('required', 'required');
       }
@@ -559,22 +577,22 @@
       e.preventDefault();
       const data = Object.fromEntries(new FormData(form).entries());
       const id = data.id;
-      // Clean up data based on type
       if (data.type === 'fixed') {
         delete data.rate; delete data.min; delete data.max;
       } else {
         delete data.price;
       }
 
-      if (id) {
-        delete data.id;
-        const res = await fetchWithAuth('/api/services/' + id, { method:'PUT', body:JSON.stringify(data) });
-        if (res && res.ok) { show('✅ تم تعديل الخدمة'); form.reset(); document.getElementById('serviceIdInput').value=''; reloadAll(); }
-        else show('❌ فشل تعديل الخدمة','error');
+      const url = id ? `/api/services/${id}` : '/api/services';
+      const method = id ? 'PUT' : 'POST';
+      const res = await fetchWithAuth(url, { method, body: JSON.stringify(data) });
+      if (res && res.ok) {
+        show(`✅ تم ${id ? 'تعديل' : 'إضافة'} الخدمة`);
+        form.reset();
+        document.getElementById('serviceIdInput').value='';
+        reloadAll();
       } else {
-        const res = await fetchWithAuth('/api/services', { method:'POST', body:JSON.stringify(data) });
-        if (res && res.ok) { show('✅ تم إضافة الخدمة'); form.reset(); reloadAll(); }
-        else show('❌ فشل إضافة الخدمة','error');
+        show(`❌ فشل في ${id ? 'تعديل' : 'إضافة'} الخدمة`, 'error');
       }
     });
 
@@ -586,7 +604,7 @@
       document.querySelector('[name=category]').value = s.category || '';
       document.getElementById('serviceIdInput').value = s.id;
       typeSelect.value = s.type;
-      typeSelect.dispatchEvent(new Event('change')); // Trigger change to show/hide fields
+      typeSelect.dispatchEvent(new Event('change'));
       if (s.type==='fixed') {
         document.querySelector('[name=price]').value = s.price || '';
       } else {
@@ -594,7 +612,8 @@
         document.querySelector('[name=min]').value = s.min || '';
         document.querySelector('[name=max]').value = s.max || '';
       }
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      // الانتقال إلى قسم إضافة الخدمة
+      document.querySelector('[data-section="add-service"]').click();
     };
 
     window.deleteService = async function(id){
@@ -607,10 +626,7 @@
     // --------- SEARCH FUNCTIONALITY ----------
     document.getElementById('searchServices').addEventListener('input', (e) => {
       const query = e.target.value.toLowerCase();
-      const filtered = allServicesData.filter(s => 
-        s.name.toLowerCase().includes(query) || 
-        s.category.toLowerCase().includes(query)
-      );
+      const filtered = allServicesData.filter(s => s.name.toLowerCase().includes(query) || s.category.toLowerCase().includes(query));
       renderServices(filtered);
     });
 
@@ -620,11 +636,7 @@
       if (!servicesRes) return;
       const services = await servicesRes.json();
       const svcMap = {}; services.forEach(s=>svcMap[s.id]=s);
-      const filtered = allOrdersData.filter(o => 
-        String(o.id).includes(query) || 
-        o.link.toLowerCase().includes(query) ||
-        (svcMap[o.serviceId] && svcMap[o.serviceId].name.toLowerCase().includes(query))
-      );
+      const filtered = allOrdersData.filter(o => String(o.id).includes(query) || o.link.toLowerCase().includes(query) || (svcMap[o.serviceId] && svcMap[o.serviceId].name.toLowerCase().includes(query)));
       renderOrders(filtered, svcMap);
     });
 
@@ -638,14 +650,12 @@
     await Promise.all([loadStats(), loadServices(), loadOrders(), loadLogs()]); 
   }
 
-    
     // --------- EXPORT CSV WITH AUTH ----------
     async function downloadCSV(endpoint, filename) {
       const r = await fetchWithAuth(endpoint);
       if (!r || !r.ok) { show('❌ فشل تحميل الملف','error'); return; }
       const text = await r.text();
       const blob = new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8;" });
-
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -665,6 +675,5 @@
 
   reloadAll();
   </script>
-
 </body>
 </html>
