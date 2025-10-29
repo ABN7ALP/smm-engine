@@ -8,25 +8,46 @@
   <!-- Cairo Font -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
   
-  <!-- Main Stylesheet (Correct Path ) -->
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Main Stylesheet -->
   <link rel="stylesheet" href="style-modern.css">
+  <script src="theme-toggle.js" defer></script>
 
 </head>
-<body>
-  <div class="login-container">
-    <h1>تسجيل الدخول</h1>
-    <form id="loginForm">
-      <div class="mb-3">
-        <input name="username" class="form-control" placeholder="اسم المستخدم" required>
+<body class="login-page">
+  <div class="login-container fade-in">
+    <div class="login-header">
+      <h1>تسجيل الدخول</h1>
+      <p class="login-subtitle">لوحة تحكم SMM</p>
+    </div>
+    
+    <div class="login-card">
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-user"></i> اسم المستخدم
+          </label>
+          <input name="username" class="form-control" placeholder="أدخل اسم المستخدم" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-lock"></i> كلمة السر
+          </label>
+          <input name="password" type="password" class="form-control" placeholder="أدخل كلمة السر" required>
+        </div>
+        <button type="submit" class="login-btn">
+          <i class="fas fa-sign-in-alt"></i> دخول
+        </button>
+      </form>
+      
+      <div class="login-footer">
+        <p>نظام إدارة خدمات وسائل التواصل الاجتماعي</p>
       </div>
-      <div class="mb-3">
-        <input name="password" type="password" class="form-control" placeholder="كلمة السر" required>
-      </div>
-      <div class="d-grid">
-        <button type="submit" class="btn btn-primary">دخول</button>
-      </div>
-    </form>
-    <div id="alert-box" class="mt-3"></div>
+    </div>
+    
+    <div class="alert-container" id="alert-box"></div>
   </div>
 
 <script>
@@ -43,22 +64,39 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const fd = new FormData(form);
   const data = Object.fromEntries(fd.entries());
+  
+  // إظهار حالة التحميل
+  const submitBtn = form.querySelector('.login-btn');
+  const originalText = submitBtn.innerHTML;
+  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تسجيل الدخول...';
+  submitBtn.disabled = true;
+  
   try {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
+    
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: 'خطأ في تسجيل الدخول' }));
       show(err.error || 'خطأ في تسجيل الدخول');
       return;
     }
+    
     const j = await res.json();
     localStorage.setItem('authToken', j.token);
-    window.location.href = '/admin.html';
+    show('تم تسجيل الدخول بنجاح!', 'success');
+    
+    setTimeout(() => {
+      window.location.href = '/admin.html';
+    }, 1000);
+    
   } catch (err) {
     show('تعذر الاتصال بالخادم');
+  } finally {
+    submitBtn.innerHTML = originalText;
+    submitBtn.disabled = false;
   }
 });
 </script>
