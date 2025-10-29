@@ -6,121 +6,294 @@
   <title>Admin Dashboard</title>
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Main Stylesheet -->
   <link rel="stylesheet" href="style-modern.css">
-
-  <style>
-    
-  </style>
+  <script src="theme-toggle.js" defer></script>
 </head>
 <body>
-  <div class="container">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <h1>لوحة الإدارة</h1>
-      <div>
-        <button id="logoutBtn" class="btn btn-danger">تسجيل خروج</button>
+  <!-- الهيكل الجديد مع القائمة الجانبية -->
+  <div class="dashboard-layout">
+    <!-- القائمة الجانبية -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="#" class="brand">
+          <div class="brand-logo">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <span class="brand-text">SMM Dashboard</span>
+        </a>
+        <button class="toggle-sidebar" id="toggleSidebar">
+          <i class="fas fa-bars"></i>
+        </button>
       </div>
-    </div>
-
-    <!-- STATS -->
-    <div class="dashboard" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;">
-      <div class="card stat-card">📋 الخدمات: <strong id="total-services">0</strong></div>
-      <div class="card stat-card">📈 الطلبات الكليّة: <strong id="total-orders">0</strong></div>
-      <div class="card stat-card">⏳ طلبات معلقة: <strong id="pending-orders">0</strong></div>
-      <div class="card stat-card">💰 متوسط السعر: <strong id="avg-price">0</strong></div>
-    </div>
-
-    <!-- CONTROLS -->
-    <div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">
-      <button id="refreshBtn" class="btn btn-secondary">🔄 تحديث البيانات</button>
-      <button id="exportServices" class="btn btn-info">📥 تحميل قائمة الخدمات</button>
-      <button id="exportOrders" class="btn btn-info">📥 تحميل قائمة الطلبات</button>
-    </div>
-
-    <!-- Accordion for Services and Orders -->
-    <div class="accordion mt-4" id="adminAccordion">
-
-      <!-- Services Section -->
-      <div class="accordion-item">
-        <h2 class="accordion-header" id="headingServices">
-          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseServices" aria-expanded="true" aria-controls="collapseServices">
-            إدارة الخدمات
-          </button>
-        </h2>
-        <div id="collapseServices" class="accordion-collapse collapse show" aria-labelledby="headingServices" data-bs-parent="#adminAccordion">
-          <div class="accordion-body">
-            <input id="searchServices" class="search-input" placeholder="🔍 ابحث عن خدمة بالاسم أو الفئة...">
-            <div class="table-responsive">
-              <table id="services-table" class="table table-striped table-hover">
-                <thead><tr><th>ID</th><th>الاسم</th><th>الفئة</th><th>النوع</th><th>السعر</th><th>إجراءات</th></tr></thead>
-                <tbody></tbody>
-              </table>
-            </div>
+      
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-title">الرئيسية</div>
+          <a href="#" class="nav-item active" data-section="dashboard">
+            <i class="fas fa-tachometer-alt nav-icon"></i>
+            <span class="nav-text">لوحة التحكم</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-title">إدارة المحتوى</div>
+          <a href="#" class="nav-item" data-section="orders">
+            <i class="fas fa-shopping-cart nav-icon"></i>
+            <span class="nav-text">الطلبات</span>
+            <span class="nav-badge" id="orders-badge">0</span>
+          </a>
+          <a href="#" class="nav-item" data-section="services">
+            <i class="fas fa-cogs nav-icon"></i>
+            <span class="nav-text">الخدمات</span>
+          </a>
+          <a href="#" class="nav-item" data-section="add-service">
+            <i class="fas fa-plus-circle nav-icon"></i>
+            <span class="nav-text">إضافة خدمة</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-title">النظام</div>
+          <a href="#" class="nav-item" data-section="logs">
+            <i class="fas fa-history nav-icon"></i>
+            <span class="nav-text">سجلات النظام</span>
+          </a>
+        </div>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="user-menu">
+          <div class="user-avatar">A</div>
+          <div class="user-info">
+            <div class="user-name">المسؤول</div>
+            <div class="user-role">مدير النظام</div>
           </div>
         </div>
+        <button class="logout-btn" id="sidebarLogoutBtn">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>تسجيل خروج</span>
+        </button>
       </div>
-
-      <!-- Orders Section -->
-      <div class="accordion-item">
-        <h2 class="accordion-header" id="headingOrders">
-          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOrders" aria-expanded="false" aria-controls="collapseOrders">
-            إدارة الطلبات
-          </button>
-        </h2>
-        <div id="collapseOrders" class="accordion-collapse collapse" aria-labelledby="headingOrders" data-bs-parent="#adminAccordion">
-          <div class="accordion-body">
-            <input id="searchOrders" class="search-input" placeholder="🔍 ابحث عن طلب بالرقم أو الرابط...">
-            <div class="table-responsive">
-              <table id="orders-table" class="table table-striped table-hover">
-                <thead><tr><th>ID</th><th>الخدمة</th><th>الرابط</th><th>كمية</th><th>السعر</th><th>الحالة</th><th>إجراءات</th></tr></thead>
-                <tbody></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-    <!-- End of Accordion -->
-
-
-    <!-- ADD/EDIT SERVICE FORM -->
-    <h2 style="margin-top:25px;">إضافة / تعديل خدمة</h2>
-    <form id="serviceForm" class="p-3 border rounded bg-light">
-      <div class="row g-3">
-        <div class="col-md-6">
-          <input name="name" class="form-control" placeholder="اسم الخدمة" required>
-        </div>
-        <div class="col-md-6">
-          <input name="category" class="form-control" placeholder="الفئة (مثال: instagram)" required>
-        </div>
-        <div class="col-md-12">
-          <select name="type" id="typeSelect" class="form-select">
-            <option value="quantity">كمية (لكل 1000)</option>
-            <option value="fixed">سعر ثابت</option>
-          </select>
-        </div>
-        <div id="priceContainer" class="col-md-12">
-          <input name="rate" type="number" step="0.01" class="form-control" placeholder="السعر لكل 1000" required>
-        </div>
-        <div id="qtyContainer" class="col-md-12" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <input name="min" type="number" class="form-control" placeholder="أدنى كمية" required>
-          <input name="max" type="number" class="form-control" placeholder="أقصى كمية" required>
-        </div>
-        <input type="hidden" name="id" id="serviceIdInput">
-        <div class="col-12">
-          <button type="submit" class="btn btn-primary">حفظ</button>
-          <button type="button" id="clearFormBtn" class="btn btn-outline-secondary">تفريغ النموذج</button>
-        </div>
-      </div>
-    </form>
+    </aside>
     
+    <!-- المحتوى الرئيسي -->
+    <main class="main-content">
+      <header class="content-header">
+        <h1 class="page-title">لوحة التحكم</h1>
+        <div class="page-actions">
+          <div class="search-box">
+            <input type="text" class="search-input" placeholder="بحث...">
+            <i class="fas fa-search search-icon"></i>
+          </div>
+          <button class="btn btn-danger d-md-none" id="mobileLogoutBtn">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
+        </div>
+      </header>
+      
+      <div class="content-body">
+        <!-- قسم لوحة التحكم -->
+        <section id="dashboard" class="content-section active">
+          <!-- STATS -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon"><i class="fas fa-cogs"></i></div>
+              <div class="stat-content">
+                <span class="stat-label">الخدمات</span>
+                <strong class="stat-value" id="total-services">0</strong>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+              <div class="stat-content">
+                <span class="stat-label">الطلبات الكليّة</span>
+                <strong class="stat-value" id="total-orders">0</strong>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+              <div class="stat-content">
+                <span class="stat-label">طلبات معلقة</span>
+                <strong class="stat-value" id="pending-orders">0</strong>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+              <div class="stat-content">
+                <span class="stat-label">متوسط السعر</span>
+                <strong class="stat-value" id="avg-price">$0</strong>
+              </div>
+            </div>
+          </div>
 
-    <!-- LOGS (preview latest) -->
-    <h2 style="margin-top:25px;">آخر التغييرات (Logs)</h2>
-    <div id="logsBox" style="max-height:200px;overflow:auto;border:1px solid var(--border-color);padding:8px;border-radius:6px;background-color:#fff;"></div>
+          <!-- CONTROLS -->
+          <div class="controls-section">
+            <div class="controls-header">
+              <i class="fas fa-tools"></i>
+              <h3>أدوات التحكم</h3>
+            </div>
+            <div class="controls-body">
+              <div class="controls-grid">
+                <button id="refreshBtn" class="btn btn-secondary control-btn">
+                  <i class="fas fa-sync-alt"></i>
+                  <span>تحديث البيانات</span>
+                </button>
+                <button id="exportServices" class="btn btn-info control-btn">
+                  <i class="fas fa-download"></i>
+                  <span>تحميل الخدمات (CSV)</span>
+                </button>
+                <button id="exportOrders" class="btn btn-info control-btn">
+                  <i class="fas fa-download"></i>
+                  <span>تحميل الطلبات (CSV)</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <!-- قسم الطلبات -->
+        <section id="orders" class="content-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="fas fa-shopping-cart"></i>
+              إدارة الطلبات
+            </h2>
+            <div class="section-actions">
+              <div class="search-box">
+                <input id="searchOrders" class="search-input" placeholder="ابحث عن طلب بالرقم أو الرابط...">
+                <i class="fas fa-search search-icon"></i>
+              </div>
+            </div>
+          </div>
 
-    <div id="alert-box" style="margin-top:12px;"></div>
+          <div class="table-container">
+            <div class="table-responsive">
+              <table id="orders-table" class="table table-striped table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>الخدمة</th>
+                    <th>الرابط</th>
+                    <th>كمية</th>
+                    <th>السعر</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        
+        <!-- قسم الخدمات -->
+        <section id="services" class="content-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="fas fa-cogs"></i>
+              إدارة الخدمات
+            </h2>
+            <div class="section-actions">
+              <div class="search-box">
+                <input id="searchServices" class="search-input" placeholder="ابحث عن خدمة بالاسم أو الفئة...">
+                <i class="fas fa-search search-icon"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <div class="table-responsive">
+              <table id="services-table" class="table table-striped table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>الاسم</th>
+                    <th>الفئة</th>
+                    <th>النوع</th>
+                    <th>السعر</th>
+                    <th>إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        
+        <!-- قسم إضافة الخدمات -->
+        <section id="add-service" class="content-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="fas fa-plus-circle"></i>
+              إضافة / تعديل خدمة
+            </h2>
+          </div>
+
+          <div class="form-container">
+            <form id="serviceForm">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">اسم الخدمة</label>
+                  <input name="name" class="form-control" placeholder="اسم الخدمة" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">الفئة</label>
+                  <input name="category" class="form-control" placeholder="الفئة (مثال: instagram)" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">النوع</label>
+                  <select name="type" id="typeSelect" class="form-select">
+                    <option value="quantity">كمية (لكل 1000)</option>
+                    <option value="fixed">سعر ثابت</option>
+                  </select>
+                </div>
+                <div class="form-group" id="priceContainer">
+                  <label class="form-label">السعر</label>
+                  <input name="rate" type="number" step="0.01" class="form-control" placeholder="السعر لكل 1000" required>
+                </div>
+                <div class="form-group" id="qtyContainer">
+                  <label class="form-label">الكميات</label>
+                  <div class="form-row">
+                    <input name="min" type="number" class="form-control" placeholder="أدنى كمية" required>
+                    <input name="max" type="number" class="form-control" placeholder="أقصى كمية" required>
+                  </div>
+                </div>
+              </div>
+              <input type="hidden" name="id" id="serviceIdInput">
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-save"></i>
+                  حفظ
+                </button>
+                <button type="button" id="clearFormBtn" class="btn btn-outline-secondary">إلغاء</button>
+              </div>
+            </form>
+          </div>
+        </section>
+        
+        <!-- قسم السجلات -->
+        <section id="logs" class="content-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="fas fa-history"></i>
+              آخر النشاطات
+            </h2>
+          </div>
+
+          <div class="logs-container">
+            <div id="logsBox" class="logs-list"></div>
+          </div>
+        </section>
+      </div>
+    </main>
   </div>
+
+  <!-- الإشعارات -->
+  <div id="alert-box" class="notification-container"></div>
+
 
   <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -337,6 +510,109 @@
       renderOrders(filtered, svcMap);
     });
 
+    // sidebar-control.js - التحكم في القائمة الجانبية والأقسام
+
+document.addEventListener('DOMContentLoaded', function() {
+  // عناصر القائمة الجانبية
+  const sidebar = document.getElementById('sidebar');
+  const toggleBtn = document.getElementById('toggleSidebar');
+  const navItems = document.querySelectorAll('.nav-item');
+  const contentSections = document.querySelectorAll('.content-section');
+  
+  // تبديل القائمة الجانبية
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', function() {
+      sidebar.classList.toggle('collapsed');
+    });
+  }
+  
+  // التحكم في عرض الأقسام
+  navItems.forEach(item => {
+    item.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // إزالة النشاط من جميع العناصر
+      navItems.forEach(nav => nav.classList.remove('active'));
+      contentSections.forEach(section => section.classList.remove('active'));
+      
+      // إضافة النشاط للعنصر المحدد
+      this.classList.add('active');
+      
+      // عرض القسم المناسب
+      const targetSection = this.getAttribute('data-section');
+      const sectionToShow = document.getElementById(targetSection);
+      if (sectionToShow) {
+        sectionToShow.classList.add('active');
+      }
+      
+      // تحديث عنوان الصفحة
+      updatePageTitle(this.querySelector('.nav-text').textContent);
+      
+      // إغلاق القائمة الجانبية على الجوال
+      if (window.innerWidth < 768) {
+        sidebar.classList.remove('mobile-open');
+      }
+    });
+  });
+  
+  // تحديث عنوان الصفحة
+  function updatePageTitle(title) {
+    const pageTitle = document.querySelector('.page-title');
+    if (pageTitle) {
+      pageTitle.textContent = title;
+    }
+  }
+  
+  // فتح القائمة الجانبية على الجوال
+  function openMobileSidebar() {
+    sidebar.classList.add('mobile-open');
+  }
+  
+  // إغلاق القائمة الجانبية على الجوال
+  function closeMobileSidebar() {
+    sidebar.classList.remove('mobile-open');
+  }
+  
+  // التحكم في القائمة الجانبية على الجوال
+  if (window.innerWidth < 768) {
+    // إضافة زر فتح القائمة على الجوال
+    const mobileMenuBtn = document.createElement('button');
+    mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+    mobileMenuBtn.className = 'btn btn-primary mobile-menu-btn';
+    mobileMenuBtn.style.position = 'fixed';
+    mobileMenuBtn.style.bottom = '20px';
+    mobileMenuBtn.style.left = '20px';
+    mobileMenuBtn.style.zIndex = '1000';
+    mobileMenuBtn.style.width = '50px';
+    mobileMenuBtn.style.height = '50px';
+    mobileMenuBtn.style.borderRadius = '50%';
+    mobileMenuBtn.style.display = 'flex';
+    mobileMenuBtn.style.alignItems = 'center';
+    mobileMenuBtn.style.justifyContent = 'center';
+    mobileMenuBtn.style.fontSize = '1.2rem';
+    
+    mobileMenuBtn.addEventListener('click', openMobileSidebar);
+    document.body.appendChild(mobileMenuBtn);
+    
+    // إغلاق القائمة عند النقر خارجها
+    document.addEventListener('click', function(e) {
+      if (!sidebar.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+        closeMobileSidebar();
+      }
+    });
+  }
+  
+  // تهيئة القسم النشط افتراضياً
+  const activeNavItem = document.querySelector('.nav-item.active');
+  if (activeNavItem) {
+    const targetSection = activeNavItem.getAttribute('data-section');
+    const sectionToShow = document.getElementById(targetSection);
+    if (sectionToShow) {
+      sectionToShow.classList.add('active');
+    }
+  }
+});
+
 
     document.getElementById('refreshBtn').onclick = async ()=> {
       await reloadAll();
@@ -348,7 +624,7 @@
     await Promise.all([loadStats(), loadServices(), loadOrders(), loadLogs()]); 
   }
 
-
+    
     // --------- EXPORT CSV WITH AUTH ----------
     async function downloadCSV(endpoint, filename) {
       const r = await fetchWithAuth(endpoint);
