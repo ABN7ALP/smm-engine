@@ -297,6 +297,124 @@
 
   <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- سكربت التحكم في القائمة الجانبية -->
+  <script>
+    // سكربت التحكم في القائمة الجانبية والأقسام
+    document.addEventListener('DOMContentLoaded', function() {
+      // عناصر القائمة الجانبية
+      const sidebar = document.getElementById('sidebar');
+      const toggleBtn = document.getElementById('toggleSidebar');
+      const navItems = document.querySelectorAll('.nav-item');
+      const contentSections = document.querySelectorAll('.content-section');
+      
+      // تبديل القائمة الجانبية
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+          sidebar.classList.toggle('collapsed');
+        });
+      }
+      
+      // التحكم في عرض الأقسام
+      navItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          // إزالة النشاط من جميع العناصر
+          navItems.forEach(nav => nav.classList.remove('active'));
+          contentSections.forEach(section => section.classList.remove('active'));
+          
+          // إضافة النشاط للعنصر المحدد
+          this.classList.add('active');
+          
+          // عرض القسم المناسب
+          const targetSection = this.getAttribute('data-section');
+          const sectionToShow = document.getElementById(targetSection);
+          if (sectionToShow) {
+            sectionToShow.classList.add('active');
+          }
+          
+          // تحديث عنوان الصفحة
+          updatePageTitle(this.querySelector('.nav-text').textContent);
+          
+          // إغلاق القائمة الجانبية على الجوال
+          if (window.innerWidth < 768) {
+            sidebar.classList.remove('mobile-open');
+          }
+        });
+      });
+      
+      // تحديث عنوان الصفحة
+      function updatePageTitle(title) {
+        const pageTitle = document.querySelector('.page-title');
+        if (pageTitle) {
+          pageTitle.textContent = title;
+        }
+      }
+      
+      // فتح القائمة الجانبية على الجوال
+      function openMobileSidebar() {
+        sidebar.classList.add('mobile-open');
+      }
+      
+      // إغلاق القائمة الجانبية على الجوال
+      function closeMobileSidebar() {
+        sidebar.classList.remove('mobile-open');
+      }
+      
+      // التحكم في القائمة الجانبية على الجوال
+      if (window.innerWidth < 768) {
+        // إضافة زر فتح القائمة على الجوال
+        const mobileMenuBtn = document.createElement('button');
+        mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+        mobileMenuBtn.className = 'btn btn-primary mobile-menu-btn';
+        mobileMenuBtn.style.position = 'fixed';
+        mobileMenuBtn.style.bottom = '20px';
+        mobileMenuBtn.style.left = '20px';
+        mobileMenuBtn.style.zIndex = '1000';
+        mobileMenuBtn.style.width = '50px';
+        mobileMenuBtn.style.height = '50px';
+        mobileMenuBtn.style.borderRadius = '50%';
+        mobileMenuBtn.style.display = 'flex';
+        mobileMenuBtn.style.alignItems = 'center';
+        mobileMenuBtn.style.justifyContent = 'center';
+        mobileMenuBtn.style.fontSize = '1.2rem';
+        
+        mobileMenuBtn.addEventListener('click', openMobileSidebar);
+        document.body.appendChild(mobileMenuBtn);
+        
+        // إغلاق القائمة عند النقر خارجها
+        document.addEventListener('click', function(e) {
+          if (!sidebar.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+            closeMobileSidebar();
+          }
+        });
+      }
+      
+      // تهيئة القسم النشط افتراضياً
+      const activeNavItem = document.querySelector('.nav-item.active');
+      if (activeNavItem) {
+        const targetSection = activeNavItem.getAttribute('data-section');
+        const sectionToShow = document.getElementById(targetSection);
+        if (sectionToShow) {
+          sectionToShow.classList.add('active');
+        }
+      }
+
+      // ربط أزرار تسجيل الخروج
+      const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
+      const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+      const originalLogoutBtn = document.getElementById('logoutBtn');
+
+      if (sidebarLogoutBtn && originalLogoutBtn) {
+        sidebarLogoutBtn.onclick = originalLogoutBtn.onclick;
+      }
+      
+      if (mobileLogoutBtn && originalLogoutBtn) {
+        mobileLogoutBtn.onclick = originalLogoutBtn.onclick;
+      }
+    });
+  </script>
   <script>
   const token = localStorage.getItem('authToken' );
   if (!token) window.location.href = '/login.html';
@@ -509,110 +627,6 @@
       );
       renderOrders(filtered, svcMap);
     });
-
-    // sidebar-control.js - التحكم في القائمة الجانبية والأقسام
-
-document.addEventListener('DOMContentLoaded', function() {
-  // عناصر القائمة الجانبية
-  const sidebar = document.getElementById('sidebar');
-  const toggleBtn = document.getElementById('toggleSidebar');
-  const navItems = document.querySelectorAll('.nav-item');
-  const contentSections = document.querySelectorAll('.content-section');
-  
-  // تبديل القائمة الجانبية
-  if (toggleBtn) {
-    toggleBtn.addEventListener('click', function() {
-      sidebar.classList.toggle('collapsed');
-    });
-  }
-  
-  // التحكم في عرض الأقسام
-  navItems.forEach(item => {
-    item.addEventListener('click', function(e) {
-      e.preventDefault();
-      
-      // إزالة النشاط من جميع العناصر
-      navItems.forEach(nav => nav.classList.remove('active'));
-      contentSections.forEach(section => section.classList.remove('active'));
-      
-      // إضافة النشاط للعنصر المحدد
-      this.classList.add('active');
-      
-      // عرض القسم المناسب
-      const targetSection = this.getAttribute('data-section');
-      const sectionToShow = document.getElementById(targetSection);
-      if (sectionToShow) {
-        sectionToShow.classList.add('active');
-      }
-      
-      // تحديث عنوان الصفحة
-      updatePageTitle(this.querySelector('.nav-text').textContent);
-      
-      // إغلاق القائمة الجانبية على الجوال
-      if (window.innerWidth < 768) {
-        sidebar.classList.remove('mobile-open');
-      }
-    });
-  });
-  
-  // تحديث عنوان الصفحة
-  function updatePageTitle(title) {
-    const pageTitle = document.querySelector('.page-title');
-    if (pageTitle) {
-      pageTitle.textContent = title;
-    }
-  }
-  
-  // فتح القائمة الجانبية على الجوال
-  function openMobileSidebar() {
-    sidebar.classList.add('mobile-open');
-  }
-  
-  // إغلاق القائمة الجانبية على الجوال
-  function closeMobileSidebar() {
-    sidebar.classList.remove('mobile-open');
-  }
-  
-  // التحكم في القائمة الجانبية على الجوال
-  if (window.innerWidth < 768) {
-    // إضافة زر فتح القائمة على الجوال
-    const mobileMenuBtn = document.createElement('button');
-    mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
-    mobileMenuBtn.className = 'btn btn-primary mobile-menu-btn';
-    mobileMenuBtn.style.position = 'fixed';
-    mobileMenuBtn.style.bottom = '20px';
-    mobileMenuBtn.style.left = '20px';
-    mobileMenuBtn.style.zIndex = '1000';
-    mobileMenuBtn.style.width = '50px';
-    mobileMenuBtn.style.height = '50px';
-    mobileMenuBtn.style.borderRadius = '50%';
-    mobileMenuBtn.style.display = 'flex';
-    mobileMenuBtn.style.alignItems = 'center';
-    mobileMenuBtn.style.justifyContent = 'center';
-    mobileMenuBtn.style.fontSize = '1.2rem';
-    
-    mobileMenuBtn.addEventListener('click', openMobileSidebar);
-    document.body.appendChild(mobileMenuBtn);
-    
-    // إغلاق القائمة عند النقر خارجها
-    document.addEventListener('click', function(e) {
-      if (!sidebar.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
-        closeMobileSidebar();
-      }
-    });
-  }
-  
-  // تهيئة القسم النشط افتراضياً
-  const activeNavItem = document.querySelector('.nav-item.active');
-  if (activeNavItem) {
-    const targetSection = activeNavItem.getAttribute('data-section');
-    const sectionToShow = document.getElementById(targetSection);
-    if (sectionToShow) {
-      sectionToShow.classList.add('active');
-    }
-  }
-});
-
 
     document.getElementById('refreshBtn').onclick = async ()=> {
       await reloadAll();
