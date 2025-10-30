@@ -244,7 +244,6 @@ body {
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-lg);
-   overflow-x: hidden;
 }
 
 /* إخفاء الشريط الجانبي على الهواتف */
@@ -1399,10 +1398,6 @@ body {
    ================================================================= */
 @media (max-width: 768px) {
    
-  .controls-grid {
-    grid-template-columns: 1fr; 
-  }
-   
    
   #orders .table-container,
   #services .table-container {
@@ -1414,7 +1409,7 @@ body {
   #orders .table,
   #services .table {
     width: 100%;
-    min-width: 500px;
+    min-width: 480px;
   }
 
   #orders .table thead th,
@@ -1533,3 +1528,62 @@ body {
   border-bottom: none;
 }
 
+/* =================================================================
+   الإصلاح النهائي لقائمة السجلات داخل الشريط الجانبي
+   ================================================================= */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 60px; /* حتى لا تتصادم مع الفوتر */
+}
+
+.sidebar-footer {
+  flex-shrink: 0;
+  position: relative;
+  bottom: 0;
+  background: var(--sidebar-bg);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  z-index: 10;
+}
+/* =================================================================
+   الإصلاح النهائي لتجاوب أقسام الخدمات والطلبات على الهواتف
+   ================================================================= */
+@media (max-width: 992px) {
+  #orders .table-container,
+  #services .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    display: block;
+  }
+
+  #orders table,
+  #services table {
+    min-width: 650px;
+    border-collapse: collapse;
+  }
+
+  #orders th, #orders td,
+  #services th, #services td {
+    white-space: nowrap;
+    font-size: 0.85rem;
+  }
+
+  #orders .table-container::-webkit-scrollbar,
+  #services .table-container::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  #orders .table-container::-webkit-scrollbar-thumb,
+  #services .table-container::-webkit-scrollbar-thumb {
+    background: var(--primary-dark);
+    border-radius: 10px;
+  }
+}
