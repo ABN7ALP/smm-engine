@@ -244,6 +244,7 @@ body {
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-lg);
+   overflow-x: hidden;
 }
 
 /* إخفاء الشريط الجانبي على الهواتف */
@@ -1397,6 +1398,12 @@ body {
    إصلاح تجاوب الجداول في أقسام الطلبات والخدمات على الهواتف
    ================================================================= */
 @media (max-width: 768px) {
+   
+  .controls-grid {
+    grid-template-columns: 1fr; 
+  }
+   
+   
   #orders .table-container,
   #services .table-container {
     overflow-x: auto;
@@ -1407,7 +1414,7 @@ body {
   #orders .table,
   #services .table {
     width: 100%;
-    min-width: 480px;
+    min-width: 500px;
   }
 
   #orders .table thead th,
