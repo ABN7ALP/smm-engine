@@ -1394,6 +1394,43 @@ body {
   }
 }
 /* =================================================================
+   إصلاح تجاوب الجداول في أقسام الطلبات والخدمات على الهواتف
+   ================================================================= */
+@media (max-width: 768px) {
+  #orders .table-container,
+  #services .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 10px;
+  }
+
+  #orders .table,
+  #services .table {
+    width: 100%;
+    min-width: 480px;
+  }
+
+  #orders .table thead th,
+  #services .table thead th {
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  #orders .table tbody td,
+  #services .table tbody td {
+    font-size: 0.85rem;
+    padding: 0.6rem 0.8rem;
+    word-break: break-word;
+  }
+
+  #orders .section-header,
+  #services .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+/* =================================================================
    تحسين القائمة الجانبية على الهاتف مع overlay وزر ثابت
    ================================================================= */
 
@@ -1468,3 +1505,24 @@ body {
   font-weight: 800;
   font-size: 1.6rem;
 }
+/* =================================================================
+   إصلاح خروج قسم السجلات من القائمة الجانبية على سطح المكتب
+   ================================================================= */
+.sidebar {
+  overflow-x: hidden;
+}
+
+.sidebar-nav .nav-item {
+  word-wrap: break-word;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.sidebar-nav .nav-section:last-child {
+  margin-bottom: var(--space-lg);
+}
+
+.sidebar-nav .nav-section:last-child .nav-item {
+  border-bottom: none;
+}
+
