@@ -383,6 +383,11 @@ body {
 .sidebar-footer {
   padding: var(--space-lg);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  background: var(--sidebar-bg);
+  z-index: 10;
 }
 
 .user-menu {
@@ -1361,4 +1366,105 @@ body {
     padding: 6px 10px;
     font-size: 0.75rem;
   }
+}
+/* =================================================================
+   تحسين عرض الجداول على الشاشات الصغيرة جداً
+   ================================================================= */
+@media (max-width: 480px) {
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 10px;
+  }
+
+  .table-responsive table {
+    min-width: 500px;
+  }
+
+  .table thead th,
+  .table tbody td {
+    font-size: 0.8rem;
+    padding: 0.75rem;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+/* =================================================================
+   تحسين القائمة الجانبية على الهاتف مع overlay وزر ثابت
+   ================================================================= */
+
+/* الخلفية عند فتح القائمة على الهاتف */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+/* تفعيل الـ overlay */
+.sidebar-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* تثبيت زر الإغلاق داخل القائمة على الهاتف */
+@media (max-width: 1024px) {
+  .sidebar .toggle-sidebar {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 1001;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sidebar .toggle-sidebar i {
+    font-size: 1.2rem;
+    color: #fff;
+  }
+}
+
+/* =================================================================
+   تحسينات جمالية عامة (ستايل عصري يشبه Google)
+   ================================================================= */
+body {
+  letter-spacing: 0.2px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.sidebar,
+.main-content,
+.section-header,
+.table-container {
+  border-radius: 12px;
+}
+
+.stat-card,
+.control-btn,
+.table-container,
+.form-container {
+  transition: all 0.25s ease;
+}
+
+.stat-card:hover,
+.control-btn:hover {
+  transform: translateY(-3px);
+}
+
+.page-title {
+  font-family: "Noto Kufi Arabic", "Cairo", sans-serif;
+  font-weight: 800;
+  font-size: 1.6rem;
 }
