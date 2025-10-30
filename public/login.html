@@ -2,103 +2,187 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>تسجيل الدخول - لوحة التحكم</title>
 
-  <!-- Cairo Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
-  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  
-  <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="style-modern.css">
-  <script src="theme-toggle.js" defer></script>
 
+  <!-- Google Fonts (Cairo) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            'sans': ['Cairo', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .fade-in {
+      animation: fadeIn 0.6s ease-out;
+    }
+  </style>
 </head>
-<body class="login-page">
-  <div class="login-container fade-in">
-    <div class="login-header">
-      <h1>تسجيل الدخول</h1>
-      <p class="login-subtitle">لوحة تحكم SMM</p>
+<body class="bg-gradient-to-br from-blue-600 via-blue-500 to-blue-700 min-h-screen flex items-center justify-center p-4">
+
+  <!-- Background Pattern -->
+  <div class="absolute inset-0 opacity-10">
+    <div class="absolute top-0 left-0 w-96 h-96 bg-white rounded-full mix-blend-multiply filter blur-3xl"></div>
+    <div class="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full mix-blend-multiply filter blur-3xl"></div>
+  </div>
+
+  <!-- Login Container -->
+  <div class="relative z-10 w-full max-w-md">
+    <!-- Header -->
+    <div class="text-center mb-8 fade-in">
+      <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl shadow-lg mb-4">
+        <i class="fas fa-chart-line text-3xl text-blue-600"></i>
+      </div>
+      <h1 class="text-4xl font-bold text-white mb-2">تسجيل الدخول</h1>
+      <p class="text-blue-100 text-lg">لوحة تحكم SMM</p>
     </div>
-    
-    <div class="login-card">
-      <form id="loginForm">
-        <div class="form-group">
-          <label class="form-label">
-            <i class="fas fa-user"></i> اسم المستخدم
+
+    <!-- Login Card -->
+    <div class="bg-white rounded-2xl shadow-2xl p-8 fade-in" style="animation-delay: 0.1s;">
+      <form id="loginForm" class="space-y-6">
+        <!-- Username Field -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <i class="fas fa-user me-2 text-blue-600"></i>اسم المستخدم
           </label>
-          <input name="username" class="form-control" placeholder="أدخل اسم المستخدم" required>
+          <input 
+            name="username" 
+            type="text"
+            placeholder="أدخل اسم المستخدم" 
+            class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition bg-gray-50 text-gray-900 placeholder-gray-500" 
+            required
+            autocomplete="username"
+          >
         </div>
-        <div class="form-group">
-          <label class="form-label">
-            <i class="fas fa-lock"></i> كلمة السر
+
+        <!-- Password Field -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <i class="fas fa-lock me-2 text-blue-600"></i>كلمة السر
           </label>
-          <input name="password" type="password" class="form-control" placeholder="أدخل كلمة السر" required>
+          <input 
+            name="password" 
+            type="password"
+            placeholder="أدخل كلمة السر" 
+            class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition bg-gray-50 text-gray-900 placeholder-gray-500" 
+            required
+            autocomplete="current-password"
+          >
         </div>
-        <button type="submit" class="login-btn">
+
+        <!-- Login Button -->
+        <button 
+          type="submit" 
+          class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-4 rounded-lg transition transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-lg"
+        >
           <i class="fas fa-sign-in-alt"></i> دخول
         </button>
       </form>
-      
-      <div class="login-footer">
-        <p>نظام إدارة خدمات وسائل التواصل الاجتماعي</p>
+
+      <!-- Footer Text -->
+      <div class="mt-6 pt-6 border-t border-gray-200 text-center">
+        <p class="text-gray-600 text-sm">
+          نظام إدارة خدمات وسائل التواصل الاجتماعي
+        </p>
       </div>
     </div>
-    
-    <div class="alert-container" id="alert-box"></div>
+
+    <!-- Alert Container -->
+    <div id="alert-box" class="mt-6"></div>
+
+    <!-- Additional Info -->
+    <div class="mt-8 text-center text-blue-100 text-sm fade-in" style="animation-delay: 0.2s;">
+      <p>© 2025 جميع الحقوق محفوظة</p>
+    </div>
   </div>
 
-<script>
-const form = document.getElementById('loginForm');
-const alertBox = document.getElementById('alert-box');
+  <!-- JavaScript -->
+  <script>
+    const form = document.getElementById('loginForm');
+    const alertBox = document.getElementById('alert-box');
 
-function show(msg, type = 'error') {
-  const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-  alertBox.innerHTML = `<div class="alert ${alertClass}">${msg}</div>`;
-  setTimeout(() => alertBox.innerHTML = '', 4000);
-}
-
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const fd = new FormData(form);
-  const data = Object.fromEntries(fd.entries());
-  
-  // إظهار حالة التحميل
-  const submitBtn = form.querySelector('.login-btn');
-  const originalText = submitBtn.innerHTML;
-  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تسجيل الدخول...';
-  submitBtn.disabled = true;
-  
-  try {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'خطأ في تسجيل الدخول' }));
-      show(err.error || 'خطأ في تسجيل الدخول');
-      return;
+    function show(msg, type = 'error') {
+      const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+      const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+      const alertHTML = `
+        <div class="bg-${bgColor} text-white p-4 rounded-lg shadow-lg flex items-center gap-3 animate-pulse">
+          <i class="fas ${icon}"></i>
+          <span>${msg}</span>
+        </div>
+      `;
+      alertBox.innerHTML = alertHTML;
+      setTimeout(() => alertBox.innerHTML = '', 4000);
     }
-    
-    const j = await res.json();
-    localStorage.setItem('authToken', j.token);
-    show('تم تسجيل الدخول بنجاح!', 'success');
-    
-    setTimeout(() => {
-      window.location.href = '/admin.html';
-    }, 1000);
-    
-  } catch (err) {
-    show('تعذر الاتصال بالخادم');
-  } finally {
-    submitBtn.innerHTML = originalText;
-    submitBtn.disabled = false;
-  }
-});
-</script>
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const data = Object.fromEntries(fd.entries());
+      
+      // إظهار حالة التحميل
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalHTML = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تسجيل الدخول...';
+      submitBtn.disabled = true;
+      
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: 'خطأ في تسجيل الدخول' }));
+          show(err.error || 'خطأ في تسجيل الدخول');
+          return;
+        }
+        
+        const j = await res.json();
+        localStorage.setItem('authToken', j.token);
+        show('تم تسجيل الدخول بنجاح!', 'success');
+        
+        setTimeout(() => {
+          window.location.href = '/admin.html';
+        }, 1000);
+        
+      } catch (err) {
+        show('تعذر الاتصال بالخادم');
+      } finally {
+        submitBtn.innerHTML = originalHTML;
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
