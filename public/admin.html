@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>لوحة التحكم - SMM</title>
+  <title>Dashboard - SMM</title>
 
-  <!-- Tailwind CSS CDN -->
+  <!-- Tailwind CSS CDN with Dark Mode Support -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Flowbite CSS CDN -->
@@ -14,13 +14,15 @@
   <!-- Font Awesome for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  <!-- Google Fonts (Cairo) -->
+  <!-- Google Fonts (Cairo for Arabic) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <script>
+    // Configure Tailwind with Dark Mode Support
     tailwind.config = {
+      darkMode: 'class', // Enable class-based dark mode
       theme: {
         extend: {
           fontFamily: {
@@ -28,6 +30,13 @@
           },
         }
       }
+    }
+
+    // Auto-detect system dark mode preference
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
   </script>
 
@@ -39,128 +48,139 @@
     .sidebar {
       transition: transform 0.3s ease-in-out;
     }
+    /* Fix for RTL/LTR support */
+    [dir="rtl"] .sidebar {
+      right: 0;
+      left: auto;
+    }
+    [dir="ltr"] .sidebar {
+      left: 0;
+      right: auto;
+    }
   </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900">
 
-  <!-- فحص التوكن -->
+  <!-- Token Check Loading Screen -->
   <div id="tokenCheck" class="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
     <div class="text-center">
       <div class="inline-block">
         <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
       </div>
-      <p class="text-gray-600 dark:text-gray-400 mt-4">جاري التحقق من صلاحية الجلسة...</p>
+      <p class="text-gray-600 dark:text-gray-400 mt-4">Checking session...</p>
     </div>
   </div>
 
-  <!-- زر فتح القائمة الجانبية (للموبايل) -->
-  <button data-drawer-target="default-sidebar" data-drawer-toggle="default-sidebar" aria-controls="default-sidebar" type="button" class="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
-    <span class="sr-only">Open sidebar</span>
+  <!-- Mobile Menu Toggle Button -->
+  <button id="mobileMenuBtn" class="fixed top-4 left-4 md:hidden z-40 p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
     <i class="fas fa-bars fa-lg"></i>
   </button>
 
-  <!-- القائمة الجانبية (Flowbite Sidebar) -->
-  <aside id="default-sidebar" class="fixed top-0 right-0 z-40 w-64 h-screen transition-transform md:translate-x-0 -translate-x-full" aria-label="Sidebar">
-    <div class="h-full px-3 py-4 overflow-y-auto bg-white dark:bg-gray-800 shadow-lg">
+  <!-- Sidebar (Fixed Position) -->
+  <aside id="sidebar" class="sidebar fixed top-0 left-0 z-30 w-64 h-screen bg-white dark:bg-gray-800 shadow-lg transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+    <div class="h-full px-3 py-4 overflow-y-auto flex flex-col">
       
       <!-- Header -->
       <a href="#" class="flex items-center ps-2.5 mb-5 pb-4 border-b border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-lg">
           <i class="fas fa-chart-line"></i>
         </div>
-        <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white mr-3">لوحة التحكم</span>
+        <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white ms-3">Dashboard</span>
       </a>
 
       <!-- Navigation Links -->
-      <ul class="space-y-2 font-medium">
+      <ul class="space-y-2 font-medium flex-1">
         <li>
-          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">الرئيسية</small>
+          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Main</small>
         </li>
         <li>
           <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item active" data-section="dashboard">
             <i class="fas fa-tachometer-alt text-gray-500 dark:text-gray-400"></i>
-            <span class="ms-3">لوحة التحكم</span>
+            <span class="ms-3">Dashboard</span>
           </a>
         </li>
 
         <li>
-          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4">إدارة المحتوى</small>
+          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4">Content Management</small>
         </li>
         <li>
           <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item" data-section="orders">
             <i class="fas fa-shopping-cart text-gray-500 dark:text-gray-400"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap">الطلبات</span>
+            <span class="flex-1 ms-3 whitespace-nowrap">Orders</span>
             <span class="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300" id="orders-badge">0</span>
           </a>
         </li>
         <li>
           <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item" data-section="services">
             <i class="fas fa-cogs text-gray-500 dark:text-gray-400"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap">الخدمات</span>
+            <span class="flex-1 ms-3 whitespace-nowrap">Services</span>
           </a>
         </li>
         <li>
           <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item" data-section="add-service">
             <i class="fas fa-plus-circle text-gray-500 dark:text-gray-400"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap">إضافة خدمة</span>
+            <span class="flex-1 ms-3 whitespace-nowrap">Add Service</span>
           </a>
         </li>
 
         <li>
-          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4">النظام</small>
+          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4">System</small>
         </li>
         <li>
           <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item" data-section="logs">
             <i class="fas fa-history text-gray-500 dark:text-gray-400"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap">سجلات النظام</span>
+            <span class="flex-1 ms-3 whitespace-nowrap">Logs</span>
           </a>
         </li>
       </ul>
 
       <!-- Footer -->
-      <div class="pt-4 mt-4 space-y-2 border-t border-gray-200 dark:border-gray-700">
+      <div class="pt-4 mt-auto space-y-2 border-t border-gray-200 dark:border-gray-700">
         <div class="flex items-center p-2">
           <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0">
             <i class="fas fa-user text-sm"></i>
           </div>
           <div class="ms-3">
-            <p class="text-sm font-medium text-gray-900 dark:text-white">المسؤول</p>
-            <p class="text-xs text-gray-500 dark:text-gray-400">مدير النظام</p>
+            <p class="text-sm font-medium text-gray-900 dark:text-white">Admin</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">System Manager</p>
           </div>
         </div>
         <button id="logoutBtn" class="w-full flex items-center justify-center p-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition">
           <i class="fas fa-sign-out-alt me-2"></i>
-          <span>تسجيل خروج</span>
+          <span>Logout</span>
         </button>
       </div>
     </div>
   </aside>
 
-  <!-- المحتوى الرئيسي -->
-  <div class="p-4 md:mr-64">
+  <!-- Mobile Overlay (closes sidebar when clicked) -->
+  <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden hidden"></div>
+
+  <!-- Main Content -->
+  <div class="md:ms-64">
     <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4 mb-6 flex justify-between items-center">
-      <h1 class="page-title text-2xl font-bold text-gray-800 dark:text-white">لوحة التحكم</h1>
+    <header class="bg-white dark:bg-gray-800 shadow-sm p-4 mb-6">
+      <h1 class="page-title text-2xl font-bold text-gray-800 dark:text-white">Dashboard</h1>
     </header>
 
-    <!-- محتوى الأقسام -->
-    <div class="space-y-6">
+    <!-- Content Body -->
+    <div class="p-4 md:p-6 space-y-6">
 
-      <!-- قسم لوحة التحكم (Dashboard) -->
+      <!-- Dashboard Section -->
       <section id="dashboard" class="content-section">
-        <!-- نظرة عامة -->
+        <!-- Overview -->
         <div class="mb-6">
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-chart-bar me-2"></i>نظرة عامة
+            <i class="fas fa-chart-bar me-2"></i>Overview
           </h2>
           
-          <!-- بطاقات الإحصائيات -->
+          <!-- Stats Grid -->
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- بطاقة 1 -->
+            <!-- Stat Card 1 -->
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">الخدمات</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Services</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-services">0</p>
                 </div>
                 <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
@@ -169,11 +189,11 @@
               </div>
             </div>
 
-            <!-- بطاقة 2 -->
+            <!-- Stat Card 2 -->
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">الطلبات الكليّة</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Total Orders</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-orders">0</p>
                 </div>
                 <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
@@ -182,11 +202,11 @@
               </div>
             </div>
 
-            <!-- بطاقة 3 -->
+            <!-- Stat Card 3 -->
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">طلبات معلقة</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Pending Orders</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white" id="pending-orders">0</p>
                 </div>
                 <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
@@ -195,11 +215,11 @@
               </div>
             </div>
 
-            <!-- بطاقة 4 -->
+            <!-- Stat Card 4 -->
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">متوسط السعر</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Avg Price</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white" id="avg-price">$0</p>
                 </div>
                 <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
@@ -210,177 +230,177 @@
           </div>
         </div>
 
-        <!-- أدوات التحكم -->
+        <!-- Control Tools -->
         <div>
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-tools me-2"></i>أدوات التحكم
+            <i class="fas fa-tools me-2"></i>Control Tools
           </h2>
           
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <button id="refreshBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2">
-              <i class="fas fa-sync-alt"></i> تحديث البيانات
+              <i class="fas fa-sync-alt"></i> Refresh Data
             </button>
             <button id="exportServices" class="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2">
-              <i class="fas fa-download"></i> تحميل الخدمات (CSV)
+              <i class="fas fa-download"></i> Export Services (CSV)
             </button>
             <button id="exportOrders" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2">
-              <i class="fas fa-download"></i> تحميل الطلبات (CSV)
+              <i class="fas fa-download"></i> Export Orders (CSV)
             </button>
           </div>
         </div>
       </section>
 
-      <!-- قسم الطلبات -->
+      <!-- Orders Section -->
       <section id="orders" class="content-section hidden">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-shopping-cart me-2"></i>إدارة الطلبات
+            <i class="fas fa-shopping-cart me-2"></i>Manage Orders
           </h2>
           
           <!-- Search Box -->
           <div class="mb-4">
             <div class="relative">
-              <input id="searchOrders" type="text" placeholder="ابحث عن طلب بالرقم أو الرابط..." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <input id="searchOrders" type="text" placeholder="Search by order ID or link..." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
               <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
             </div>
           </div>
 
           <!-- Table -->
           <div class="overflow-x-auto">
-            <table class="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
                   <th scope="col" class="px-6 py-3">ID</th>
-                  <th scope="col" class="px-6 py-3">الخدمة</th>
-                  <th scope="col" class="px-6 py-3">الرابط</th>
-                  <th scope="col" class="px-6 py-3">كمية</th>
-                  <th scope="col" class="px-6 py-3">السعر</th>
-                  <th scope="col" class="px-6 py-3">الحالة</th>
-                  <th scope="col" class="px-6 py-3">إجراءات</th>
+                  <th scope="col" class="px-6 py-3">Service</th>
+                  <th scope="col" class="px-6 py-3">Link</th>
+                  <th scope="col" class="px-6 py-3">Qty</th>
+                  <th scope="col" class="px-6 py-3">Price</th>
+                  <th scope="col" class="px-6 py-3">Status</th>
+                  <th scope="col" class="px-6 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody id="orders-table">
-                <!-- سيتم ملء البيانات عبر JavaScript -->
+                <!-- Data will be filled by JavaScript -->
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- قسم الخدمات -->
+      <!-- Services Section -->
       <section id="services" class="content-section hidden">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-cogs me-2"></i>إدارة الخدمات
+            <i class="fas fa-cogs me-2"></i>Manage Services
           </h2>
           
           <!-- Search Box -->
           <div class="mb-4">
             <div class="relative">
-              <input id="searchServices" type="text" placeholder="ابحث عن خدمة بالاسم أو الفئة..." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <input id="searchServices" type="text" placeholder="Search by service name or category..." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
               <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
             </div>
           </div>
 
           <!-- Table -->
           <div class="overflow-x-auto">
-            <table class="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
                   <th scope="col" class="px-6 py-3">ID</th>
-                  <th scope="col" class="px-6 py-3">الاسم</th>
-                  <th scope="col" class="px-6 py-3">الفئة</th>
-                  <th scope="col" class="px-6 py-3">النوع</th>
-                  <th scope="col" class="px-6 py-3">السعر</th>
-                  <th scope="col" class="px-6 py-3">إجراءات</th>
+                  <th scope="col" class="px-6 py-3">Name</th>
+                  <th scope="col" class="px-6 py-3">Category</th>
+                  <th scope="col" class="px-6 py-3">Type</th>
+                  <th scope="col" class="px-6 py-3">Price</th>
+                  <th scope="col" class="px-6 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody id="services-table">
-                <!-- سيتم ملء البيانات عبر JavaScript -->
+                <!-- Data will be filled by JavaScript -->
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- قسم إضافة الخدمات -->
+      <!-- Add Service Section -->
       <section id="add-service" class="content-section hidden">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-6">
-            <i class="fas fa-plus-circle me-2"></i>إضافة / تعديل خدمة
+            <i class="fas fa-plus-circle me-2"></i>Add / Edit Service
           </h2>
           
           <form id="serviceForm" class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <!-- اسم الخدمة -->
+              <!-- Service Name -->
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">اسم الخدمة</label>
-                <input name="name" type="text" placeholder="أدخل اسم الخدمة" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Service Name</label>
+                <input name="name" type="text" placeholder="Enter service name" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
               </div>
 
-              <!-- الفئة -->
+              <!-- Category -->
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">الفئة</label>
-                <input name="category" type="text" placeholder="مثال: instagram, twitter, etc." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
+                <input name="category" type="text" placeholder="e.g., instagram, twitter, etc." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
               </div>
 
-              <!-- نوع الخدمة -->
+              <!-- Service Type -->
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">نوع الخدمة</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Service Type</label>
                 <select name="type" id="typeSelect" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="quantity">خدمة كمية (لكل 1000)</option>
-                  <option value="fixed">سعر ثابت</option>
+                  <option value="quantity">Quantity Service (per 1000)</option>
+                  <option value="fixed">Fixed Price</option>
                 </select>
               </div>
 
-              <!-- السعر -->
+              <!-- Price -->
               <div id="priceContainer">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">السعر لكل 1000</label>
-                <input name="rate" type="number" step="0.01" placeholder="السعر لكل 1000" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price per 1000</label>
+                <input name="rate" type="number" step="0.01" placeholder="Price per 1000" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
               </div>
             </div>
 
-            <!-- الحدود المسموحة -->
+            <!-- Quantity Limits -->
             <div id="qtyContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">أدنى كمية</label>
-                <input name="min" type="number" placeholder="أدنى كمية" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Min Quantity</label>
+                <input name="min" type="number" placeholder="Minimum quantity" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">أقصى كمية</label>
-                <input name="max" type="number" placeholder="أقصى كمية" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Max Quantity</label>
+                <input name="max" type="number" placeholder="Maximum quantity" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
               </div>
             </div>
 
             <input type="hidden" name="id" id="serviceIdInput">
 
-            <!-- الأزرار -->
+            <!-- Buttons -->
             <div class="flex gap-4 pt-4">
               <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center gap-2">
-                <i class="fas fa-save"></i> حفظ الخدمة
+                <i class="fas fa-save"></i> Save Service
               </button>
               <button type="button" id="clearFormBtn" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center gap-2">
-                <i class="fas fa-times"></i> إلغاء
+                <i class="fas fa-times"></i> Cancel
               </button>
             </div>
           </form>
         </div>
       </section>
 
-      <!-- قسم السجلات -->
+      <!-- Logs Section -->
       <section id="logs" class="content-section hidden">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-bold text-gray-800 dark:text-white">
-              <i class="fas fa-history me-2"></i>سجلات النظام
+              <i class="fas fa-history me-2"></i>System Logs
             </h2>
             <button onclick="loadLogs()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center gap-2">
-              <i class="fas fa-sync-alt"></i> تحديث
+              <i class="fas fa-sync-alt"></i> Refresh
             </button>
           </div>
 
-          <div id="logsBox" class="space-y-3">
-            <!-- سيتم ملء السجلات هنا -->
+          div id="logsBox" class="space-y-3">
+            <!-- Logs will be filled by JavaScript -->
           </div>
         </div>
       </section>
@@ -389,25 +409,23 @@
   </div>
 
   <!-- Notification Container -->
-  <div id="alert-box" class="fixed bottom-4 left-4 z-50"></div>
+  <div id="alert-box" class="fixed bottom-4 right-4 z-50"></div>
 
   <!-- Flowbite JS CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
 
-  <!-- السكربت الأساسي (نفسه تماماً من الملف الأصلي) -->
+  <!-- Main JavaScript (Same as original) -->
   <script>
   // =======================================================
-  //  نظام التحقق من التوكن والإصلاحات
+  //  Token Check & Authentication
   // =======================================================
   
-  // التحقق من التوكن أولاً
   const token = localStorage.getItem('authToken');
   const tokenCheck = document.getElementById('tokenCheck');
   
   if (!token) {
     window.location.href = '/login.html';
   } else {
-    // إخفاء شاشة التحقق بعد التأكد من وجود التوكن
     setTimeout(() => {
       tokenCheck.classList.add('hidden');
     }, 1000);
@@ -416,7 +434,7 @@
   const headers = { 'Content-Type': 'application/json', 'x-auth-token': token };
   const alertBox = document.getElementById('alert-box');
 
-  // نظام الإشعارات المحسن
+  // Notification System
   function show(msg, type='success'){
     const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
     const alertHTML = `
@@ -435,7 +453,7 @@
     options.headers = {...headers, ...(options.headers||{})};
     const r = await fetch(url, options);
     if (r.status === 401) {
-      show("انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.", 'error');
+      show("Session expired. Please login again.", 'error');
       localStorage.removeItem('authToken');
       setTimeout(() => {
         window.location.href = '/login.html';
@@ -445,9 +463,9 @@
     return r;
   }
 
-  // نظام تسجيل الخروج المحسن
+  // Logout
   document.getElementById('logoutBtn').onclick = async ()=>{
-    if (!confirm('هل أنت متأكد من تسجيل الخروج؟')) return;
+    if (!confirm('Are you sure you want to logout?')) return;
     
     try {
       await fetchWithAuth('/api/auth/logout', { method:'POST' });
@@ -456,7 +474,7 @@
     }
     
     localStorage.removeItem('authToken');
-    show('تم تسجيل الخروج بنجاح', 'success');
+    show('Logged out successfully', 'success');
     setTimeout(() => {
       window.location.href = '/login.html';
     }, 1500);
@@ -473,7 +491,6 @@
       document.getElementById('pending-orders').textContent = s.pendingOrders || 0;
       document.getElementById('avg-price').textContent = '$' + (s.avgPrice || 0).toFixed(2);
       
-      // تحديث العداد في القائمة الجانبية
       const ordersBadge = document.getElementById('orders-badge');
       if (ordersBadge) {
         ordersBadge.textContent = s.pendingOrders || 0;
@@ -508,7 +525,7 @@
         <td class="px-6 py-4">${s.id}</td>
         <td class="px-6 py-4">${s.name}</td>
         <td class="px-6 py-4">${s.category}</td>
-        <td class="px-6 py-4">${s.type === 'fixed' ? 'سعر ثابت' : 'خدمة كمية'}</td>
+        <td class="px-6 py-4">${s.type === 'fixed' ? 'Fixed' : 'Quantity'}</td>
         <td class="px-6 py-4">${s.type === 'fixed' ? '$' + (s.price || '0') : '$' + (s.rate || '0') + ' /1k'}</td>
         <td class="px-6 py-4">
           <div class="flex gap-2">
@@ -527,10 +544,10 @@
 
   // --------- ORDERS ----------
   const statusMap = {
-    pending: { text: "⏳ قيد الانتظار", class: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
-    processing: { text: "⚙️ قيد التنفيذ", class: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
-    completed: { text: "✅ مكتمل", class: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
-    rejected: { text: "❌ مرفوض", class: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" }
+    pending: { text: "⏳ Pending", class: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
+    processing: { text: "⚙️ Processing", class: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
+    completed: { text: "✅ Completed", class: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
+    rejected: { text: "❌ Rejected", class: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" }
   };
 
   let allOrdersData = [];
@@ -574,13 +591,13 @@
         </td>
         <td class="px-6 py-4">
           <div class="flex gap-2">
-            <button onclick="updateOrderStatus(${o.id},'processing')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition" title="قيد التنفيذ">
+            <button onclick="updateOrderStatus(${o.id},'processing')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition" title="Processing">
               <i class="fas fa-hourglass-half"></i>
             </button>
-            <button onclick="updateOrderStatus(${o.id},'completed')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition" title="مكتمل">
+            <button onclick="updateOrderStatus(${o.id},'completed')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition" title="Completed">
               <i class="fas fa-check"></i>
             </button>
-            <button onclick="updateOrderStatus(${o.id},'rejected')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition" title="مرفوض">
+            <button onclick="updateOrderStatus(${o.id},'rejected')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition" title="Rejected">
               <i class="fas fa-times"></i>
             </button>
           </div>
@@ -591,20 +608,20 @@
   }
 
   async function updateOrderStatus(id, status) {
-    if (!confirm(`تأكيد تحديث حالة الطلب إلى "${statusMap[status].text}"؟`)) return;
+    if (!confirm(`Confirm update order status to "${statusMap[status].text}"?`)) return;
     try {
       const res = await fetchWithAuth('/api/orders/' + id, { 
         method: 'PUT', 
         body: JSON.stringify({ status }) 
       });
       if (res && res.ok) { 
-        show('تم تحديث حالة الطلب بنجاح'); 
+        show('Order status updated successfully'); 
         reloadAll(); 
       } else {
-        show('فشل في تحديث حالة الطلب', 'error');
+        show('Failed to update order status', 'error');
       }
     } catch (error) {
-      show('فشل في تحديث حالة الطلب', 'error');
+      show('Failed to update order status', 'error');
     }
   }
 
@@ -617,11 +634,10 @@
       const box = document.getElementById('logsBox');
       if (!box) return;
       
-      // تنظيف وعرض السجلات بشكل منظم
       box.innerHTML = logs.slice(0, 50).map(l => {
-        const time = new Date(l.time).toLocaleString('ar-EG');
-        const user = l.user || 'غير معروف';
-        const action = l.action || 'لا يوجد وصف';
+        const time = new Date(l.time).toLocaleString();
+        const user = l.user || 'Unknown';
+        const action = l.action || 'No description';
         
         return `
           <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
@@ -634,15 +650,14 @@
         `;
       }).join('');
       
-      // إذا لم توجد سجلات
       if (logs.length === 0) {
-        box.innerHTML = '<div class="text-center text-gray-500 dark:text-gray-400 p-4">لا توجد سجلات حالياً</div>';
+        box.innerHTML = '<div class="text-center text-gray-500 dark:text-gray-400 p-4">No logs available</div>';
       }
     } catch (error) {
       console.error('Error loading logs:', error);
       const box = document.getElementById('logsBox');
       if (box) {
-        box.innerHTML = '<div class="text-center text-red-500 p-4">فشل في تحميل السجلات</div>';
+        box.innerHTML = '<div class="text-center text-red-500 p-4">Failed to load logs</div>';
       }
     }
   }
@@ -658,14 +673,14 @@
     
     if (isFixed) {
       priceContainer.innerHTML = `
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">السعر الإجمالي</label>
-        <input name="price" type="number" step="0.01" placeholder="السعر الإجمالي" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total Price</label>
+        <input name="price" type="number" step="0.01" placeholder="Total price" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
       `;
       qtyContainer.style.display = 'none';
     } else {
       priceContainer.innerHTML = `
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">السعر لكل 1000</label>
-        <input name="rate" type="number" step="0.01" placeholder="السعر لكل 1000" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price per 1000</label>
+        <input name="rate" type="number" step="0.01" placeholder="Price per 1000" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
       `;
       qtyContainer.style.display = 'grid';
     }
@@ -685,7 +700,6 @@
     const data = Object.fromEntries(formData.entries());
     const id = data.id;
 
-    // تنظيف البيانات حسب النوع
     if (data.type === 'fixed') {
       delete data.rate;
       delete data.min;
@@ -704,21 +718,20 @@
       });
       
       if (res && res.ok) {
-        show(`✅ تم ${id ? 'تعديل' : 'إضافة'} الخدمة بنجاح`);
+        show(`✅ Service ${id ? 'updated' : 'added'} successfully`);
         form.reset();
         document.getElementById('serviceIdInput').value = '';
         updateFormFields();
         reloadAll();
         
-        // العودة إلى قسم الخدمات بعد الحفظ
         setTimeout(() => {
           document.querySelector('[data-section="services"]').click();
         }, 1000);
       } else {
-        show(`❌ فشل في ${id ? 'تعديل' : 'إضافة'} الخدمة`, 'error');
+        show(`❌ Failed to ${id ? 'update' : 'add'} service`, 'error');
       }
     } catch (error) {
-      show(`❌ فشل في ${id ? 'تعديل' : 'إضافة'} الخدمة`, 'error');
+      show(`❌ Failed to ${id ? 'update' : 'add'} service`, 'error');
     }
   });
 
@@ -733,7 +746,6 @@
     typeSelect.value = s.type;
     updateFormFields();
     
-    // تعبئة الحقول بناءً على النوع
     setTimeout(() => {
       if (s.type === 'fixed') {
         document.querySelector('[name="price"]').value = s.price || '';
@@ -744,23 +756,22 @@
       }
     }, 100);
     
-    // الانتقال إلى قسم إضافة/تعديل الخدمة
     document.querySelector('[data-section="add-service"]').click();
   };
 
   window.deleteService = async function(id) {
-    if (!confirm('⚠️ هل أنت متأكد من حذف هذه الخدمة؟ سيتم حذفها نهائياً.')) return;
+    if (!confirm('⚠️ Are you sure you want to delete this service? It will be permanently deleted.')) return;
     
     try {
       const res = await fetchWithAuth('/api/services/' + id, { method: 'DELETE' });
       if (res && res.ok) { 
-        show('✅ تم حذف الخدمة بنجاح'); 
+        show('✅ Service deleted successfully'); 
         reloadAll(); 
       } else {
-        show('❌ فشل في حذف الخدمة', 'error');
+        show('❌ Failed to delete service', 'error');
       }
     } catch (error) {
-      show('❌ فشل في حذف الخدمة', 'error');
+      show('❌ Failed to delete service', 'error');
     }
   };
 
@@ -794,16 +805,16 @@
     }
   });
 
-  // زر تحديث البيانات المحسن
+  // Refresh Button
   document.getElementById('refreshBtn').onclick = async () => {
     try {
       await reloadAll();
-      show('✅ تم تحديث البيانات بنجاح');
+      show('✅ Data refreshed successfully');
     } catch (error) {
-      show('❌ فشل في تحديث البيانات', 'error');
+      show('❌ Failed to refresh data', 'error');
     }
   };
-
+    
   // --------- RELOAD ----------
   async function reloadAll() { 
     await Promise.all([loadStats(), loadServices(), loadOrders(), loadLogs()]); 
@@ -814,7 +825,7 @@
     try {
       const r = await fetchWithAuth(endpoint);
       if (!r || !r.ok) { 
-        show('❌ فشل في تحميل الملف', 'error'); 
+        show('❌ Failed to download file', 'error'); 
         return; 
       }
       const text = await r.text();
@@ -827,56 +838,66 @@
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-      show('✅ تم تحميل الملف بنجاح');
+      show('✅ File downloaded successfully');
     } catch (error) {
-      show('❌ فشل في تحميل الملف', 'error');
+      show('❌ Failed to download file', 'error');
     }
   }
   
   document.getElementById('exportServices').onclick = () => {
-    downloadCSV('/api/export/services.csv', 'الخدمات.csv');
+    downloadCSV('/api/export/services.csv', 'services.csv');
   };
   
   document.getElementById('exportOrders').onclick = () => {
-    downloadCSV('/api/export/orders.csv', 'الطلبات.csv');
+    downloadCSV('/api/export/orders.csv', 'orders.csv');
   };
 
   // --------- SIDEBAR & NAVIGATION CONTROL ----------
   document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const navItems = document.querySelectorAll('.nav-item');
     const contentSections = document.querySelectorAll('.content-section');
-    const drawer = document.getElementById('default-sidebar');
     
-    // التحكم في عرض الأقسام
+    // Mobile menu toggle
+    mobileMenuBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('-translate-x-full');
+      overlay.classList.toggle('hidden');
+    });
+
+    // Close sidebar when clicking overlay
+    overlay.addEventListener('click', () => {
+      sidebar.classList.add('-translate-x-full');
+      overlay.classList.add('hidden');
+    });
+
+    // Navigation
     navItems.forEach(item => {
       item.addEventListener('click', function(e) {
         e.preventDefault();
         
-        // إزالة النشاط من جميع العناصر
         navItems.forEach(nav => nav.classList.remove('bg-gray-100', 'dark:bg-gray-700'));
         contentSections.forEach(section => section.classList.add('hidden'));
         
-        // إضافة النشاط للعنصر المحدد
         this.classList.add('bg-gray-100', 'dark:bg-gray-700');
         
-        // عرض القسم المناسب
         const targetSection = this.getAttribute('data-section');
         const sectionToShow = document.getElementById(targetSection);
         if (sectionToShow) {
           sectionToShow.classList.remove('hidden');
         }
         
-        // تحديث عنوان الصفحة
         updatePageTitle(this.querySelector('span').textContent);
         
-        // إغلاق القائمة الجانبية على الموبايل
-        if (window.innerWidth < 768 && drawer) {
-          drawer.classList.add('-translate-x-full');
+        // Close sidebar on mobile
+        if (window.innerWidth < 768) {
+          sidebar.classList.add('-translate-x-full');
+          overlay.classList.add('hidden');
         }
       });
     });
     
-    // تحديث عنوان الصفحة
     function updatePageTitle(title) {
       const pageTitle = document.querySelector('.page-title');
       if (pageTitle) {
@@ -885,7 +906,7 @@
     }
   });
 
-  // بدء التحميل بعد تهيئة الصفحة
+  // Initialize
   setTimeout(() => {
     reloadAll();
     tokenCheck.classList.add('hidden');
