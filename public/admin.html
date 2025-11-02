@@ -1,16 +1,13 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en" dir="ltr" id="htmlElement">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
-  <meta name="description" content="Dashboard - SMM" />
-  <title data-i18n="page_title">Dashboard - SMM</title>
+  <meta name="description" content="Professional Dashboard - SMM Management System" />
+  <title>Dashboard - SMM Management</title>
 
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Flowbite CSS -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+  <!-- Ant Design CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/5.13.0/antd.min.css" />
 
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -18,533 +15,174 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: { 'sans': ['Cairo', 'sans-serif'] },
-        }
-      }
-    }
-
-    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    }
-
-    const savedLang = localStorage.getItem('language') || 'en';
-    if (savedLang === 'ar') {
-      document.documentElement.lang = 'ar';
-      document.documentElement.dir = 'rtl';
-    }
-  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
     * { box-sizing: border-box; }
     html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
-    body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-    
-    /* Layout Container */
-    .layout-container { display: flex; width: 100%; height: 100vh; }
-    
-    /* Sidebar - Fixed on Desktop, Hidden on Mobile */
-    .sidebar {
-      width: 256px;
-      height: 100vh;
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 30;
+    body { 
+      font-family: 'Inter', 'Cairo', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: #f5f5f5;
+    }
+
+    #root { width: 100%; height: 100%; }
+
+    /* Dark Mode */
+    body.dark-mode {
+      background: #141414;
+    }
+
+    /* RTL Support */
+    [dir="rtl"] .ant-layout-sider {
+      border-right: none;
+      border-left: 1px solid #f0f0f0;
+    }
+
+    [dir="rtl"] .ant-layout-sider.ant-layout-sider-dark {
+      border-left: 1px solid #434343;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+
+    body.dark-mode ::-webkit-scrollbar-track {
+      background: #262626;
+    }
+
+    body.dark-mode ::-webkit-scrollbar-thumb {
+      background: #595959;
+    }
+
+    /* Stats Cards */
+    .stat-card {
+      border-radius: 8px;
+      padding: 24px;
       background: white;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      overflow-y: auto;
-      transform: translateX(-100%);
-      transition: transform 0.3s ease-in-out;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 1px 6px rgba(0, 0, 0, 0.03), 0 1px 12px rgba(0, 0, 0, 0.12);
+      transition: all 0.3s ease;
     }
-    
-    [dir="rtl"] .sidebar {
-      left: auto;
-      right: 0;
-      transform: translateX(100%);
+
+    .stat-card:hover {
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
     }
-    
-    @media (min-width: 768px) {
-      .sidebar {
-        transform: translateX(0);
-      }
-      [dir="rtl"] .sidebar {
-        transform: translateX(0);
-      }
+
+    body.dark-mode .stat-card {
+      background: #262626;
     }
-    
-    .dark .sidebar {
-      background: #1f2937;
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1890ff;
+      margin: 12px 0;
     }
-    
-    /* Main Content Area */
-    .main-wrapper {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      overflow: hidden;
+
+    .stat-label {
+      font-size: 14px;
+      color: #8c8c8c;
+      font-weight: 500;
     }
-    
-    @media (min-width: 768px) {
-      .main-wrapper {
-        margin-left: 256px;
-      }
-      [dir="rtl"] .main-wrapper {
-        margin-left: 0;
-        margin-right: 256px;
-      }
+
+    body.dark-mode .stat-label {
+      color: #a6a6a6;
     }
-    
-    /* Content Area */
-    .content-area {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-      width: 100%;
+
+    /* Loading Spinner */
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-top-color: #1890ff;
+      animation: spin 0.8s linear infinite;
     }
-    
-    /* Overlay */
-    .sidebar-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-      z-index: 20;
-      display: none;
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
-    
-    .sidebar-overlay.active {
-      display: block;
+
+    /* Tables */
+    .ant-table {
+      font-size: 14px;
     }
-    
-    /* Mobile Menu Button */
-    .mobile-menu-btn {
-      position: fixed;
-      top: 1rem;
-      z-index: 40;
-      display: none;
+
+    .ant-table-thead > tr > th {
+      background: #fafafa;
+      font-weight: 600;
     }
-    
-    [dir="ltr"] .mobile-menu-btn {
-      left: 1rem;
+
+    body.dark-mode .ant-table-thead > tr > th {
+      background: #1f1f1f;
     }
-    
-    [dir="rtl"] .mobile-menu-btn {
-      right: 1rem;
-    }
-    
-    @media (max-width: 767px) {
-      .mobile-menu-btn {
-        display: block;
-      }
-    }
-    
-    /* Language Toggle Button */
-    .lang-toggle-btn {
-      position: fixed;
-      top: 1rem;
-      z-index: 40;
-    }
-    
-    [dir="ltr"] .lang-toggle-btn {
-      right: 1rem;
-    }
-    
-    [dir="rtl"] .lang-toggle-btn {
-      left: 1rem;
-    }
-    
-    /* Content Sections */
-    .content-section {
-      display: none !important;
-    }
-    
-    .content-section.active {
-      display: block !important;
-    }
-    
-    /* Logs Box */
-    .logs-box {
-      max-height: 400px;
-      overflow-y: auto;
-    }
-    
-    /* Alert Box */
-    .alert-box {
-      position: fixed;
-      bottom: 1rem;
-      z-index: 50;
-    }
-    
-    [dir="ltr"] .alert-box {
-      right: 1rem;
-    }
-    
-    [dir="rtl"] .alert-box {
-      left: 1rem;
-    }
-    
-    /* Responsive Tables */
+
+    /* Responsive */
     @media (max-width: 768px) {
-      table { font-size: 0.75rem; }
-      table td, table th { padding: 0.5rem 0.25rem; }
+      .stat-card {
+        padding: 16px;
+      }
+
+      .stat-value {
+        font-size: 24px;
+      }
+
+      .ant-table {
+        font-size: 12px;
+      }
     }
   </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 w-full overflow-hidden">
+<body>
+  <div id="root"></div>
 
-  <!-- Token Check Loading Screen -->
-  <div id="tokenCheck" class="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
-    <div class="text-center">
-      <div class="inline-block"><i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i></div>
-      <p class="text-gray-600 dark:text-gray-400 mt-4" data-i18n="checking_session">Checking session...</p>
-    </div>
-  </div>
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/react.production.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/react-dom.production.min.js"></script>
 
-  <!-- Mobile Menu Button -->
-  <button id="mobileMenuBtn" class="mobile-menu-btn p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition" aria-label="Toggle menu">
-    <i class="fas fa-bars fa-lg"></i>
-  </button>
+  <!-- Babel Standalone (for JSX) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 
-  <!-- Language Toggle Button -->
-  <button id="langToggleBtn" class="lang-toggle-btn p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition" aria-label="Toggle language">
-    <span id="langBadge" class="text-xs font-bold">EN</span>
-  </button>
+  <!-- Ant Design -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/antd/5.13.0/antd.min.js"></script>
 
-  <!-- Sidebar Overlay (Mobile) -->
-  <div id="sidebarOverlay" class="sidebar-overlay"></div>
+  <!-- Main App -->
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo } = React;
+    const { Layout, Menu, Button, Table, Form, Input, Select, Modal, message, Spin, Card, Row, Col, Tag, Space, Drawer, Badge, Avatar, Dropdown, Empty, Popconfirm, Tooltip } = antd;
+    const { Header, Sider, Content } = Layout;
 
-  <!-- Sidebar -->
-  <aside id="sidebar" class="sidebar">
-    <div class="h-full px-3 py-4 flex flex-col">
-      <!-- Logo -->
-      <a href="#" class="flex items-center ps-2.5 mb-5 pb-4 border-b border-gray-200 dark:border-gray-700">
-        <div class="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-lg flex-shrink-0">
-          <i class="fas fa-chart-line"></i>
-        </div>
-        <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white ms-3" data-i18n="dashboard">Dashboard</span>
-      </a>
-
-      <!-- Navigation -->
-      <ul class="space-y-2 font-medium flex-1 overflow-y-auto">
-        <li><small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400" data-i18n="main">Main</small></li>
-        <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item active" data-section="dashboard" aria-label="Dashboard">
-            <i class="fas fa-tachometer-alt text-gray-500 dark:text-gray-400"></i>
-            <span class="ms-3" data-i18n="dashboard">Dashboard</span>
-          </a>
-        </li>
-
-        <li><small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4" data-i18n="content_management">Content Management</small></li>
-        <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 nav-item" data-section="orders" aria-label="Orders">
-            <i class="fas fa-shopping-cart text-gray-500 dark:text-gray-400"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap" data-i18n="orders">Orders</span>
-            <span class="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300" id="orders-badge">0</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 nav-item" data-section="services" aria-label="Services">
-            <i class="fas fa-cogs text-gray-500 dark:text-gray-400"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap" data-i18n="services">Services</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 nav-item" data-section="add-service" aria-label="Add Service">
-            <i class="fas fa-plus-circle text-gray-500 dark:text-gray-400"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap" data-i18n="add_service">Add Service</span>
-          </a>
-        </li>
-
-        <li><small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4" data-i18n="system">System</small></li>
-        <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 nav-item" data-section="logs" aria-label="Logs">
-            <i class="fas fa-history text-gray-500 dark:text-gray-400"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap" data-i18n="logs">Logs</span>
-          </a>
-        </li>
-      </ul>
-      
-      <!-- User Info -->
-      <div class="pt-4 mt-auto space-y-2 border-t border-gray-200 dark:border-gray-700">
-        <div class="flex items-center p-2">
-          <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0">
-            <i class="fas fa-user text-sm"></i>
-          </div>
-          <div class="ms-3 min-w-0">
-            <p class="text-sm font-medium text-gray-900 dark:text-white truncate" data-i18n="admin">Admin</p>
-            <p class="text-xs text-gray-500 dark:text-gray-400 truncate" data-i18n="system_manager">System Manager</p>
-          </div>
-        </div>
-        <button id="logoutBtn" class="w-full flex items-center justify-center p-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition" aria-label="Logout">
-          <i class="fas fa-sign-out-alt me-2"></i>
-          <span data-i18n="logout">Logout</span>
-        </button>
-      </div>
-    </div>
-  </aside>
-
-  <!-- Main Content -->
-  <div class="main-wrapper">
-    <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 shadow-sm p-4 border-b border-gray-200 dark:border-gray-700">
-      <h1 class="page-title text-2xl font-bold text-gray-800 dark:text-white" data-i18n="dashboard">Dashboard</h1>
-    </header>
-
-    <!-- Content Area -->
-    <div class="content-area">
-      <div class="p-4 md:p-6 space-y-6">
-
-        <!-- Dashboard Section -->
-        <section id="dashboard" class="content-section active">
-          <div class="mb-6">
-            <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-              <i class="fas fa-chart-bar me-2"></i><span data-i18n="overview">Overview</span>
-            </h2>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="services">Services</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-services">0</p>
-                  </div>
-                  <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-cogs text-blue-600 dark:text-blue-300 text-lg"></i>
-                  </div>
-                </div>
-              </div>
-
-              <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="total_orders">Total Orders</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-orders">0</p>
-                  </div>
-                  <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-shopping-cart text-green-600 dark:text-green-300 text-lg"></i>
-                  </div>
-                </div>
-              </div>
-
-              <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="pending_orders">Pending Orders</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white" id="pending-orders">0</p>
-                  </div>
-                  <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-hourglass-half text-yellow-600 dark:text-yellow-300 text-lg"></i>
-                  </div>
-                </div>
-              </div>
-
-              <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="avg_price">Avg Price</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white" id="avg-price">$0</p>
-                  </div>
-                  <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-dollar-sign text-indigo-600 dark:text-indigo-300 text-lg"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-              <i class="fas fa-tools me-2"></i><span data-i18n="control_tools">Control Tools</span>
-            </h2>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <button id="refreshBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Refresh data">
-                <i class="fas fa-sync-alt"></i> <span data-i18n="refresh_data">Refresh Data</span>
-              </button>
-              <button id="exportServices" class="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Export services">
-                <i class="fas fa-download"></i> <span data-i18n="export_services">Export Services (CSV)</span>
-              </button>
-              <button id="exportOrders" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Export orders">
-                <i class="fas fa-download"></i> <span data-i18n="export_orders">Export Orders (CSV)</span>
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <!-- Orders Section -->
-        <section id="orders" class="content-section">
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6">
-            <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-              <i class="fas fa-shopping-cart me-2"></i><span data-i18n="manage_orders">Manage Orders</span>
-            </h2>
-            
-            <div class="mb-4">
-              <input id="searchOrders" type="text" placeholder="Search by order ID or link..." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" data-i18n-placeholder="search_orders">
-            </div>
-
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                  <tr>
-                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="id">ID</th>
-                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="service">Service</th>
-                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="link">Link</th>
-                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="qty">Qty</th>
-                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="price">Price</th>
-                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="status">Status</th>
-                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="actions">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="orders-table"></tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        <!-- Services Section -->
-        <section id="services" class="content-section">
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6">
-            <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-              <i class="fas fa-cogs me-2"></i><span data-i18n="manage_services">Manage Services</span>
-            </h2>
-            
-            <div class="mb-4">
-              <input id="searchServices" type="text" placeholder="Search by service name or category..." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" data-i18n-placeholder="search_services">
-            </div>
-
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                  <tr>
-                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="id">ID</th>
-                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="name">Name</th>
-                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="category">Category</th>
-                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="type">Type</th>
-                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="price">Price</th>
-                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="actions">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="services-table"></tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        <!-- Add Service Section -->
-        <section id="add-service" class="content-section">
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6">
-            <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-6">
-              <i class="fas fa-plus-circle me-2"></i><span data-i18n="add_edit_service">Add / Edit Service</span>
-            </h2>
-            
-            <form id="serviceForm" class="space-y-4">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="service_name">Service Name</label>
-                  <input name="name" type="text" placeholder="Enter service name" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="category">Category</label>
-                  <input name="category" type="text" placeholder="e.g., instagram, twitter, etc." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="service_type">Service Type</label>
-                  <select name="type" id="typeSelect" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="quantity" data-i18n="quantity_service">Quantity Service (per 1000)</option>
-                    <option value="fixed" data-i18n="fixed_price">Fixed Price</option>
-                  </select>
-                </div>
-
-                <div id="priceContainer">
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="price_per_1000">Price per 1000</label>
-                  <input name="rate" type="number" step="0.01" placeholder="Price per 1000" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-              </div>
-
-              <div id="qtyContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="min_quantity">Min Quantity</label>
-                  <input name="min" type="number" placeholder="Minimum quantity" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="max_quantity">Max Quantity</label>
-                  <input name="max" type="number" placeholder="Maximum quantity" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-              </div>
-
-              <input type="hidden" name="id" id="serviceIdInput">
-
-              <div class="flex gap-4 pt-4">
-                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Save service">
-                  <i class="fas fa-save"></i> <span data-i18n="save_service">Save Service</span>
-                </button>
-                <button type="button" id="clearFormBtn" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Cancel">
-                  <i class="fas fa-times"></i> <span data-i18n="cancel">Cancel</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </section>
-
-        <!-- Logs Section -->
-        <section id="logs" class="content-section">
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6">
-            <div class="flex justify-between items-center mb-6 flex-wrap gap-2">
-              <h2 class="text-xl font-bold text-gray-800 dark:text-white">
-                <i class="fas fa-history me-2"></i><span data-i18n="system_logs">System Logs</span>
-              </h2>
-              <button onclick="loadLogs()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center gap-2" aria-label="Refresh logs">
-                <i class="fas fa-sync-alt"></i> <span data-i18n="refresh">Refresh</span>
-              </button>
-            </div>
-
-            <div id="logsBox" class="logs-box space-y-3 border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
-              <!-- Logs will be filled by JavaScript -->
-            </div>
-          </div>
-        </section>
-
-      </div>
-    </div>
-  </div>
-
-  <!-- Notification Container -->
-  <div id="alert-box" class="alert-box"></div>
-
-  <!-- Flowbite JS -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
-   <!-- Main JavaScript -->
-  <script>
     // ============================================
-    // TRANSLATIONS SYSTEM
+    // TRANSLATIONS
     // ============================================
     const translations = {
       en: {
-        'page_title': 'Dashboard - SMM',
-        'checking_session': 'Checking session...',
         'dashboard': 'Dashboard',
-        'main': 'Main',
-        'content_management': 'Content Management',
-        'system': 'System',
         'orders': 'Orders',
         'services': 'Services',
         'add_service': 'Add Service',
         'logs': 'Logs',
+        'logout': 'Logout',
         'admin': 'Admin',
         'system_manager': 'System Manager',
-        'logout': 'Logout',
         'overview': 'Overview',
         'total_orders': 'Total Orders',
         'pending_orders': 'Pending Orders',
@@ -557,9 +195,7 @@
         'manage_services': 'Manage Services',
         'add_edit_service': 'Add / Edit Service',
         'system_logs': 'System Logs',
-        'refresh': 'Refresh',
-        'search_orders': 'Search by order ID or link...',
-        'search_services': 'Search by service name or category...',
+        'search': 'Search',
         'id': 'ID',
         'service': 'Service',
         'link': 'Link',
@@ -577,31 +213,31 @@
         'price_per_1000': 'Price per 1000',
         'min_quantity': 'Min Quantity',
         'max_quantity': 'Max Quantity',
-        'save_service': 'Save Service',
+        'save': 'Save',
         'cancel': 'Cancel',
+        'delete': 'Delete',
+        'edit': 'Edit',
         'data_refreshed': 'Data refreshed successfully',
         'order_status_updated': 'Order status updated successfully',
         'session_expired': 'Session expired. Please login again.',
-        'login_failed': 'Login failed',
-        'failed_to_update': 'Failed to update order status',
-        'failed_to_delete': 'Failed to delete service',
-        'no_logs': 'No logs available',
-        'failed_to_load_logs': 'Failed to load logs',
+        'failed_to_update': 'Failed to update',
+        'failed_to_delete': 'Failed to delete',
+        'no_data': 'No data available',
+        'loading': 'Loading...',
+        'pending': 'Pending',
+        'processing': 'Processing',
+        'completed': 'Completed',
+        'rejected': 'Rejected',
       },
       ar: {
-        'page_title': 'لوحة التحكم - SMM',
-        'checking_session': 'جاري التحقق من الجلسة...',
         'dashboard': 'لوحة التحكم',
-        'main': 'الرئيسية',
-        'content_management': 'إدارة المحتوى',
-        'system': 'النظام',
         'orders': 'الطلبات',
         'services': 'الخدمات',
         'add_service': 'إضافة خدمة',
         'logs': 'السجلات',
+        'logout': 'تسجيل الخروج',
         'admin': 'المسؤول',
         'system_manager': 'مدير النظام',
-        'logout': 'تسجيل الخروج',
         'overview': 'نظرة عامة',
         'total_orders': 'إجمالي الطلبات',
         'pending_orders': 'الطلبات المعلقة',
@@ -614,9 +250,7 @@
         'manage_services': 'إدارة الخدمات',
         'add_edit_service': 'إضافة / تعديل خدمة',
         'system_logs': 'سجلات النظام',
-        'refresh': 'تحديث',
-        'search_orders': 'ابحث برقم الطلب أو الرابط...',
-        'search_services': 'ابحث باسم الخدمة أو الفئة...',
+        'search': 'بحث',
         'id': 'المعرّف',
         'service': 'الخدمة',
         'link': 'الرابط',
@@ -634,560 +268,438 @@
         'price_per_1000': 'السعر لكل 1000',
         'min_quantity': 'الحد الأدنى للكمية',
         'max_quantity': 'الحد الأقصى للكمية',
-        'save_service': 'حفظ الخدمة',
+        'save': 'حفظ',
         'cancel': 'إلغاء',
+        'delete': 'حذف',
+        'edit': 'تعديل',
         'data_refreshed': 'تم تحديث البيانات بنجاح',
         'order_status_updated': 'تم تحديث حالة الطلب بنجاح',
         'session_expired': 'انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.',
-        'login_failed': 'فشل تسجيل الدخول',
-        'failed_to_update': 'فشل تحديث حالة الطلب',
-        'failed_to_delete': 'فشل حذف الخدمة',
-        'no_logs': 'لا توجد سجلات',
-        'failed_to_load_logs': 'فشل تحميل السجلات',
+        'failed_to_update': 'فشل التحديث',
+        'failed_to_delete': 'فشل الحذف',
+        'no_data': 'لا توجد بيانات',
+        'loading': 'جاري التحميل...',
+        'pending': 'معلق',
+        'processing': 'قيد المعالجة',
+        'completed': 'مكتمل',
+        'rejected': 'مرفوض',
       }
     };
 
-    function updateLanguage(lang) {
-      const html = document.documentElement;
-      html.lang = lang;
-      html.dir = lang === 'ar' ? 'rtl' : 'ltr';
-      localStorage.setItem('language', lang);
-      document.getElementById('langBadge').textContent = lang === 'ar' ? 'AR' : 'EN';
-      
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (translations[lang][key]) {
-          el.textContent = translations[lang][key];
-        }
-      });
-      
-      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        const key = el.getAttribute('data-i18n-placeholder');
-        if (translations[lang][key]) {
-          el.placeholder = translations[lang][key];
-        }
-      });
-    }
-
-    document.getElementById('langToggleBtn').addEventListener('click', () => {
-      const currentLang = document.documentElement.lang;
-      const newLang = currentLang === 'en' ? 'ar' : 'en';
-      updateLanguage(newLang);
-    });
-
     // ============================================
-    // AUTHENTICATION & CORE
+    // MAIN APP COMPONENT
     // ============================================
-    const token = localStorage.getItem('authToken');
-    const tokenCheck = document.getElementById('tokenCheck');
-    
-    if (!token) {
-      window.location.href = '/login.html';
-    } else {
-      setTimeout(() => {
-        tokenCheck.classList.add('hidden');
-      }, 1000);
-    }
+    function DashboardApp() {
+      const [lang, setLang] = useState(localStorage.getItem('language') || 'en');
+      const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark' || window.matchMedia('(prefers-color-scheme: dark)').matches);
+      const [collapsed, setCollapsed] = useState(false);
+      const [currentPage, setCurrentPage] = useState('dashboard');
+      const [loading, setLoading] = useState(false);
+      const [stats, setStats] = useState({ totalServices: 0, totalOrders: 0, pendingOrders: 0, avgPrice: 0 });
+      const [services, setServices] = useState([]);
+      const [orders, setOrders] = useState([]);
+      const [logs, setLogs] = useState([]);
+      const [form] = Form.useForm();
+      const [editingService, setEditingService] = useState(null);
+      const [searchText, setSearchText] = useState('');
 
-    const headers = { 'Content-Type': 'application/json', 'x-auth-token': token };
-    const alertBox = document.getElementById('alert-box');
+      const token = localStorage.getItem('authToken');
 
-    function show(msgKey, type='success'){
-      const lang = document.documentElement.lang;
-      const msg = translations[lang][msgKey] || msgKey;
-      const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
-      const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-      const alertHTML = `
-        <div class="bg-${bgColor} text-white p-4 rounded-lg shadow-lg flex items-center gap-3">
-          <i class="fas ${icon}"></i>
-          <span>${msg}</span>
-        </div>
-      `;
-      alertBox.innerHTML = alertHTML;
-      setTimeout(() => { alertBox.innerHTML = ''; }, 5000);
-    }
+      // Translations helper
+      const t = (key) => translations[lang][key] || key;
 
-    async function fetchWithAuth(url, options={}) {
-      options.headers = {...headers, ...(options.headers||{})};
-      const r = await fetch(url, options);
-      if (r.status === 401) {
-        show('session_expired', 'error');
+      // Update HTML attributes
+      useEffect(() => {
+        const html = document.documentElement;
+        html.lang = lang;
+        html.dir = lang === 'ar' ? 'rtl' : 'ltr';
+        localStorage.setItem('language', lang);
+        document.body.classList.toggle('dark-mode', darkMode);
+        localStorage.setItem('theme', darkMode ? 'dark' : 'light');
+      }, [lang, darkMode]);
+
+      // Check token
+      useEffect(() => {
+        if (!token) {
+          window.location.href = '/login.html';
+        }
+      }, []);
+
+      // Fetch data
+      const fetchData = useCallback(async () => {
+        setLoading(true);
+        try {
+          const headers = { 'Content-Type': 'application/json', 'x-auth-token': token };
+
+          const [statsRes, servicesRes, ordersRes, logsRes] = await Promise.all([
+            fetch('/api/stats', { headers }),
+            fetch('/api/services', { headers }),
+            fetch('/api/orders', { headers }),
+            fetch('/api/logs', { headers })
+          ]);
+
+          if (statsRes.status === 401) {
+            message.error(t('session_expired'));
+            localStorage.removeItem('authToken');
+            setTimeout(() => { window.location.href = '/login.html'; }, 1500);
+            return;
+          }
+
+          const statsData = await statsRes.json();
+          const servicesData = await servicesRes.json();
+          const ordersData = await ordersRes.json();
+          const logsData = await logsRes.json();
+
+          setStats(statsData);
+          setServices(servicesData || []);
+          setOrders(ordersData || []);
+          setLogs(logsData || []);
+          message.success(t('data_refreshed'));
+        } catch (error) {
+          console.error('Error fetching data:', error);
+          message.error(t('failed_to_update'));
+        } finally {
+          setLoading(false);
+        }
+      }, [token, t]);
+
+      // Initial load
+      useEffect(() => {
+        fetchData();
+      }, [fetchData]);
+
+      // Logout
+      const handleLogout = async () => {
+        try {
+          await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { 'x-auth-token': token }
+          });
+        } catch (error) {
+          console.log('Logout error:', error);
+        }
         localStorage.removeItem('authToken');
-        setTimeout(() => { window.location.href = '/login.html'; }, 2000);
-        return null;
-      }
-      return r;
-    }
+        message.success(t('data_refreshed'));
+        setTimeout(() => { window.location.href = '/login.html'; }, 1000);
+      };
 
-    document.getElementById('logoutBtn').onclick = async ()=>{
-      if (!confirm('Are you sure you want to logout?')) return;
-      try {
-        await fetchWithAuth('/api/auth/logout', { method:'POST' });
-      } catch (error) {
-        console.log('Error during logout:', error);
-      }
-      localStorage.removeItem('authToken');
-      show('data_refreshed', 'success');
-      setTimeout(() => { window.location.href = '/login.html'; }, 1500);
-    };
+      // Menu items
+      const menuItems = [
+        {
+          key: 'dashboard',
+          icon: <i className="fas fa-tachometer-alt"></i>,
+          label: t('dashboard'),
+        },
+        {
+          key: 'orders',
+          icon: <i className="fas fa-shopping-cart"></i>,
+          label: t('orders'),
+        },
+        {
+          key: 'services',
+          icon: <i className="fas fa-cogs"></i>,
+          label: t('services'),
+        },
+        {
+          key: 'add-service',
+          icon: <i className="fas fa-plus-circle"></i>,
+          label: t('add_service'),
+        },
+        {
+          key: 'logs',
+          icon: <i className="fas fa-history"></i>,
+          label: t('logs'),
+        },
+      ];
 
-    // ============================================
-    // DATA LOADING
-    // ============================================
-    let allServicesData = [];
-    let allOrdersData = [];
-    let servicesCache = null;
-    let ordersCache = null;
-
-    async function loadStats(){
-      try {
-        const r = await fetchWithAuth('/api/stats');
-        if (!r) return;
-        const s = await r.json();
-        document.getElementById('total-services').textContent = s.totalServices || 0;
-        document.getElementById('total-orders').textContent = s.totalOrders || 0;
-        document.getElementById('pending-orders').textContent = s.pendingOrders || 0;
-        document.getElementById('avg-price').textContent = '$' + (s.avgPrice || 0).toFixed(2);
-        document.getElementById('orders-badge').textContent = s.pendingOrders || 0;
-      } catch (error) {
-        console.error('Error loading stats:', error);
-      }
-    }
-
-    async function loadServices(){
-      if (servicesCache) return servicesCache;
-      try {
-        const r = await fetchWithAuth('/api/services');
-        if (!r) return;
-        allServicesData = await r.json();
-        servicesCache = allServicesData;
-        renderServices(allServicesData);
-        return allServicesData;
-      } catch (error) {
-        console.error('Error loading services:', error);
-      }
-    }
-
-    function renderServices(list) {
-      const tbody = document.querySelector('#services-table');
-      if (!tbody) return;
-      tbody.innerHTML = '';
-      list.forEach(s => {
-        const tr = document.createElement('tr');
-        tr.className = 'border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700';
-        tr.innerHTML = `
-          <td class="px-3 md:px-6 py-4">${s.id || ''}</td>
-          <td class="px-3 md:px-6 py-4">${s.name || ''}</td>
-          <td class="px-3 md:px-6 py-4">${s.category || ''}</td>
-          <td class="px-3 md:px-6 py-4">${s.type === 'fixed' ? 'Fixed' : 'Quantity'}</td>
-          <td class="px-3 md:px-6 py-4">${s.type === 'fixed' ? '$' + (s.price || '0') : '$' + (s.rate || '0') + ' /1k'}</td>
-          <td class="px-3 md:px-6 py-4">
-            <div class="flex gap-2">
-              <button onclick="editService(${s.id})" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition" aria-label="Edit">
-                <i class="fas fa-edit"></i>
-              </button>
-              <button onclick="deleteService(${s.id})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition" aria-label="Delete">
-                <i class="fas fa-trash"></i>
-              </button>
+      return (
+        <Layout style={{ minHeight: '100vh' }}>
+          {/* Sidebar */}
+          <Sider
+            trigger={null}
+            collapsible
+            collapsed={collapsed}
+            width={256}
+            theme={darkMode ? 'dark' : 'light'}
+            breakpoint="md"
+            onBreakpoint={(broken) => setCollapsed(broken)}
+            style={{
+              overflow: 'auto',
+              height: '100vh',
+              position: 'fixed',
+              left: lang === 'ar' ? 'auto' : 0,
+              right: lang === 'ar' ? 0 : 'auto',
+              top: 0,
+              bottom: 0,
+            }}
+          >
+            <div style={{ padding: '16px', textAlign: 'center', borderBottom: '1px solid #f0f0f0' }}>
+              <Avatar size={48} icon={<i className="fas fa-chart-line"></i>} style={{ backgroundColor: '#1890ff' }} />
+              {!collapsed && <div style={{ marginTop: '12px', fontWeight: 'bold' }}>SMM Dashboard</div>}
             </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    // ============================================
-    // ORDERS MANAGEMENT
-    // ============================================
-    const statusMap = {
-      pending: { text: "⏳ Pending", class: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
-      processing: { text: "⚙️ Processing", class: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
-      completed: { text: "✅ Completed", class: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
-      rejected: { text: "❌ Rejected", class: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" }
-    };
-
-    async function loadOrders(){
-      if (ordersCache) {
-        renderOrdersWithServices(ordersCache);
-        return;
-      }
-      try {
-        const r = await fetchWithAuth('/api/orders');
-        if (!r) return;
-        allOrdersData = await r.json();
-        ordersCache = allOrdersData;
-        renderOrdersWithServices(allOrdersData);
-      } catch (error) {
-        console.error('Error loading orders:', error);
-      }
-    }
-
-    async function renderOrdersWithServices(list) {
-      const servicesRes = await fetchWithAuth('/api/services');
-      if (!servicesRes) return;
-      const services = await servicesRes.json();
-      const svcMap = {};
-      services.forEach(s => svcMap[s.id] = s);
-      renderOrders(list, svcMap);
-    }
-
-    function renderOrders(list, svcMap) {
-      const tbody = document.querySelector('#orders-table');
-      if (!tbody) return;
-      tbody.innerHTML = '';
-      list.forEach(o => {
-        const status = statusMap[o.status] || { text: o.status, class: '' };
-        const tr = document.createElement('tr');
-        tr.className = 'border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700';
-        
-        const link = o.link && typeof o.link === 'string' ? o.link : '';
-        const serviceName = svcMap[o.serviceId] ? svcMap[o.serviceId].name : (o.serviceId || '');
-        
-        tr.innerHTML = `
-          <td class="px-3 md:px-6 py-4">${o.id || ''}</td>
-          <td class="px-3 md:px-6 py-4">${serviceName}</td>
-          <td class="px-3 md:px-6 py-4 max-w-xs">
-            ${link ? `<a href="${link}" target="_blank" rel="noopener" class="text-blue-600 hover:underline truncate block">${link}</a>` : ''}
-          </td>
-          <td class="px-3 md:px-6 py-4">${o.quantity || ''}</td>
-          <td class="px-3 md:px-6 py-4">$${(o.price || 0).toFixed(2)}</td>
-          <td class="px-3 md:px-6 py-4">
-            <span class="px-3 py-1 rounded-full text-xs font-medium ${status.class}">${status.text}</span>
-          </td>
-          <td class="px-3 md:px-6 py-4">
-            <div class="flex gap-2">
-              <button onclick="updateOrderStatus(${o.id},'processing')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition" aria-label="Processing">
-                <i class="fas fa-hourglass-half"></i>
-              </button>
-              <button onclick="updateOrderStatus(${o.id},'completed')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition" aria-label="Completed">
-                <i class="fas fa-check"></i>
-              </button>
-              <button onclick="updateOrderStatus(${o.id},'rejected')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition" aria-label="Rejected">
-                <i class="fas fa-times"></i>
-              </button>
+            <Menu
+              theme={darkMode ? 'dark' : 'light'}
+              mode="inline"
+              selectedKeys={[currentPage]}
+              items={menuItems}
+              onClick={(e) => setCurrentPage(e.key)}
+            />
+            <div style={{ padding: '16px', borderTop: '1px solid #f0f0f0', marginTop: 'auto' }}>
+              <Button block danger onClick={handleLogout} icon={<i className="fas fa-sign-out-alt"></i>}>
+                {!collapsed && t('logout')}
+              </Button>
             </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+          </Sider>
+
+          {/* Main Layout */}
+          <Layout style={{ marginLeft: lang === 'ar' ? 0 : (collapsed ? 80 : 256), marginRight: lang === 'ar' ? (collapsed ? 80 : 256) : 0, transition: 'all 0.2s' }}>
+            {/* Header */}
+            <Header style={{ background: darkMode ? '#141414' : '#fff', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', position: 'sticky', top: 0, zIndex: 99 }}>
+              <Button
+                type="text"
+                icon={collapsed ? <i className="fas fa-bars"></i> : <i className="fas fa-bars"></i>}
+                onClick={() => setCollapsed(!collapsed)}
+              />
+              <Space>
+                <Button
+                  type="text"
+                  onClick={() => setLang(lang === 'en' ? 'ar' : 'en')}
+                >
+                  {lang === 'en' ? '🇸🇦 AR' : '🇺🇸 EN'}
+                </Button>
+                <Button
+                  type="text"
+                  icon={darkMode ? <i className="fas fa-sun"></i> : <i className="fas fa-moon"></i>}
+                  onClick={() => setDarkMode(!darkMode)}
+                />
+              </Space>
+       /Header>
+
+            {/* Content */}
+            <Content style={{ padding: '24px', background: darkMode ? '#141414' : '#f5f5f5', minHeight: 'calc(100vh - 64px)' }}>
+              <Spin spinning={loading} tip={t('loading')}>
+                {currentPage === 'dashboard' && <DashboardPage stats={stats} onRefresh={fetchData} t={t} />}
+                {currentPage === 'orders' && <OrdersPage orders={orders} services={services} t={t} />}
+                {currentPage === 'services' && <ServicesPage services={services} onRefresh={fetchData} t={t} />}
+                {currentPage === 'add-service' && <AddServicePage onRefresh={fetchData} editingService={editingService} setEditingService={setEditingService} t={t} />}
+                {currentPage === 'logs' && <LogsPage logs={logs} t={t} />}
+              </Spin>
+            </Content>
+          </Layout>
+        </Layout>
+      );
     }
 
-    async function updateOrderStatus(id, status) {
-      if (!confirm(`Confirm update order status?`)) return;
-      try {
-        const res = await fetchWithAuth('/api/orders/' + id, { 
-          method: 'PUT', 
-          body: JSON.stringify({ status }) 
-        });
-        if (res && res.ok) { 
-          show('order_status_updated'); 
-          ordersCache = null;
-          reloadAll(); 
-        } else {
-          show('failed_to_update', 'error');
-        }
-      } catch (error) {
-        show('failed_to_update', 'error');
-      }
-    }
-       // ============================================
-    // LOGS
     // ============================================
-    async function loadLogs(){
-      try {
-        const r = await fetchWithAuth('/api/logs');
-        if (!r) return;
-        const logs = await r.json();
-        const box = document.getElementById('logsBox');
-        if (!box) return;
-        
-        if (!logs || logs.length === 0) {
-          box.innerHTML = `<div class="text-center text-gray-500 dark:text-gray-400 p-4">${translations[document.documentElement.lang]['no_logs']}</div>`;
-          return;
-        }
-        
-        box.innerHTML = logs.slice(0, 50).map(l => {
-          const time = new Date(l.time || Date.now()).toLocaleString();
-          const user = l.user || 'Unknown';
-          const action = l.action || 'No description';
-          
-          return `
-            <div class="bg-gray-100 dark:bg-gray-600 p-3 rounded border border-gray-300 dark:border-gray-500">
-              <div class="flex justify-between items-start mb-1 flex-wrap gap-2">
-                <span class="font-medium text-gray-900 dark:text-white text-sm">${user}</span>
-                <span class="text-xs text-gray-600 dark:text-gray-300">${time}</span>
-              </div>
-              <p class="text-gray-700 dark:text-gray-200 text-sm">${action}</p>
+    // DASHBOARD PAGE
+    // ============================================
+    function DashboardPage({ stats, onRefresh, t }) {
+      return (
+        <div>
+          <h1 style={{ marginBottom: '24px' }}>{t('overview')}</h1>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} lg={6}>
+              <Card className="stat-card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div className="stat-label">{t('services')}</div>
+                    <div className="stat-value">{stats.totalServices || 0}</div>
+                  </div>
+                  <Avatar size={64} icon={<i className="fas fa-cogs"></i>} style={{ backgroundColor: '#1890ff' }} />
+                </div>
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card className="stat-card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div className="stat-label">{t('total_orders')}</div>
+                    <div className="stat-value">{stats.totalOrders || 0}</div>
+                  </div>
+                  <Avatar size={64} icon={<i className="fas fa-shopping-cart"></i>} style={{ backgroundColor: '#52c41a' }} />
+                </div>
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card className="stat-card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div className="stat-label">{t('pending_orders')}</div>
+                    <div className="stat-value">{stats.pendingOrders || 0}</div>
+                  </div>
+                  <Avatar size={64} icon={<i className="fas fa-hourglass-half"></i>} style={{ backgroundColor: '#faad14' }} />
+                </div>
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card className="stat-card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div className="stat-label">{t('avg_price')}</div>
+                    <div className="stat-value">${(stats.avgPrice || 0).toFixed(2)}</div>
+                  </div>
+                  <Avatar size={64} icon={<i className="fas fa-dollar-sign"></i>} style={{ backgroundColor: '#722ed1' }} />
+                </div>
+              </Card>
+            </Col>
+          </Row>
+
+          <Card style={{ marginTop: '24px' }}>
+            <h2>{t('control_tools')}</h2>
+            <Space wrap>
+              <Button type="primary" icon={<i className="fas fa-sync-alt"></i>} onClick={onRefresh}>
+                {t('refresh_data')}
+              </Button>
+              <Button icon={<i className="fas fa-download"></i>}>
+                {t('export_services')}
+              </Button>
+              <Button icon={<i className="fas fa-download"></i>}>
+                {t('export_orders')}
+              </Button>
+            </Space>
+          </Card>
+        </div>
+      );
+    }
+
+    // ============================================
+    // ORDERS PAGE
+    // ============================================
+    function OrdersPage({ orders, services, t }) {
+      const serviceMap = useMemo(() => {
+        const map = {};
+        services.forEach(s => map[s.id] = s);
+        return map;
+      }, [services]);
+
+      const columns = [
+        { title: t('id'), dataIndex: 'id', key: 'id', width: 80 },
+        { title: t('service'), dataIndex: 'serviceId', key: 'serviceId', render: (serviceId) => serviceMap[serviceId]?.name || '-' },
+        { title: t('link'), dataIndex: 'link', key: 'link', render: (link) => link ? <a href={link} target="_blank" rel="noopener">{link.substring(0, 30)}...</a> : '-' },
+        { title: t('qty'), dataIndex: 'quantity', key: 'quantity', width: 80 },
+        { title: t('price'), dataIndex: 'price', key: 'price', render: (price) => `$${price.toFixed(2)}` },
+        {
+          title: t('status'),
+          dataIndex: 'status',
+          key: 'status',
+          render: (status) => {
+            const colors = { pending: 'gold', processing: 'blue', completed: 'green', rejected: 'red' };
+            return <Tag color={colors[status] || 'default'}>{status}</Tag>;
+          }
+        },
+      ];
+
+      return (
+        <Card>
+          <h1>{t('manage_orders')}</h1>
+          <Input placeholder={t('search')} style={{ marginBottom: '16px' }} />
+          <Table columns={columns} dataSource={orders} rowKey="id" pagination={{ pageSize: 10 }} />
+        </Card>
+      );
+    }
+
+    // ============================================
+    // SERVICES PAGE
+    // ============================================
+    function ServicesPage({ services, onRefresh, t }) {
+      const columns = [
+        { title: t('id'), dataIndex: 'id', key: 'id', width: 80 },
+        { title: t('name'), dataIndex: 'name', key: 'name' },
+        { title: t('category'), dataIndex: 'category', key: 'category' },
+        { title: t('type'), dataIndex: 'type', key: 'type', render: (type) => type === 'fixed' ? 'Fixed' : 'Quantity' },
+        { title: t('price'), dataIndex: 'price', key: 'price', render: (price, record) => record.type === 'fixed' ? `$${price}` : `$${record.rate}/1k` },
+        {
+          title: t('actions'),
+          key: 'actions',
+          render: (_, record) => (
+            <Space>
+              <Button type="primary" size="small" icon={<i className="fas fa-edit"></i>} />
+              <Popconfirm title="Delete?" onConfirm={() => console.log('delete', record.id)}>
+                <Button danger size="small" icon={<i className="fas fa-trash"></i>} />
+              </Popconfirm>
+            </Space>
+          ),
+        },
+      ];
+
+      return (
+        <Card>
+          <h1>{t('manage_services')}</h1>
+          <Input placeholder={t('search')} style={{ marginBottom: '16px' }} />
+          <Table columns={columns} dataSource={services} rowKey="id" pagination={{ pageSize: 10 }} />
+        </Card>
+      );
+    }
+
+    // ============================================
+    // ADD SERVICE PAGE
+    // ============================================
+    function AddServicePage({ onRefresh, editingService, setEditingService, t }) {
+      const [form] = Form.useForm();
+
+      return (
+        <Card>
+          <h1>{t('add_edit_service')}</h1>
+          <Form layout="vertical" form={form}>
+            <Form.Item label={t('service_name')} name="name" rules={[{ required: true }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item label={t('category')} name="category" rules={[{ required: true }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item label={t('service_type')} name="type" rules={[{ required: true }]}>
+              <Select options={[
+                { label: t('quantity_service'), value: 'quantity' },
+                { label: t('fixed_price'), value: 'fixed' }
+              ]} />
+            </Form.Item>
+            <Form.Item label={t('price_per_1000')} name="rate" rules={[{ required: true }]}>
+              <Input type="number" step="0.01" />
+            </Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit" icon={<i className="fas fa-save"></i>}>
+                {t('save')}
+              </Button>
+              <Button onClick={() => form.resetFields()}>
+                {t('cancel')}
+              </Button>
+            </Space>
+          </Form>
+        </Card>
+      );
+    }
+
+    // ============================================
+    // LOGS PAGE
+    // ============================================
+    function LogsPage({ logs, t }) {
+      return (
+        <Card>
+          <h1>{t('system_logs')}</h1>
+          {logs && logs.length > 0 ? (
+            <div>
+              {logs.slice(0, 50).map((log, idx) => (
+                <div key={idx} style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <strong>{log.user || 'Unknown'}</strong>
+                    <span style={{ fontSize: '12px', color: '#999' }}>{new Date(log.time).toLocaleString()}</span>
+                  </div>
+                  <p style={{ margin: 0, color: '#666' }}>{log.action}</p>
+                </div>
+              ))}
             </div>
-          `;
-        }).join('');
-      } catch (error) {
-        console.error('Error loading logs:', error);
-        const box = document.getElementById('logsBox');
-        if (box) {
-          box.innerHTML = `<div class="text-center text-red-500 p-4">${translations[document.documentElement.lang]['failed_to_load_logs']}</div>`;
-        }
-      }
+          ) : (
+            <Empty description={t('no_data')} />
+          )}
+        </Card>
+      );
     }
 
     // ============================================
-    // SERVICE FORM
+    // RENDER APP
     // ============================================
-    const form = document.getElementById('serviceForm');
-    const typeSelect = document.getElementById('typeSelect');
-
-    function updateFormFields() {
-      const isFixed = typeSelect.value === 'fixed';
-      const priceContainer = document.getElementById('priceContainer');
-      const qtyContainer = document.getElementById('qtyContainer');
-      
-      if (isFixed) {
-        priceContainer.innerHTML = `
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total Price</label>
-          <input name="price" type="number" step="0.01" placeholder="Total price" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-        `;
-        qtyContainer.style.display = 'none';
-      } else {
-        priceContainer.innerHTML = `
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price per 1000</label>
-          <input name="rate" type="number" step="0.01" placeholder="Price per 1000" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-        `;
-        qtyContainer.style.display = 'grid';
-      }
-    }
-
-    typeSelect.addEventListener('change', updateFormFields);
-
-    document.getElementById('clearFormBtn').addEventListener('click', () => {
-      form.reset();
-      document.getElementById('serviceIdInput').value = '';
-      updateFormFields();
-    });
-
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      const formData = new FormData(form);
-      const data = Object.fromEntries(formData.entries());
-      const id = data.id;
-
-      if (data.type === 'fixed') {
-        delete data.rate;
-        delete data.min;
-        delete data.max;
-      } else {
-        delete data.price;
-      }
-
-      const url = id ? `/api/services/${id}` : '/api/services';
-      const method = id ? 'PUT' : 'POST';
-      
-      try {
-        const res = await fetchWithAuth(url, { 
-          method, 
-          body: JSON.stringify(data) 
-        });
-        
-        if (res && res.ok) {
-          show('data_refreshed');
-          form.reset();
-          document.getElementById('serviceIdInput').value = '';
-          updateFormFields();
-          servicesCache = null;
-          reloadAll();
-          
-          setTimeout(() => {
-            document.querySelector('[data-section="services"]').click();
-          }, 1000);
-        } else {
-          show('failed_to_delete', 'error');
-        }
-      } catch (error) {
-        show('failed_to_delete', 'error');
-      }
-    });
-
-    // ============================================
-    // EDIT / DELETE SERVICE
-    // ============================================
-    window.editService = async function(id) {
-      const s = allServicesData.find(x => x.id === id);
-      if (!s) return;
-      
-      document.querySelector('[name="name"]').value = s.name || '';
-      document.querySelector('[name="category"]').value = s.category || '';
-      document.getElementById('serviceIdInput').value = s.id;
-      typeSelect.value = s.type;
-      updateFormFields();
-      
-      setTimeout(() => {
-        if (s.type === 'fixed') {
-          document.querySelector('[name="price"]').value = s.price || '';
-        } else {
-          document.querySelector('[name="rate"]').value = s.rate || '';
-          document.querySelector('[name="min"]').value = s.min || '';
-          document.querySelector('[name="max"]').value = s.max || '';
-        }
-      }, 100);
-      
-      document.querySelector('[data-section="add-service"]').click();
-    };
-
-    window.deleteService = async function(id) {
-      if (!confirm('Are you sure you want to delete this service?')) return;
-      
-      try {
-        const res = await fetchWithAuth('/api/services/' + id, { method: 'DELETE' });
-        if (res && res.ok) { 
-          show('data_refreshed'); 
-          servicesCache = null;
-          reloadAll(); 
-        } else {
-          show('failed_to_delete', 'error');
-        }
-      } catch (error) {
-        show('failed_to_delete', 'error');
-      }
-    };
-
-    // ============================================
-    // SEARCH & FILTER
-    // ============================================
-    document.getElementById('searchServices')?.addEventListener('input', (e) => {
-      const query = e.target.value.toLowerCase();
-      const filtered = allServicesData.filter(s => {
-        const name = (s.name || '').toLowerCase();
-        const category = (s.category || '').toLowerCase();
-        return name.includes(query) || category.includes(query);
-      });
-      renderServices(filtered);
-    });
-
-    document.getElementById('searchOrders')?.addEventListener('input', async (e) => {
-      const query = e.target.value.toLowerCase();
-      try {
-        const servicesRes = await fetchWithAuth('/api/services');
-        if (!servicesRes) return;
-        const services = await servicesRes.json();
-        const svcMap = {};
-        services.forEach(s => svcMap[s.id] = s);
-        
-        const filtered = allOrdersData.filter(o => {
-          const id = (o.id || '').toString().toLowerCase();
-          const link = (o.link && typeof o.link === 'string') ? o.link.toLowerCase() : '';
-          const serviceName = svcMap[o.serviceId] ? (svcMap[o.serviceId].name || '').toLowerCase() : '';
-          return id.includes(query) || link.includes(query) || serviceName.includes(query);
-        });
-        renderOrders(filtered, svcMap);
-      } catch (error) {
-        console.error('Error searching orders:', error);
-      }
-    });
-
-    // ============================================
-    // EXPORT & REFRESH
-    // ============================================
-    document.getElementById('refreshBtn').onclick = async () => {
-      servicesCache = null;
-      ordersCache = null;
-      try {
-        await reloadAll();
-        show('data_refreshed');
-      } catch (error) {
-        show('failed_to_update', 'error');
-      }
-    };
-
-    async function downloadCSV(endpoint, filename) {
-      try {
-        const r = await fetchWithAuth(endpoint);
-        if (!r || !r.ok) { 
-          show('failed_to_update', 'error'); 
-          return; 
-        }
-        const text = await r.text();
-        const blob = new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8;" });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-        show('data_refreshed');
-      } catch (error) {
-        show('failed_to_update', 'error');
-      }
-    }
-    
-    document.getElementById('exportServices').onclick = () => {
-      downloadCSV('/api/export/services.csv', 'services.csv');
-    };
-    
-    document.getElementById('exportOrders').onclick = () => {
-      downloadCSV('/api/export/orders.csv', 'orders.csv');
-    };
-
-    // ============================================
-    // SIDEBAR & NAVIGATION
-    // ============================================
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const navItems = document.querySelectorAll('.nav-item');
-    const contentSections = document.querySelectorAll('.content-section');
-    
-    mobileMenuBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('-translate-x-full');
-      overlay.classList.toggle('active');
-    });
-
-    overlay.addEventListener('click', () => {
-      sidebar.classList.add('-translate-x-full');
-      overlay.classList.remove('active');
-    });
-
-    navItems.forEach(item => {
-      item.addEventListener('click', function(e) {
-        e.preventDefault();
-        
-        navItems.forEach(nav => nav.classList.remove('bg-gray-100', 'dark:bg-gray-700'));
-        contentSections.forEach(section => {
-          section.classList.remove('active');
-        });
-        
-        this.classList.add('bg-gray-100', 'dark:bg-gray-700');
-        
-        const targetSection = this.getAttribute('data-section');
-        const sectionToShow = document.getElementById(targetSection);
-        if (sectionToShow) {
-          sectionToShow.classList.add('active');
-        }
-        
-        const pageTitle = document.querySelector('.page-title');
-        if (pageTitle) {
-          pageTitle.textContent = this.querySelector('span').textContent;
-        }
-        
-        if (window.innerWidth < 768) {
-          sidebar.classList.add('-translate-x-full');
-          overlay.classList.remove('active');
-        }
-      });
-    });
-
-    // ============================================
-    // RELOAD ALL & INITIALIZE
-    // ============================================
-    async function reloadAll() { 
-      await Promise.all([loadStats(), loadServices(), loadOrders(), loadLogs()]); 
-    }
-
-    setTimeout(() => {
-      reloadAll();
-      tokenCheck.classList.add('hidden');
-      updateLanguage(document.documentElement.lang);
-    }, 1500);
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<DashboardApp />);
   </script>
 </body>
 </html>
