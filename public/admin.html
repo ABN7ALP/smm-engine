@@ -60,39 +60,6 @@
     .content-section { display: none !important; }
     .content-section.active { display: block !important; }
 
-    /* ✅ إصلاح مكان القائمة الجانبية في الشاشات الصغيرة */
-@media (max-width: 768px) {
-  /* يجب أن يكون موقع القائمة الجانبية على اليمين في وضع RTL */
-  [dir="rtl"] #sidebar {
-    right: 0; /* تأكد من تثبيتها على اليمين */
-    left: auto;
-    transform: translateX(100%); /* تبدأ مخفية بتحريكها 100% إلى اليمين */
-  }
-  
-  /* الحالة الظاهرة في وضع RTL (عند إزالة فئة -translate-x-full) */
-  [dir="rtl"] #sidebar:not(.-translate-x-full) {
-    transform: translateX(0); /* تظهر في مكانها الأصلي */
-  }
-
-  /*
-   * ملاحظة: زر القائمة وزر اللغة يجب أن يكونا على اليسار في وضع RTL
-   * لتجنب التداخل مع القائمة التي تخرج من اليمين.
-   */
-  [dir="rtl"] #mobileMenuBtn {
-    right: auto;
-    left: 1rem;
-  }
-  [dir="rtl"] #langToggleBtn {
-    right: auto;
-    left: 4rem;
-  }
-}
-    /* تصغير الحواف والهوامش على الموبايل */
-@media (max-width: 640px) {
-  .p-6 { padding: 1rem !important; }
-  .text-2xl { font-size: 1.25rem !important; }
-  .grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-    }
                              
     
   </style>
@@ -118,8 +85,8 @@
   </button>
 
   <!-- Sidebar -->
-  <aside id="sidebar" class="sidebar fixed top-0 z-30 w-64 h-screen bg-white dark:bg-gray-800 shadow-lg transform -translate-x-full md:translate-x-0 transition-transform duration-300">
-    <div class="h-full px-3 py-4 overflow-y-auto flex flex-col">
+   <aside id="sidebar" class="sidebar fixed top-0 left-0 z-30 w-64 h-screen bg-white dark:bg-gray-800 shadow-lg transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+     <div class="h-full px-3 py-4 overflow-y-auto flex flex-col">
       <a href="#" class="flex items-center ps-2.5 mb-5 pb-4 border-b border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-lg">
           <i class="fas fa-chart-line"></i>
