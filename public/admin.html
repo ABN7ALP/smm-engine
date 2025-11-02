@@ -1,20 +1,21 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en" dir="ltr" id="htmlElement">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <meta name="description" content="Dashboard - SMM" />
   <title data-i18n="page_title">Dashboard - SMM</title>
 
-  <!-- Tailwind CSS CDN with Dark Mode Support -->
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Flowbite CSS CDN -->
+  <!-- Flowbite CSS -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
 
-  <!-- Font Awesome for Icons -->
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  <!-- Google Fonts (Cairo for Arabic) -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -43,42 +44,163 @@
   <style>
     * { box-sizing: border-box; }
     html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
-    body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overflow-x: hidden; }
+    body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
     
-    .sidebar { transition: transform 0.3s ease-in-out; }
-    [dir="rtl"] .sidebar { right: 0; left: auto; }
-    [dir="ltr"] .sidebar { left: 0; right: auto; }
+    /* Layout Container */
+    .layout-container { display: flex; width: 100%; height: 100vh; }
     
-    [dir="rtl"] #mobileMenuBtn { right: 1rem; left: auto; }
-    [dir="ltr"] #mobileMenuBtn { left: 1rem; right: auto; }
+    /* Sidebar - Fixed on Desktop, Hidden on Mobile */
+    .sidebar {
+      width: 256px;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 30;
+      background: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow-y: auto;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease-in-out;
+    }
     
-    [dir="rtl"] #langToggleBtn { left: 4rem; right: auto; }
-    [dir="ltr"] #langToggleBtn { right: 4rem; left: auto; }
+    [dir="rtl"] .sidebar {
+      left: auto;
+      right: 0;
+      transform: translateX(100%);
+    }
     
-    [dir="rtl"] .md\:ms-64 { margin-right: 16rem; margin-left: 0; }
-    [dir="ltr"] .md\:ms-64 { margin-left: 16rem; margin-right: 0; }
+    @media (min-width: 768px) {
+      .sidebar {
+        transform: translateX(0);
+      }
+      [dir="rtl"] .sidebar {
+        transform: translateX(0);
+      }
+    }
     
-    [dir="rtl"] #alert-box { left: 1rem; right: auto; }
-    [dir="ltr"] #alert-box { right: 1rem; left: auto; }
+    .dark .sidebar {
+      background: #1f2937;
+    }
     
-    .logs-box { max-height: 400px; overflow-y: auto; }
-    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* Main Content Area */
+    .main-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      overflow: hidden;
+    }
     
-    /* ✅ إصلاح تكدس الأقسام على الموبايل */
-    .content-section { display: none !important; }
-    .content-section.active { display: block !important; }
+    @media (min-width: 768px) {
+      .main-wrapper {
+        margin-left: 256px;
+      }
+      [dir="rtl"] .main-wrapper {
+        margin-left: 0;
+        margin-right: 256px;
+      }
+    }
     
-    /* ✅ إصلاح مشاكل القص على الموبايل */
-    .main-content { width: 100%; overflow-x: hidden; }
-    table { width: 100%; table-layout: auto; }
+    /* Content Area */
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      width: 100%;
+    }
+    
+    /* Overlay */
+    .sidebar-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 20;
+      display: none;
+    }
+    
+    .sidebar-overlay.active {
+      display: block;
+    }
+    
+    /* Mobile Menu Button */
+    .mobile-menu-btn {
+      position: fixed;
+      top: 1rem;
+      z-index: 40;
+      display: none;
+    }
+    
+    [dir="ltr"] .mobile-menu-btn {
+      left: 1rem;
+    }
+    
+    [dir="rtl"] .mobile-menu-btn {
+      right: 1rem;
+    }
+    
+    @media (max-width: 767px) {
+      .mobile-menu-btn {
+        display: block;
+      }
+    }
+    
+    /* Language Toggle Button */
+    .lang-toggle-btn {
+      position: fixed;
+      top: 1rem;
+      z-index: 40;
+    }
+    
+    [dir="ltr"] .lang-toggle-btn {
+      right: 1rem;
+    }
+    
+    [dir="rtl"] .lang-toggle-btn {
+      left: 1rem;
+    }
+    
+    /* Content Sections */
+    .content-section {
+      display: none !important;
+    }
+    
+    .content-section.active {
+      display: block !important;
+    }
+    
+    /* Logs Box */
+    .logs-box {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    /* Alert Box */
+    .alert-box {
+      position: fixed;
+      bottom: 1rem;
+      z-index: 50;
+    }
+    
+    [dir="ltr"] .alert-box {
+      right: 1rem;
+    }
+    
+    [dir="rtl"] .alert-box {
+      left: 1rem;
+    }
+    
+    /* Responsive Tables */
     @media (max-width: 768px) {
       table { font-size: 0.75rem; }
       table td, table th { padding: 0.5rem 0.25rem; }
     }
   </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 w-full overflow-x-hidden">
+<body class="bg-gray-50 dark:bg-gray-900 w-full overflow-hidden">
 
   <!-- Token Check Loading Screen -->
   <div id="tokenCheck" class="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
@@ -88,19 +210,23 @@
     </div>
   </div>
 
-  <!-- Mobile Menu Toggle Button -->
-  <button id="mobileMenuBtn" class="fixed top-4 md:hidden z-40 p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition" aria-label="Toggle menu" title="Toggle menu">
+  <!-- Mobile Menu Button -->
+  <button id="mobileMenuBtn" class="mobile-menu-btn p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition" aria-label="Toggle menu">
     <i class="fas fa-bars fa-lg"></i>
   </button>
 
   <!-- Language Toggle Button -->
-  <button id="langToggleBtn" class="fixed top-4 md:top-6 z-40 p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition" aria-label="Toggle language" title="Toggle language">
+  <button id="langToggleBtn" class="lang-toggle-btn p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition" aria-label="Toggle language">
     <span id="langBadge" class="text-xs font-bold">EN</span>
   </button>
 
+  <!-- Sidebar Overlay (Mobile) -->
+  <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
   <!-- Sidebar -->
-  <aside id="sidebar" class="sidebar fixed top-0 left-0 z-30 w-64 h-screen bg-white dark:bg-gray-800 shadow-lg transform -translate-x-full md:translate-x-0 transition-transform duration-300 overflow-y-auto">
+  <aside id="sidebar" class="sidebar">
     <div class="h-full px-3 py-4 flex flex-col">
+      <!-- Logo -->
       <a href="#" class="flex items-center ps-2.5 mb-5 pb-4 border-b border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-lg flex-shrink-0">
           <i class="fas fa-chart-line"></i>
@@ -108,6 +234,7 @@
         <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white ms-3" data-i18n="dashboard">Dashboard</span>
       </a>
 
+      <!-- Navigation -->
       <ul class="space-y-2 font-medium flex-1 overflow-y-auto">
         <li><small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400" data-i18n="main">Main</small></li>
         <li>
@@ -146,7 +273,8 @@
           </a>
         </li>
       </ul>
-
+      
+      <!-- User Info -->
       <div class="pt-4 mt-auto space-y-2 border-t border-gray-200 dark:border-gray-700">
         <div class="flex items-center p-2">
           <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0">
@@ -165,250 +293,242 @@
     </div>
   </aside>
 
-  <!-- Mobile Overlay -->
-  <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden hidden"></div>
-
   <!-- Main Content -->
-  <div class="main-content md:ms-64 w-full">
+  <div class="main-wrapper">
     <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 shadow-sm p-4 mb-4 md:mb-6">
+    <header class="bg-white dark:bg-gray-800 shadow-sm p-4 border-b border-gray-200 dark:border-gray-700">
       <h1 class="page-title text-2xl font-bold text-gray-800 dark:text-white" data-i18n="dashboard">Dashboard</h1>
     </header>
 
-    <!-- Content Body -->
-    <div class="p-4 md:p-6 space-y-6 w-full">
+    <!-- Content Area -->
+    <div class="content-area">
+      <div class="p-4 md:p-6 space-y-6">
 
-      <!-- Dashboard Section -->
-      <section id="dashboard" class="content-section active">
-        <div class="mb-6">
-          <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-chart-bar me-2"></i><span data-i18n="overview">Overview</span>
-          </h2>
-          
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="services">Services</p>
-                  <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-services">0</p>
-                </div>
-                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <i class="fas fa-cogs text-blue-600 dark:text-blue-300 text-lg"></i>
-                </div>
-              </div>
-            </div>
-
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="total_orders">Total Orders</p>
-                  <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-orders">0</p>
-                </div>
-                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <i class="fas fa-shopping-cart text-green-600 dark:text-green-300 text-lg"></i>
-                </div>
-              </div>
-            </div>
-
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="pending_orders">Pending Orders</p>
-                  <p class="text-2xl font-bold text-gray-900 dark:text-white" id="pending-orders">0</p>
-                </div>
-                <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <i class="fas fa-hourglass-half text-yellow-600 dark:text-yellow-300 text-lg"></i>
-                </div>
-              </div>
-            </div>
-
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="avg_price">Avg Price</p>
-                  <p class="text-2xl font-bold text-gray-900 dark:text-white" id="avg-price">$0</p>
-                </div>
-                <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <i class="fas fa-dollar-sign text-indigo-600 dark:text-indigo-300 text-lg"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-tools me-2"></i><span data-i18n="control_tools">Control Tools</span>
-          </h2>
-          
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <button id="refreshBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Refresh data">
-              <i class="fas fa-sync-alt"></i> <span data-i18n="refresh_data">Refresh Data</span>
-            </button>
-            <button id="exportServices" class="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Export services">
-              <i class="fas fa-download"></i> <span data-i18n="export_services">Export Services (CSV)</span>
-            </button>
-            <button id="exportOrders" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Export orders">
-              <i class="fas fa-download"></i> <span data-i18n="export_orders">Export Orders (CSV)</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Orders Section -->
-      <section id="orders" class="content-section">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6 w-full overflow-x-auto">
-          <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-shopping-cart me-2"></i><span data-i18n="manage_orders">Manage Orders</span>
-          </h2>
-          
-          <div class="mb-4">
-            <div class="relative">
-              <input id="searchOrders" type="text" placeholder="Search by order ID or link..." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" data-i18n-placeholder="search_orders">
-              <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-            </div>
-          </div>
-
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-              <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr>
-                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="id">ID</th>
-                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="service">Service</th>
-                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="link">Link</th>
-                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="qty">Qty</th>
-                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="price">Price</th>
-                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="status">Status</th>
-                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="actions">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="orders-table"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- Services Section -->
-      <section id="services" class="content-section">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6 w-full overflow-x-auto">
-          <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-cogs me-2"></i><span data-i18n="manage_services">Manage Services</span>
-          </h2>
-          
-          <div class="mb-4">
-            <div class="relative">
-              <input id="searchServices" type="text" placeholder="Search by service name or category..." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" data-i18n-placeholder="search_services">
-              <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-            </div>
-          </div>
-
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-              <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr>
-                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="id">ID</th>
-                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="name">Name</th>
-                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="category">Category</th>
-                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="type">Type</th>
-                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="price">Price</th>
-                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="actions">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="services-table"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- Add Service Section -->
-      <section id="add-service" class="content-section">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6 w-full">
-          <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-6">
-            <i class="fas fa-plus-circle me-2"></i><span data-i18n="add_edit_service">Add / Edit Service</span>
-          </h2>
-          
-          <form id="serviceForm" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="service_name">Service Name</label>
-                <input name="name" type="text" placeholder="Enter service name" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="category">Category</label>
-                <input name="category" type="text" placeholder="e.g., instagram, twitter, etc." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="service_type">Service Type</label>
-                <select name="type" id="typeSelect" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="quantity" data-i18n="quantity_service">Quantity Service (per 1000)</option>
-                  <option value="fixed" data-i18n="fixed_price">Fixed Price</option>
-                </select>
-              </div>
-
-              <div id="priceContainer">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="price_per_1000">Price per 1000</label>
-                <input name="rate" type="number" step="0.01" placeholder="Price per 1000" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-              </div>
-            </div>
-
-            <div id="qtyContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="min_quantity">Min Quantity</label>
-                <input name="min" type="number" placeholder="Minimum quantity" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="max_quantity">Max Quantity</label>
-                <input name="max" type="number" placeholder="Maximum quantity" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-              </div>
-            </div>
-
-            <input type="hidden" name="id" id="serviceIdInput">
-
-            <div class="flex gap-4 pt-4">
-              <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Save service">
-                <i class="fas fa-save"></i> <span data-i18n="save_service">Save Service</span>
-              </button>
-              <button type="button" id="clearFormBtn" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Cancel">
-                <i class="fas fa-times"></i> <span data-i18n="cancel">Cancel</span>
-              </button>
-            </div>
-          </form>
-        </div>
-      </section>
-
-      <!-- Logs Section -->
-      <section id="logs" class="content-section">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6 w-full">
-          <div class="flex justify-between items-center mb-6 flex-wrap gap-2">
-            <h2 class="text-xl font-bold text-gray-800 dark:text-white">
-              <i class="fas fa-history me-2"></i><span data-i18n="system_logs">System Logs</span>
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="content-section active">
+          <div class="mb-6">
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
+              <i class="fas fa-chart-bar me-2"></i><span data-i18n="overview">Overview</span>
             </h2>
-            <button onclick="loadLogs()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center gap-2" aria-label="Refresh logs">
-              <i class="fas fa-sync-alt"></i> <span data-i18n="refresh">Refresh</span>
-            </button>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="services">Services</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-services">0</p>
+                  </div>
+                  <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-cogs text-blue-600 dark:text-blue-300 text-lg"></i>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="total_orders">Total Orders</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-orders">0</p>
+                  </div>
+                  <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-shopping-cart text-green-600 dark:text-green-300 text-lg"></i>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="pending_orders">Pending Orders</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white" id="pending-orders">0</p>
+                  </div>
+                  <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-hourglass-half text-yellow-600 dark:text-yellow-300 text-lg"></i>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="avg_price">Avg Price</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white" id="avg-price">$0</p>
+                  </div>
+                  <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-dollar-sign text-indigo-600 dark:text-indigo-300 text-lg"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div id="logsBox" class="logs-box space-y-3 border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700 w-full">
-            <!-- Logs will be filled by JavaScript -->
+          <div>
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
+              <i class="fas fa-tools me-2"></i><span data-i18n="control_tools">Control Tools</span>
+            </h2>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <button id="refreshBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Refresh data">
+                <i class="fas fa-sync-alt"></i> <span data-i18n="refresh_data">Refresh Data</span>
+              </button>
+              <button id="exportServices" class="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Export services">
+                <i class="fas fa-download"></i> <span data-i18n="export_services">Export Services (CSV)</span>
+              </button>
+              <button id="exportOrders" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Export orders">
+                <i class="fas fa-download"></i> <span data-i18n="export_orders">Export Orders (CSV)</span>
+              </button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
+        <!-- Orders Section -->
+        <section id="orders" class="content-section">
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6">
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
+              <i class="fas fa-shopping-cart me-2"></i><span data-i18n="manage_orders">Manage Orders</span>
+            </h2>
+            
+            <div class="mb-4">
+              <input id="searchOrders" type="text" placeholder="Search by order ID or link..." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" data-i18n-placeholder="search_orders">
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                  <tr>
+                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="id">ID</th>
+                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="service">Service</th>
+                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="link">Link</th>
+                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="qty">Qty</th>
+                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="price">Price</th>
+                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="status">Status</th>
+                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-table"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Services Section -->
+        <section id="services" class="content-section">
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6">
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
+              <i class="fas fa-cogs me-2"></i><span data-i18n="manage_services">Manage Services</span>
+            </h2>
+            
+            <div class="mb-4">
+              <input id="searchServices" type="text" placeholder="Search by service name or category..." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" data-i18n-placeholder="search_services">
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                  <tr>
+                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="id">ID</th>
+                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="name">Name</th>
+                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="category">Category</th>
+                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="type">Type</th>
+                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="price">Price</th>
+                    <th scope="col" class="px-3 md:px-6 py-3" data-i18n="actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="services-table"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Add Service Section -->
+        <section id="add-service" class="content-section">
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6">
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-6">
+              <i class="fas fa-plus-circle me-2"></i><span data-i18n="add_edit_service">Add / Edit Service</span>
+            </h2>
+            
+            <form id="serviceForm" class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="service_name">Service Name</label>
+                  <input name="name" type="text" placeholder="Enter service name" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="category">Category</label>
+                  <input name="category" type="text" placeholder="e.g., instagram, twitter, etc." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="service_type">Service Type</label>
+                  <select name="type" id="typeSelect" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="quantity" data-i18n="quantity_service">Quantity Service (per 1000)</option>
+                    <option value="fixed" data-i18n="fixed_price">Fixed Price</option>
+                  </select>
+                </div>
+
+                <div id="priceContainer">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="price_per_1000">Price per 1000</label>
+                  <input name="rate" type="number" step="0.01" placeholder="Price per 1000" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+              </div>
+
+              <div id="qtyContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="min_quantity">Min Quantity</label>
+                  <input name="min" type="number" placeholder="Minimum quantity" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="max_quantity">Max Quantity</label>
+                  <input name="max" type="number" placeholder="Maximum quantity" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+              </div>
+
+              <input type="hidden" name="id" id="serviceIdInput">
+
+              <div class="flex gap-4 pt-4">
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Save service">
+                  <i class="fas fa-save"></i> <span data-i18n="save_service">Save Service</span>
+                </button>
+                <button type="button" id="clearFormBtn" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Cancel">
+                  <i class="fas fa-times"></i> <span data-i18n="cancel">Cancel</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- Logs Section -->
+        <section id="logs" class="content-section">
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6">
+            <div class="flex justify-between items-center mb-6 flex-wrap gap-2">
+              <h2 class="text-xl font-bold text-gray-800 dark:text-white">
+                <i class="fas fa-history me-2"></i><span data-i18n="system_logs">System Logs</span>
+              </h2>
+              <button onclick="loadLogs()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center gap-2" aria-label="Refresh logs">
+                <i class="fas fa-sync-alt"></i> <span data-i18n="refresh">Refresh</span>
+              </button>
+            </div>
+
+            <div id="logsBox" class="logs-box space-y-3 border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
+              <!-- Logs will be filled by JavaScript -->
+            </div>
+          </div>
+        </section>
+
+      </div>
     </div>
   </div>
 
   <!-- Notification Container -->
-  <div id="alert-box" class="fixed bottom-4 z-50"></div>
+  <div id="alert-box" class="alert-box"></div>
 
-  <!-- Flowbite JS CDN -->
+  <!-- Flowbite JS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
-
-  <!-- Main JavaScript (Same as before) -->
+   <!-- Main JavaScript -->
   <script>
     // ============================================
-    // TRANSLATIONS SYSTEM (data-i18n)
+    // TRANSLATIONS SYSTEM
     // ============================================
     const translations = {
       en: {
@@ -556,7 +676,7 @@
     });
 
     // ============================================
-    // AUTHENTICATION & CORE FUNCTIONS
+    // AUTHENTICATION & CORE
     // ============================================
     const token = localStorage.getItem('authToken');
     const tokenCheck = document.getElementById('tokenCheck');
@@ -611,8 +731,8 @@
       setTimeout(() => { window.location.href = '/login.html'; }, 1500);
     };
 
-     // ============================================
-    // DATA LOADING & CACHING
+    // ============================================
+    // DATA LOADING
     // ============================================
     let allServicesData = [];
     let allOrdersData = [];
@@ -770,9 +890,8 @@
         show('failed_to_update', 'error');
       }
     }
-
-    // ============================================
-    // LOGS MANAGEMENT (FIXED)
+       // ============================================
+    // LOGS
     // ============================================
     async function loadLogs(){
       try {
@@ -812,7 +931,7 @@
     }
 
     // ============================================
-    // SERVICE FORM MANAGEMENT
+    // SERVICE FORM
     // ============================================
     const form = document.getElementById('serviceForm');
     const typeSelect = document.getElementById('typeSelect');
@@ -887,7 +1006,6 @@
       }
     });
 
-    
     // ============================================
     // EDIT / DELETE SERVICE
     // ============================================
@@ -932,7 +1050,7 @@
     };
 
     // ============================================
-    // SEARCH & FILTER (FIXED)
+    // SEARCH & FILTER
     // ============================================
     document.getElementById('searchServices')?.addEventListener('input', (e) => {
       const query = e.target.value.toLowerCase();
@@ -966,7 +1084,7 @@
     });
 
     // ============================================
-    // REFRESH & EXPORT
+    // EXPORT & REFRESH
     // ============================================
     document.getElementById('refreshBtn').onclick = async () => {
       servicesCache = null;
@@ -1013,70 +1131,59 @@
     // ============================================
     // SIDEBAR & NAVIGATION
     // ============================================
-    document.addEventListener('DOMContentLoaded', function() {
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('sidebarOverlay');
-      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-      const navItems = document.querySelectorAll('.nav-item');
-      const contentSections = document.querySelectorAll('.content-section');
-      
-      mobileMenuBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('-translate-x-full');
-        overlay.classList.toggle('hidden');
-      });
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const navItems = document.querySelectorAll('.nav-item');
+    const contentSections = document.querySelectorAll('.content-section');
+    
+    mobileMenuBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('-translate-x-full');
+      overlay.classList.toggle('active');
+    });
 
-      overlay.addEventListener('click', () => {
-        sidebar.classList.add('-translate-x-full');
-        overlay.classList.add('hidden');
-      });
+    overlay.addEventListener('click', () => {
+      sidebar.classList.add('-translate-x-full');
+      overlay.classList.remove('active');
+    });
 
-      navItems.forEach(item => {
-        item.addEventListener('click', function(e) {
-          e.preventDefault();
-          
-          navItems.forEach(nav => nav.classList.remove('bg-gray-100', 'dark:bg-gray-700'));
-          contentSections.forEach(section => {
-            section.classList.remove('active');
-            section.style.display = 'none';
-          });
-          
-          this.classList.add('bg-gray-100', 'dark:bg-gray-700');
-          
-          const targetSection = this.getAttribute('data-section');
-          const sectionToShow = document.getElementById(targetSection);
-          if (sectionToShow) {
-            sectionToShow.classList.add('active');
-            sectionToShow.style.display = 'block';
-          }
-          
-          const pageTitle = document.querySelector('.page-title');
-          if (pageTitle) {
-            pageTitle.textContent = this.querySelector('span').textContent;
-          }
-          
-          if (window.innerWidth < 768) {
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.add('hidden');
-          }
+    navItems.forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        navItems.forEach(nav => nav.classList.remove('bg-gray-100', 'dark:bg-gray-700'));
+        contentSections.forEach(section => {
+          section.classList.remove('active');
         });
+        
+        this.classList.add('bg-gray-100', 'dark:bg-gray-700');
+        
+        const targetSection = this.getAttribute('data-section');
+        const sectionToShow = document.getElementById(targetSection);
+        if (sectionToShow) {
+          sectionToShow.classList.add('active');
+        }
+        
+        const pageTitle = document.querySelector('.page-title');
+        if (pageTitle) {
+          pageTitle.textContent = this.querySelector('span').textContent;
+        }
+        
+        if (window.innerWidth < 768) {
+          sidebar.classList.add('-translate-x-full');
+          overlay.classList.remove('active');
+        }
       });
     });
 
     // ============================================
-    // RELOAD ALL DATA
+    // RELOAD ALL & INITIALIZE
     // ============================================
     async function reloadAll() { 
       await Promise.all([loadStats(), loadServices(), loadOrders(), loadLogs()]); 
     }
 
-    // Initialize
     setTimeout(() => {
-      const dashboardSection = document.getElementById('dashboard');
-      if (dashboardSection) {
-        dashboardSection.classList.add('active');
-        dashboardSection.style.display = 'block';
-      }
-      
       reloadAll();
       tokenCheck.classList.add('hidden');
       updateLanguage(document.documentElement.lang);
@@ -1084,5 +1191,3 @@
   </script>
 </body>
 </html>
-
-    
