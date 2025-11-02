@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr" id="htmlElement">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
   <title data-i18n="page_title">Dashboard - SMM</title>
 
   <!-- Tailwind CSS CDN with Dark Mode Support -->
@@ -41,34 +41,44 @@
   </script>
 
   <style>
-    body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
+    body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overflow-x: hidden; }
+    
     .sidebar { transition: transform 0.3s ease-in-out; }
     [dir="rtl"] .sidebar { right: 0; left: auto; }
     [dir="ltr"] .sidebar { left: 0; right: auto; }
+    
     [dir="rtl"] #mobileMenuBtn { right: 1rem; left: auto; }
     [dir="ltr"] #mobileMenuBtn { left: 1rem; right: auto; }
+    
     [dir="rtl"] #langToggleBtn { left: 4rem; right: auto; }
     [dir="ltr"] #langToggleBtn { right: 4rem; left: auto; }
+    
     [dir="rtl"] .md\:ms-64 { margin-right: 16rem; margin-left: 0; }
     [dir="ltr"] .md\:ms-64 { margin-left: 16rem; margin-right: 0; }
+    
     [dir="rtl"] #alert-box { left: 1rem; right: auto; }
     [dir="ltr"] #alert-box { right: 1rem; left: auto; }
+    
     .logs-box { max-height: 400px; overflow-y: auto; }
     .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    
     /* ✅ إصلاح تكدس الأقسام على الموبايل */
     .content-section { display: none !important; }
     .content-section.active { display: block !important; }
-/* تحسين التمرير على الهواتف */
-    html, body { 
-        height: 100%;
-        overflow-x: hidden;
-              }
-                             
     
+    /* ✅ إصلاح مشاكل القص على الموبايل */
+    .main-content { width: 100%; overflow-x: hidden; }
+    table { width: 100%; table-layout: auto; }
+    @media (max-width: 768px) {
+      table { font-size: 0.75rem; }
+      table td, table th { padding: 0.5rem 0.25rem; }
+    }
   </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900">
+<body class="bg-gray-50 dark:bg-gray-900 w-full overflow-x-hidden">
 
   <!-- Token Check Loading Screen -->
   <div id="tokenCheck" class="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
@@ -89,16 +99,16 @@
   </button>
 
   <!-- Sidebar -->
-   <aside id="sidebar" class="fixed top-0 left-0 z-30 w-64 h-screen bg-white dark:bg-gray-800 shadow-lg hidden md:block transition-all duration-300">
-     <div class="h-full px-3 py-4 overflow-y-auto flex flex-col">
+  <aside id="sidebar" class="sidebar fixed top-0 left-0 z-30 w-64 h-screen bg-white dark:bg-gray-800 shadow-lg transform -translate-x-full md:translate-x-0 transition-transform duration-300 overflow-y-auto">
+    <div class="h-full px-3 py-4 flex flex-col">
       <a href="#" class="flex items-center ps-2.5 mb-5 pb-4 border-b border-gray-200 dark:border-gray-700">
-        <div class="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-lg">
+        <div class="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-lg flex-shrink-0">
           <i class="fas fa-chart-line"></i>
         </div>
         <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white ms-3" data-i18n="dashboard">Dashboard</span>
       </a>
 
-      <ul class="space-y-2 font-medium flex-1">
+      <ul class="space-y-2 font-medium flex-1 overflow-y-auto">
         <li><small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400" data-i18n="main">Main</small></li>
         <li>
           <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item active" data-section="dashboard" aria-label="Dashboard">
@@ -142,9 +152,9 @@
           <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0">
             <i class="fas fa-user text-sm"></i>
           </div>
-          <div class="ms-3">
-            <p class="text-sm font-medium text-gray-900 dark:text-white" data-i18n="admin">Admin</p>
-            <p class="text-xs text-gray-500 dark:text-gray-400" data-i18n="system_manager">System Manager</p>
+          <div class="ms-3 min-w-0">
+            <p class="text-sm font-medium text-gray-900 dark:text-white truncate" data-i18n="admin">Admin</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 truncate" data-i18n="system_manager">System Manager</p>
           </div>
         </div>
         <button id="logoutBtn" class="w-full flex items-center justify-center p-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition" aria-label="Logout">
@@ -159,31 +169,30 @@
   <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden hidden"></div>
 
   <!-- Main Content -->
-  <div class="md:ms-64">
-    <div class="min-h-screen overflow-y-auto">
+  <div class="main-content md:ms-64 w-full">
     <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 shadow-sm p-4 mb-6">
+    <header class="bg-white dark:bg-gray-800 shadow-sm p-4 mb-4 md:mb-6">
       <h1 class="page-title text-2xl font-bold text-gray-800 dark:text-white" data-i18n="dashboard">Dashboard</h1>
     </header>
 
     <!-- Content Body -->
-    <div class="p-4 md:p-6 space-y-6">
+    <div class="p-4 md:p-6 space-y-6 w-full">
 
       <!-- Dashboard Section -->
-      <section id="dashboard" class="content-section">
+      <section id="dashboard" class="content-section active">
         <div class="mb-6">
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
             <i class="fas fa-chart-bar me-2"></i><span data-i18n="overview">Overview</span>
           </h2>
           
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="services">Services</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-services">0</p>
                 </div>
-                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0">
                   <i class="fas fa-cogs text-blue-600 dark:text-blue-300 text-lg"></i>
                 </div>
               </div>
@@ -195,7 +204,7 @@
                   <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="total_orders">Total Orders</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-orders">0</p>
                 </div>
-                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center flex-shrink-0">
                   <i class="fas fa-shopping-cart text-green-600 dark:text-green-300 text-lg"></i>
                 </div>
               </div>
@@ -207,7 +216,7 @@
                   <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="pending_orders">Pending Orders</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white" id="pending-orders">0</p>
                 </div>
-                <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
+                <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center flex-shrink-0">
                   <i class="fas fa-hourglass-half text-yellow-600 dark:text-yellow-300 text-lg"></i>
                 </div>
               </div>
@@ -219,7 +228,7 @@
                   <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="avg_price">Avg Price</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white" id="avg-price">$0</p>
                 </div>
-                <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
+                <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center flex-shrink-0">
                   <i class="fas fa-dollar-sign text-indigo-600 dark:text-indigo-300 text-lg"></i>
                 </div>
               </div>
@@ -232,7 +241,7 @@
             <i class="fas fa-tools me-2"></i><span data-i18n="control_tools">Control Tools</span>
           </h2>
           
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <button id="refreshBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Refresh data">
               <i class="fas fa-sync-alt"></i> <span data-i18n="refresh_data">Refresh Data</span>
             </button>
@@ -248,7 +257,7 @@
 
       <!-- Orders Section -->
       <section id="orders" class="content-section">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6 w-full overflow-x-auto">
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
             <i class="fas fa-shopping-cart me-2"></i><span data-i18n="manage_orders">Manage Orders</span>
           </h2>
@@ -260,17 +269,17 @@
             </div>
           </div>
 
-          <div class="overflow-x-auto -mx-4 md:mx-0">
-           <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400 min-w-[800px] md:min-w-0">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                  <th scope="col" class="px-6 py-3" data-i18n="id">ID</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="service">Service</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="link">Link</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="qty">Qty</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="price">Price</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="status">Status</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="actions">Actions</th>
+                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="id">ID</th>
+                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="service">Service</th>
+                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="link">Link</th>
+                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="qty">Qty</th>
+                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="price">Price</th>
+                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="status">Status</th>
+                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="actions">Actions</th>
                 </tr>
               </thead>
               <tbody id="orders-table"></tbody>
@@ -281,7 +290,7 @@
 
       <!-- Services Section -->
       <section id="services" class="content-section">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6 w-full overflow-x-auto">
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
             <i class="fas fa-cogs me-2"></i><span data-i18n="manage_services">Manage Services</span>
           </h2>
@@ -293,16 +302,16 @@
             </div>
           </div>
 
-          <div class="overflow-x-auto -mx-4 md:mx-0">
-            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400 min-w-[700px] md:min-w-0">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                  <th scope="col" class="px-6 py-3" data-i18n="id">ID</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="name">Name</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="category">Category</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="type">Type</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="price">Price</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="actions">Actions</th>
+                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="id">ID</th>
+                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="name">Name</th>
+                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="category">Category</th>
+                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="type">Type</th>
+                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="price">Price</th>
+                  <th scope="col" class="px-3 md:px-6 py-3" data-i18n="actions">Actions</th>
                 </tr>
               </thead>
               <tbody id="services-table"></tbody>
@@ -313,13 +322,13 @@
 
       <!-- Add Service Section -->
       <section id="add-service" class="content-section">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6 w-full">
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-6">
             <i class="fas fa-plus-circle me-2"></i><span data-i18n="add_edit_service">Add / Edit Service</span>
           </h2>
           
           <form id="serviceForm" class="space-y-4">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="service_name">Service Name</label>
                 <input name="name" type="text" placeholder="Enter service name" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
@@ -350,7 +359,7 @@
                 <input name="min" type="number" placeholder="Minimum quantity" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
               </div>
               <div>
-              label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="max_quantity">Max Quantity</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="max_quantity">Max Quantity</label>
                 <input name="max" type="number" placeholder="Maximum quantity" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
               </div>
             </div>
@@ -371,8 +380,8 @@
 
       <!-- Logs Section -->
       <section id="logs" class="content-section">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <div class="flex justify-between items-center mb-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6 w-full">
+          <div class="flex justify-between items-center mb-6 flex-wrap gap-2">
             <h2 class="text-xl font-bold text-gray-800 dark:text-white">
               <i class="fas fa-history me-2"></i><span data-i18n="system_logs">System Logs</span>
             </h2>
@@ -381,7 +390,7 @@
             </button>
           </div>
 
-          <div id="logsBox" class="logs-box space-y-3 border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
+          <div id="logsBox" class="logs-box space-y-3 border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700 w-full">
             <!-- Logs will be filled by JavaScript -->
           </div>
         </div>
@@ -396,7 +405,7 @@
   <!-- Flowbite JS CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
 
-  <!-- Main JavaScript -->
+  <!-- Main JavaScript (Same as before) -->
   <script>
     // ============================================
     // TRANSLATIONS SYSTEM (data-i18n)
@@ -525,7 +534,6 @@
       localStorage.setItem('language', lang);
       document.getElementById('langBadge').textContent = lang === 'ar' ? 'AR' : 'EN';
       
-      // Update all data-i18n elements
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (translations[lang][key]) {
@@ -533,7 +541,6 @@
         }
       });
       
-      // Update placeholders
       document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.getAttribute('data-i18n-placeholder');
         if (translations[lang][key]) {
@@ -565,7 +572,6 @@
     const headers = { 'Content-Type': 'application/json', 'x-auth-token': token };
     const alertBox = document.getElementById('alert-box');
 
-    // Notification System
     function show(msgKey, type='success'){
       const lang = document.documentElement.lang;
       const msg = translations[lang][msgKey] || msgKey;
@@ -593,7 +599,6 @@
       return r;
     }
 
-    // Logout
     document.getElementById('logoutBtn').onclick = async ()=>{
       if (!confirm('Are you sure you want to logout?')) return;
       try {
@@ -606,7 +611,7 @@
       setTimeout(() => { window.location.href = '/login.html'; }, 1500);
     };
 
-    // ============================================
+     // ============================================
     // DATA LOADING & CACHING
     // ============================================
     let allServicesData = [];
@@ -651,12 +656,12 @@
         const tr = document.createElement('tr');
         tr.className = 'border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700';
         tr.innerHTML = `
-          <td class="px-6 py-4">${s.id || ''}</td>
-          <td class="px-6 py-4">${s.name || ''}</td>
-          <td class="px-6 py-4">${s.category || ''}</td>
-          <td class="px-6 py-4">${s.type === 'fixed' ? 'Fixed' : 'Quantity'}</td>
-          <td class="px-6 py-4">${s.type === 'fixed' ? '$' + (s.price || '0') : '$' + (s.rate || '0') + ' /1k'}</td>
-          <td class="px-6 py-4">
+          <td class="px-3 md:px-6 py-4">${s.id || ''}</td>
+          <td class="px-3 md:px-6 py-4">${s.name || ''}</td>
+          <td class="px-3 md:px-6 py-4">${s.category || ''}</td>
+          <td class="px-3 md:px-6 py-4">${s.type === 'fixed' ? 'Fixed' : 'Quantity'}</td>
+          <td class="px-3 md:px-6 py-4">${s.type === 'fixed' ? '$' + (s.price || '0') : '$' + (s.rate || '0') + ' /1k'}</td>
+          <td class="px-3 md:px-6 py-4">
             <div class="flex gap-2">
               <button onclick="editService(${s.id})" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition" aria-label="Edit">
                 <i class="fas fa-edit"></i>
@@ -719,17 +724,17 @@
         const serviceName = svcMap[o.serviceId] ? svcMap[o.serviceId].name : (o.serviceId || '');
         
         tr.innerHTML = `
-          <td class="px-6 py-4">${o.id || ''}</td>
-          <td class="px-6 py-4">${serviceName}</td>
-          <td class="px-6 py-4">
-            ${link ? `<a href="${link}" target="_blank" rel="noopener" class="text-blue-600 hover:underline truncate block max-w-xs">${link}</a>` : ''}
+          <td class="px-3 md:px-6 py-4">${o.id || ''}</td>
+          <td class="px-3 md:px-6 py-4">${serviceName}</td>
+          <td class="px-3 md:px-6 py-4 max-w-xs">
+            ${link ? `<a href="${link}" target="_blank" rel="noopener" class="text-blue-600 hover:underline truncate block">${link}</a>` : ''}
           </td>
-          <td class="px-6 py-4">${o.quantity || ''}</td>
-          <td class="px-6 py-4">$${(o.price || 0).toFixed(2)}</td>
-          <td class="px-6 py-4">
+          <td class="px-3 md:px-6 py-4">${o.quantity || ''}</td>
+          <td class="px-3 md:px-6 py-4">$${(o.price || 0).toFixed(2)}</td>
+          <td class="px-3 md:px-6 py-4">
             <span class="px-3 py-1 rounded-full text-xs font-medium ${status.class}">${status.text}</span>
           </td>
-          <td class="px-6 py-4">
+          <td class="px-3 md:px-6 py-4">
             <div class="flex gap-2">
               <button onclick="updateOrderStatus(${o.id},'processing')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition" aria-label="Processing">
                 <i class="fas fa-hourglass-half"></i>
@@ -789,7 +794,7 @@
           
           return `
             <div class="bg-gray-100 dark:bg-gray-600 p-3 rounded border border-gray-300 dark:border-gray-500">
-              <div class="flex justify-between items-start mb-1">
+              <div class="flex justify-between items-start mb-1 flex-wrap gap-2">
                 <span class="font-medium text-gray-900 dark:text-white text-sm">${user}</span>
                 <span class="text-xs text-gray-600 dark:text-gray-300">${time}</span>
               </div>
@@ -806,7 +811,6 @@
       }
     }
 
-    
     // ============================================
     // SERVICE FORM MANAGEMENT
     // ============================================
@@ -883,6 +887,7 @@
       }
     });
 
+    
     // ============================================
     // EDIT / DELETE SERVICE
     // ============================================
@@ -1016,12 +1021,12 @@
       const contentSections = document.querySelectorAll('.content-section');
       
       mobileMenuBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('hidden');
+        sidebar.classList.toggle('-translate-x-full');
         overlay.classList.toggle('hidden');
       });
 
       overlay.addEventListener('click', () => {
-        sidebar.classList.add('hidden');
+        sidebar.classList.add('-translate-x-full');
         overlay.classList.add('hidden');
       });
 
@@ -1050,7 +1055,7 @@
           }
           
           if (window.innerWidth < 768) {
-            sidebar.classList.add('hidden');
+            sidebar.classList.add('-translate-x-full');
             overlay.classList.add('hidden');
           }
         });
@@ -1066,7 +1071,6 @@
 
     // Initialize
     setTimeout(() => {
-      // ✅ إظهار قسم Dashboard عند التحميل الأولي
       const dashboardSection = document.getElementById('dashboard');
       if (dashboardSection) {
         dashboardSection.classList.add('active');
@@ -1080,3 +1084,5 @@
   </script>
 </body>
 </html>
+
+    
