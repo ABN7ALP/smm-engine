@@ -59,6 +59,30 @@
     /* ✅ إصلاح تكدس الأقسام على الموبايل */
     .content-section { display: none !important; }
     .content-section.active { display: block !important; }
+    /* ✅ إصلاح مكان القائمة الجانبية في الشاشات الصغيرة */
+@media (max-width: 768px) {
+  [dir="rtl"] #sidebar {
+    transform: translateX(100%); /* تبدأ مخفية من اليمين */
+  }
+  [dir="rtl"] #sidebar.-translate-x-full {
+    transform: translateX(100%); /* تظل مخفية */
+  }
+  [dir="rtl"] #sidebar:not(.-translate-x-full) {
+    transform: translateX(0); /* تظهر عند الفتح */
+  }
+}
+    /* ✅ السماح بالتمرير الكامل على الهواتف */
+html, body {
+  height: auto !important;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+    /* تصغير الحواف والهوامش على الموبايل */
+@media (max-width: 640px) {
+  .p-6 { padding: 1rem !important; }
+  .text-2xl { font-size: 1.25rem !important; }
+  .grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
   </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900">
