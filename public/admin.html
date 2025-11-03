@@ -420,7 +420,54 @@
             <p class="text-gray-600 dark:text-gray-400" data-i18n="loading">جاري التحميل...</p>
           </div>
 
+         <!-- Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+              <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                <tr>
+                  <th scope="col" class="px-6 py-3" data-i18n="id">المعرف</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="service">الخدمة</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="link">الرابط</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="qty">الكمية</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="price">السعر</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="status">الحالة</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="actions">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="orders-table">
+                <!-- Data will be filled by JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Services Section -->
+      <section id="services" class="content-section hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
+          <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
+            <i class="fas fa-cogs me-2"></i><span data-i18n="manage_services">إدارة الخدمات</span>
+          </h2>
           
+          <!-- Search Box -->
+          <div class="mb-4">
+            <div class="relative">
+              <input id="searchServices" 
+                     type="text" 
+                     placeholder="البحث باسم الخدمة أو الفئة..." 
+                     data-i18n-placeholder="search_services"
+                     class="w-full px-4 py-2 pe-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+                     aria-label="البحث في الخدمات">
+              <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+          </div>
+
+          <!-- Loading Indicator -->
+          <div id="servicesLoading" class="hidden text-center py-8">
+            <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-2"></i>
+            <p class="text-gray-600 dark:text-gray-400" data-i18n="loading">جاري التحميل...</p>
+          </div>
+
           <!-- Table -->
           <div class="overflow-x-auto">
             <table class="w-full text-sm text-right text-gray-500 dark:text-gray-400">
@@ -838,8 +885,7 @@
       localStorage.setItem('theme', 'dark');
     }
   });
-
-  // =======================================================
+    // =======================================================
   //  TOKEN CHECK & AUTHENTICATION
   // =======================================================
   
@@ -860,6 +906,7 @@
   // =======================================================
   //  NOTIFICATION SYSTEM (نظام الإشعارات المحسّن)
   // =======================================================
+  
   function show(msg, type='success'){
     const bgColor = type === 'success' ? 'bg-green-500 dark:bg-green-600' : 'bg-red-500 dark:bg-red-600';
     const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
@@ -1215,9 +1262,8 @@
     } finally {
       hideLoading('logs');
     }
-  }
-
-  // =======================================================
+    }
+    // =======================================================
   //  SERVICE FORM MANAGEMENT
   // =======================================================
   
@@ -1347,7 +1393,6 @@
     }
   };
 
-  
   // =======================================================
   //  SEARCH FUNCTIONALITY (محسّن)
   // =======================================================
