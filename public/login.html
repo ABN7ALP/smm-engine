@@ -58,53 +58,108 @@
       animation: fadeIn 0.6s ease-out;
     }
     
-    /* Improved Alert Box */
+    /* Fixed Alert Box - Top Center */
     .alert-container {
       position: fixed;
-      top: 1rem;
-      right: 1rem;
+      top: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
       z-index: 9999;
-      max-width: 400px;
-    }
-    
-    [dir="rtl"] .alert-container {
-      right: auto;
-      left: 1rem;
+      max-width: 500px;
+      width: 90%;
     }
     
     @keyframes slideIn {
       from {
         opacity: 0;
-        transform: translateX(100%);
+        transform: translateX(-50%) translateY(-20px);
       }
       to {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateX(-50%) translateY(0);
       }
     }
     
     .animate-slide-in {
       animation: slideIn 0.3s ease-out;
     }
+
+    /* Fixed Buttons Container */
+    .fixed-buttons-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 40;
+      display: flex;
+      gap: 0.75rem;
+      flex-direction: column;
+    }
+
+    [dir="ltr"] .fixed-buttons-container {
+      right: auto;
+      left: 1rem;
+    }
+
+    /* Responsive button sizing */
+    @media (max-width: 768px) {
+      .fixed-buttons-container {
+        top: 0.5rem;
+        right: 0.5rem;
+      }
+
+      [dir="ltr"] .fixed-buttons-container {
+        left: 0.5rem;
+      }
+
+      .fixed-buttons-container button {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+      }
+
+      .fixed-buttons-container i {
+        font-size: 1rem;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .fixed-buttons-container {
+        top: 1.5rem;
+        right: 1.5rem;
+      }
+
+      [dir="ltr"] .fixed-buttons-container {
+        left: 1.5rem;
+      }
+
+      .fixed-buttons-container button {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+      }
+    }
   </style>
 </head>
 <body class="bg-gradient-to-br from-blue-600 via-blue-500 to-blue-700 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 min-h-screen flex items-center justify-center p-4 transition-colors duration-300">
 
-  <!-- Dark Mode Toggle Button -->
-  <button id="darkModeToggle" 
-          class="fixed top-4 right-4 z-40 p-3 text-white dark:text-gray-300 hover:bg-white/10 dark:hover:bg-gray-800/50 rounded-lg transition-all duration-200 backdrop-blur-sm"
-          aria-label="تبديل الوضع الليلي">
-    <i class="fas fa-moon dark:hidden"></i>
-    <i class="fas fa-sun hidden dark:inline"></i>
-  </button>
+  <!-- Fixed Buttons Container -->
+  <div class="fixed-buttons-container">
+    <!-- Dark Mode Toggle Button -->
+    <button id="darkModeToggle" 
+            class="p-3 text-white dark:text-gray-300 hover:bg-white/20 dark:hover:bg-gray-800/50 rounded-lg transition-all duration-200 backdrop-blur-sm shadow-lg"
+            aria-label="تبديل الوضع الليلي"
+            title="تبديل الوضع الليلي">
+      <i class="fas fa-moon dark:hidden text-lg"></i>
+      <i class="fas fa-sun hidden dark:inline text-lg"></i>
+    </button>
 
-  <!-- Language Toggle Button -->
-  <button id="langToggle" 
-          class="fixed top-4 left-4 z-40 p-3 text-white dark:text-gray-300 hover:bg-white/10 dark:hover:bg-gray-800/50 rounded-lg transition-all duration-200 text-sm font-medium backdrop-blur-sm"
-          aria-label="تبديل اللغة">
-    <i class="fas fa-language me-1"></i>
-    <span id="currentLang">العربية</span>
-  </button>
+    <!-- Language Toggle Button -->
+    <button id="langToggle" 
+            class="p-3 text-white dark:text-gray-300 hover:bg-white/20 dark:hover:bg-gray-800/50 rounded-lg transition-all duration-200 backdrop-blur-sm shadow-lg flex items-center gap-2 text-sm font-medium"
+            aria-label="تبديل اللغة"
+            title="تبديل اللغة">
+      <i class="fas fa-language text-lg"></i>
+      <span id="currentLang" class="hidden sm:inline">العربية</span>
+    </button>
+  </div>
 
   <!-- Background Pattern -->
   <div class="absolute inset-0 opacity-10">
@@ -174,7 +229,7 @@
         <button 
           type="submit"
           id="submitBtn"
-          class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 dark:from-blue-700 dark:to-blue-800 dark:hover:from-blue-800 dark:hover:to-blue-900 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-lg"
+          class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 dark:from-blue-700 dark:to-blue-800 dark:hover:from-blue-800 dark:hover:to-blue-900 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-lg disabled:opacity-75 disabled:cursor-not-allowed"
           aria-label="تسجيل الدخول"
         >
           <i class="fas fa-sign-in-alt"></i> <span data-i18n="login">تسجيل الدخول</span>
@@ -189,14 +244,14 @@
       </div>
     </div>
 
-    <!-- Alert Container -->
-    <div id="alert-box" class="alert-container"></div>
-
     <!-- Additional Info -->
     <div class="mt-8 text-center text-blue-100 dark:text-gray-500 text-sm fade-in transition-colors duration-200" style="animation-delay: 0.2s;">
       <p data-i18n="copyright">© 2025 جميع الحقوق محفوظة</p>
     </div>
   </div>
+
+  <!-- Alert Container - Fixed at Top Center -->
+  <div id="alert-box" class="alert-container"></div>
 
   <!-- JavaScript -->
   <script>
@@ -262,7 +317,10 @@
       document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
       
       // Update language button text
-      document.getElementById('currentLang').textContent = currentLang === 'ar' ? 'العربية' : 'English';
+      const langSpan = document.getElementById('currentLang');
+      if (langSpan) {
+        langSpan.textContent = currentLang === 'ar' ? 'العربية' : 'English';
+      }
       
       // Update title
       document.title = t('login') + ' - ' + t('smm_dashboard');
@@ -331,11 +389,12 @@
       
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = alertHTML;
-      alertBox.appendChild(tempDiv.firstElementChild);
+      const alertElement = tempDiv.firstElementChild;
+      alertBox.appendChild(alertElement);
       
       setTimeout(() => {
-        if (alertBox.firstElementChild) {
-          alertBox.firstElementChild.remove();
+        if (alertElement && alertElement.parentNode) {
+          alertElement.remove();
         }
       }, 4000);
     }
