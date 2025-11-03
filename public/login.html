@@ -35,16 +35,6 @@
     } else {
       document.documentElement.classList.remove('dark');
     }
-    
-    // Load language preference
-    const savedLang = localStorage.getItem('language') || 'en';
-    if (savedLang === 'ar') {
-      document.documentElement.lang = 'ar';
-      document.documentElement.dir = 'rtl';
-    } else {
-      document.documentElement.lang = 'en';
-      document.documentElement.dir = 'ltr';
-    }
   </script>
 
   <style>
@@ -82,8 +72,8 @@
       <div class="inline-flex items-center justify-center w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-lg mb-4">
         <i class="fas fa-chart-line text-3xl text-blue-600"></i>
       </div>
-      <h1 class="text-4xl font-bold text-white dark:text-gray-100 mb-2 login-title">Login</h1>
-      <p class="text-blue-100 dark:text-gray-400 text-lg login-subtitle">SMM Dashboard</p>
+      <h1 class="text-4xl font-bold text-white dark:text-gray-100 mb-2">Login</h1>
+      <p class="text-blue-100 dark:text-gray-400 text-lg">SMM Dashboard</p>
     </div>
 
     <!-- Login Card -->
@@ -91,14 +81,14 @@
       <form id="loginForm" class="space-y-6">
         <!-- Username Field -->
         <div>
-          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 login-label-username">
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
             <i class="fas fa-user me-2 text-blue-600"></i>Username
           </label>
           <input 
             name="username" 
             type="text"
             placeholder="Enter your username" 
-            class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 login-placeholder-username" 
+            class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" 
             required
             autocomplete="username"
           >
@@ -106,14 +96,14 @@
 
         <!-- Password Field -->
         <div>
-          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 login-label-password">
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
             <i class="fas fa-lock me-2 text-blue-600"></i>Password
           </label>
           <input 
             name="password" 
             type="password"
             placeholder="Enter your password" 
-            class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 login-placeholder-password" 
+            class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" 
             required
             autocomplete="current-password"
           >
@@ -122,15 +112,15 @@
         <!-- Login Button -->
         <button 
           type="submit" 
-          class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 dark:from-blue-700 dark:to-blue-800 dark:hover:from-blue-800 dark:hover:to-blue-900 text-white font-bold py-3 px-4 rounded-lg transition transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-lg login-btn"
+          class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 dark:from-blue-700 dark:to-blue-800 dark:hover:from-blue-800 dark:hover:to-blue-900 text-white font-bold py-3 px-4 rounded-lg transition transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-lg"
         >
-          <i class="fas fa-sign-in-alt"></i> <span class="login-btn-text">Login</span>
+          <i class="fas fa-sign-in-alt"></i> Login
         </button>
       </form>
 
       <!-- Footer Text -->
       <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
-        <p class="text-gray-600 dark:text-gray-400 text-sm login-footer-text">
+        <p class="text-gray-600 dark:text-gray-400 text-sm">
           Social Media Management System
         </p>
       </div>
@@ -141,7 +131,7 @@
 
     <!-- Additional Info -->
     <div class="mt-8 text-center text-blue-100 dark:text-gray-500 text-sm fade-in" style="animation-delay: 0.2s;">
-      <p class="login-copyright-text">© 2025 All Rights Reserved</p>
+      <p>© 2025 All Rights Reserved</p>
     </div>
   </div>
 
@@ -150,74 +140,13 @@
     const form = document.getElementById('loginForm');
     const alertBox = document.getElementById('alert-box');
 
-    // Translations for Login Page
-    const loginTranslations = {
-      en: {
-        'Login': 'Login',
-        'SMM Dashboard': 'SMM Dashboard',
-        'Username': 'Username',
-        'Enter your username': 'Enter your username',
-        'Password': 'Password',
-        'Enter your password': 'Enter your password',
-        'Logging in...': 'Logging in...',
-        'Login failed': 'Login failed',
-        'Unable to connect to server': 'Unable to connect to server',
-        'Login successful!': 'Login successful!',
-        'Social Media Management System': 'Social Media Management System',
-        '© 2025 All Rights Reserved': '© 2025 All Rights Reserved',
-        'Session expired. Please login again.': 'Session expired. Please login again.',
-      },
-      ar: {
-        'Login': 'تسجيل الدخول',
-        'SMM Dashboard': 'لوحة تحكم SMM',
-        'Username': 'اسم المستخدم',
-        'Enter your username': 'أدخل اسم المستخدم',
-        'Password': 'كلمة السر',
-        'Enter your password': 'أدخل كلمة السر',
-        'Logging in...': 'جاري تسجيل الدخول...',
-        'Login failed': 'فشل تسجيل الدخول',
-        'Unable to connect to server': 'تعذر الاتصال بالخادم',
-        'Login successful!': 'تم تسجيل الدخول بنجاح!',
-        'Social Media Management System': 'نظام إدارة خدمات وسائل التواصل الاجتماعي',
-        '© 2025 All Rights Reserved': '© 2025 جميع الحقوق محفوظة',
-        'Session expired. Please login again.': 'انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.',
-      }
-    };
-
-    function translateLoginPage(lang) {
-      const t = loginTranslations[lang];
-      
-      // Update text content
-      document.querySelector('.login-title').textContent = t['Login'];
-      document.querySelector('.login-subtitle').textContent = t['SMM Dashboard'];
-      document.querySelector('.login-label-username').lastChild.textContent = t['Username'];
-      document.querySelector('.login-label-password').lastChild.textContent = t['Password'];
-      document.querySelector('.login-btn-text').textContent = t['Login'];
-      document.querySelector('.login-footer-text').textContent = t['Social Media Management System'];
-      document.querySelector('.login-copyright-text').textContent = t['© 2025 All Rights Reserved'];
-      
-      // Update placeholders
-      document.querySelector('.login-placeholder-username').placeholder = t['Enter your username'];
-      document.querySelector('.login-placeholder-password').placeholder = t['Enter your password'];
-    }
-
-    // Initial translation
-    translateLoginPage(document.documentElement.lang);
-
     function show(msg, type = 'error') {
-      const lang = document.documentElement.lang;
-      const t = loginTranslations[lang];
-      
       const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
       const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-      
-      // Translate messages if they match the English key
-      let translatedMsg = t[msg] || msg;
-
       const alertHTML = `
         <div class="bg-${bgColor} text-white p-4 rounded-lg shadow-lg flex items-center gap-3 animate-pulse">
           <i class="fas ${icon}"></i>
-          <span>${translatedMsg}</span>
+          <span>${msg}</span>
         </div>
       `;
       alertBox.innerHTML = alertHTML;
@@ -228,13 +157,11 @@
       e.preventDefault();
       const fd = new FormData(form);
       const data = Object.fromEntries(fd.entries());
-      const lang = document.documentElement.lang;
-      const t = loginTranslations[lang];
       
       // Show loading state
       const submitBtn = form.querySelector('button[type="submit"]');
       const originalHTML = submitBtn.innerHTML;
-      submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t['Logging in...']}`;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
       submitBtn.disabled = true;
       
       try {
@@ -245,8 +172,8 @@
         });
         
         if (!res.ok) {
-          const err = await res.json().catch(() => ({ error: t['Login failed'] }));
-          show(err.error || t['Login failed']);
+          const err = await res.json().catch(() => ({ error: 'Login failed' }));
+          show(err.error || 'Login failed');
           return;
         }
         
