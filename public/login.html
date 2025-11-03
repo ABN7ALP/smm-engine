@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Login - Dashboard</title>
+  <title>تسجيل الدخول - لوحة التحكم</title>
 
   <!-- Tailwind CSS CDN with Dark Mode Support -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -19,7 +19,7 @@
   <script>
     // Configure Tailwind with Dark Mode Support
     tailwind.config = {
-      darkMode: 'class', // Enable class-based dark mode
+      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
@@ -42,6 +42,7 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
+    
     @keyframes fadeIn {
       from {
         opacity: 0;
@@ -52,12 +53,58 @@
         transform: translateY(0);
       }
     }
+    
     .fade-in {
       animation: fadeIn 0.6s ease-out;
     }
+    
+    /* Improved Alert Box */
+    .alert-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 9999;
+      max-width: 400px;
+    }
+    
+    [dir="rtl"] .alert-container {
+      right: auto;
+      left: 1rem;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(100%);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
+    .animate-slide-in {
+      animation: slideIn 0.3s ease-out;
+    }
   </style>
 </head>
-<body class="bg-gradient-to-br from-blue-600 via-blue-500 to-blue-700 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 min-h-screen flex items-center justify-center p-4">
+<body class="bg-gradient-to-br from-blue-600 via-blue-500 to-blue-700 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 min-h-screen flex items-center justify-center p-4 transition-colors duration-300">
+
+  <!-- Dark Mode Toggle Button -->
+  <button id="darkModeToggle" 
+          class="fixed top-4 right-4 z-40 p-3 text-white dark:text-gray-300 hover:bg-white/10 dark:hover:bg-gray-800/50 rounded-lg transition-all duration-200 backdrop-blur-sm"
+          aria-label="تبديل الوضع الليلي">
+    <i class="fas fa-moon dark:hidden"></i>
+    <i class="fas fa-sun hidden dark:inline"></i>
+  </button>
+
+  <!-- Language Toggle Button -->
+  <button id="langToggle" 
+          class="fixed top-4 left-4 z-40 p-3 text-white dark:text-gray-300 hover:bg-white/10 dark:hover:bg-gray-800/50 rounded-lg transition-all duration-200 text-sm font-medium backdrop-blur-sm"
+          aria-label="تبديل اللغة">
+    <i class="fas fa-language me-1"></i>
+    <span id="currentLang">العربية</span>
+  </button>
 
   <!-- Background Pattern -->
   <div class="absolute inset-0 opacity-10">
@@ -69,99 +116,243 @@
   <div class="relative z-10 w-full max-w-md">
     <!-- Header -->
     <div class="text-center mb-8 fade-in">
-      <div class="inline-flex items-center justify-center w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-lg mb-4">
-        <i class="fas fa-chart-line text-3xl text-blue-600"></i>
+      <div class="inline-flex items-center justify-center w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-lg mb-4 transition-colors duration-300">
+        <i class="fas fa-chart-line text-3xl text-blue-600 dark:text-blue-400"></i>
       </div>
-      <h1 class="text-4xl font-bold text-white dark:text-gray-100 mb-2">Login</h1>
-      <p class="text-blue-100 dark:text-gray-400 text-lg">SMM Dashboard</p>
+      <h1 class="text-4xl font-bold text-white dark:text-gray-100 mb-2" data-i18n="login">تسجيل الدخول</h1>
+      <p class="text-blue-100 dark:text-gray-400 text-lg" data-i18n="smm_dashboard">لوحة تحكم SMM</p>
     </div>
 
     <!-- Login Card -->
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 fade-in" style="animation-delay: 0.1s;">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 fade-in transition-colors duration-300" style="animation-delay: 0.1s;">
       <form id="loginForm" class="space-y-6">
         <!-- Username Field -->
         <div>
           <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            <i class="fas fa-user me-2 text-blue-600"></i>Username
+            <i class="fas fa-user me-2 text-blue-600 dark:text-blue-400"></i><span data-i18n="username">اسم المستخدم</span>
           </label>
           <input 
             name="username" 
             type="text"
-            placeholder="Enter your username" 
-            class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" 
+            placeholder="أدخل اسم المستخدم"
+            data-i18n-placeholder="enter_username"
+            class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-all duration-200 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" 
             required
             autocomplete="username"
+            aria-label="اسم المستخدم"
           >
         </div>
 
         <!-- Password Field -->
         <div>
           <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            <i class="fas fa-lock me-2 text-blue-600"></i>Password
+            <i class="fas fa-lock me-2 text-blue-600 dark:text-blue-400"></i><span data-i18n="password">كلمة المرور</span>
           </label>
-          <input 
-            name="password" 
-            type="password"
-            placeholder="Enter your password" 
-            class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" 
-            required
-            autocomplete="current-password"
-          >
+          <div class="relative">
+            <input 
+              id="passwordInput"
+              name="password" 
+              type="password"
+              placeholder="أدخل كلمة المرور"
+              data-i18n-placeholder="enter_password"
+              class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-all duration-200 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" 
+              required
+              autocomplete="current-password"
+              aria-label="كلمة المرور"
+            >
+            <button 
+              type="button"
+              id="togglePassword"
+              class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200"
+              aria-label="إظهار/إخفاء كلمة المرور">
+              <i class="fas fa-eye" id="eyeIcon"></i>
+            </button>
+          </div>
         </div>
 
         <!-- Login Button -->
         <button 
-          type="submit" 
-          class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 dark:from-blue-700 dark:to-blue-800 dark:hover:from-blue-800 dark:hover:to-blue-900 text-white font-bold py-3 px-4 rounded-lg transition transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-lg"
+          type="submit"
+          id="submitBtn"
+          class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 dark:from-blue-700 dark:to-blue-800 dark:hover:from-blue-800 dark:hover:to-blue-900 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-lg"
+          aria-label="تسجيل الدخول"
         >
-          <i class="fas fa-sign-in-alt"></i> Login
+          <i class="fas fa-sign-in-alt"></i> <span data-i18n="login">تسجيل الدخول</span>
         </button>
       </form>
 
       <!-- Footer Text -->
-      <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
-        <p class="text-gray-600 dark:text-gray-400 text-sm">
-          Social Media Management System
+      <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 text-center transition-colors duration-200">
+        <p class="text-gray-600 dark:text-gray-400 text-sm" data-i18n="smm_system">
+          نظام إدارة وسائل التواصل الاجتماعي
         </p>
       </div>
     </div>
 
     <!-- Alert Container -->
-    <div id="alert-box" class="mt-6"></div>
+    <div id="alert-box" class="alert-container"></div>
 
     <!-- Additional Info -->
-    <div class="mt-8 text-center text-blue-100 dark:text-gray-500 text-sm fade-in" style="animation-delay: 0.2s;">
-      <p>© 2025 All Rights Reserved</p>
+    <div class="mt-8 text-center text-blue-100 dark:text-gray-500 text-sm fade-in transition-colors duration-200" style="animation-delay: 0.2s;">
+      <p data-i18n="copyright">© 2025 جميع الحقوق محفوظة</p>
     </div>
   </div>
 
   <!-- JavaScript -->
   <script>
+    // =======================================================
+    //  TRANSLATION SYSTEM
+    // =======================================================
+    
+    const translations = {
+      ar: {
+        login: "تسجيل الدخول",
+        smm_dashboard: "لوحة تحكم SMM",
+        username: "اسم المستخدم",
+        password: "كلمة المرور",
+        enter_username: "أدخل اسم المستخدم",
+        enter_password: "أدخل كلمة المرور",
+        smm_system: "نظام إدارة وسائل التواصل الاجتماعي",
+        copyright: "© 2025 جميع الحقوق محفوظة",
+        login_success: "تم تسجيل الدخول بنجاح!",
+        login_failed: "فشل تسجيل الدخول",
+        connection_error: "تعذر الاتصال بالخادم",
+        logging_in: "جاري تسجيل الدخول..."
+      },
+      en: {
+        login: "Login",
+        smm_dashboard: "SMM Dashboard",
+        username: "Username",
+        password: "Password",
+        enter_username: "Enter your username",
+        enter_password: "Enter your password",
+        smm_system: "Social Media Management System",
+        copyright: "© 2025 All Rights Reserved",
+        login_success: "Login successful!",
+        login_failed: "Login failed",
+        connection_error: "Unable to connect to server",
+        logging_in: "Logging in..."
+      }
+    };
+
+    // Current Language
+    let currentLang = localStorage.getItem('lang') || 'ar';
+    
+    // Translation Function
+    function t(key) {
+      return translations[currentLang][key] || key;
+    }
+    
+    // Apply Translations to DOM
+    function applyTranslations() {
+      // Translate elements with data-i18n attribute
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.textContent = t(key);
+      });
+      
+      // Translate placeholders
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        el.placeholder = t(key);
+      });
+      
+      // Update HTML lang and dir
+      document.documentElement.lang = currentLang;
+      document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+      
+      // Update language button text
+      document.getElementById('currentLang').textContent = currentLang === 'ar' ? 'العربية' : 'English';
+      
+      // Update title
+      document.title = t('login') + ' - ' + t('smm_dashboard');
+    }
+    
+    // Language Toggle
+    document.getElementById('langToggle').addEventListener('click', () => {
+      currentLang = currentLang === 'ar' ? 'en' : 'ar';
+      localStorage.setItem('lang', currentLang);
+      applyTranslations();
+    });
+
+    // =======================================================
+    //  DARK MODE TOGGLE
+    // =======================================================
+    
+    document.getElementById('darkModeToggle').addEventListener('click', () => {
+      const html = document.documentElement;
+      const isDark = html.classList.contains('dark');
+      
+      if (isDark) {
+        html.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        html.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+    });
+
+    // =======================================================
+    //  PASSWORD VISIBILITY TOGGLE
+    // =======================================================
+    
+    document.getElementById('togglePassword').addEventListener('click', () => {
+      const passwordInput = document.getElementById('passwordInput');
+      const eyeIcon = document.getElementById('eyeIcon');
+      
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        eyeIcon.classList.remove('fa-eye');
+        eyeIcon.classList.add('fa-eye-slash');
+      } else {
+        passwordInput.type = 'password';
+        eyeIcon.classList.remove('fa-eye-slash');
+        eyeIcon.classList.add('fa-eye');
+      }
+    });
+
+    // =======================================================
+    //  NOTIFICATION SYSTEM
+    // =======================================================
+    
     const form = document.getElementById('loginForm');
     const alertBox = document.getElementById('alert-box');
 
     function show(msg, type = 'error') {
-      const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+      const bgColor = type === 'success' ? 'bg-green-500 dark:bg-green-600' : 'bg-red-500 dark:bg-red-600';
       const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+      
       const alertHTML = `
-        <div class="bg-${bgColor} text-white p-4 rounded-lg shadow-lg flex items-center gap-3 animate-pulse">
+        <div class="${bgColor} text-white p-4 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in mb-2 transition-colors duration-200">
           <i class="fas ${icon}"></i>
           <span>${msg}</span>
         </div>
       `;
-      alertBox.innerHTML = alertHTML;
-      setTimeout(() => alertBox.innerHTML = '', 4000);
+      
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = alertHTML;
+      alertBox.appendChild(tempDiv.firstElementChild);
+      
+      setTimeout(() => {
+        if (alertBox.firstElementChild) {
+          alertBox.firstElementChild.remove();
+        }
+      }, 4000);
     }
 
+    // =======================================================
+    //  LOGIN FORM SUBMISSION
+    // =======================================================
+    
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const fd = new FormData(form);
       const data = Object.fromEntries(fd.entries());
       
       // Show loading state
-      const submitBtn = form.querySelector('button[type="submit"]');
+      const submitBtn = document.getElementById('submitBtn');
       const originalHTML = submitBtn.innerHTML;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+      submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t('logging_in')}`;
       submitBtn.disabled = true;
       
       try {
@@ -172,26 +363,33 @@
         });
         
         if (!res.ok) {
-          const err = await res.json().catch(() => ({ error: 'Login failed' }));
-          show(err.error || 'Login failed');
+          const err = await res.json().catch(() => ({ error: t('login_failed') }));
+          show(err.error || t('login_failed'));
           return;
         }
         
         const j = await res.json();
         localStorage.setItem('authToken', j.token);
-        show('Login successful!', 'success');
+        show(t('login_success'), 'success');
         
         setTimeout(() => {
           window.location.href = '/admin.html';
         }, 1000);
         
       } catch (err) {
-        show('Unable to connect to server');
+        show(t('connection_error'));
       } finally {
         submitBtn.innerHTML = originalHTML;
         submitBtn.disabled = false;
       }
     });
+
+    // =======================================================
+    //  INITIALIZE
+    // =======================================================
+    
+    // Apply translations on load
+    applyTranslations();
   </script>
 </body>
 </html>
