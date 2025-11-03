@@ -2,9 +2,9 @@
 <html lang="en" dir="ltr" id="htmlElement">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
-  <meta name="description" content="Professional Dashboard - SMM Management System" />
-  <title>Dashboard - SMM Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Professional SMM Dashboard - Fully Responsive & Stable" />
+  <title>Dashboard - SMM Management System</title>
 
   <!-- Ant Design CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/5.13.0/antd.min.css" />
@@ -29,7 +29,6 @@
 
     #root { width: 100%; height: 100%; }
 
-    /* Dark Mode */
     body.dark-mode {
       background: #141414;
     }
@@ -44,7 +43,7 @@
       border-left: 1px solid #434343;
     }
 
-    /* Custom Scrollbar */
+    /* Scrollbar */
     ::-webkit-scrollbar {
       width: 8px;
       height: 8px;
@@ -71,7 +70,7 @@
       background: #595959;
     }
 
-    /* Stats Cards */
+    /* Custom Cards */
     .stat-card {
       border-radius: 8px;
       padding: 24px;
@@ -106,7 +105,7 @@
       color: #a6a6a6;
     }
 
-    /* Loading Spinner */
+    /* Loading */
     .spinner {
       display: inline-block;
       width: 20px;
@@ -158,7 +157,7 @@
   <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/react.production.min.js"></script>
   <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/react-dom.production.min.js"></script>
 
-  <!-- Babel Standalone (for JSX) -->
+  <!-- Babel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 
   <!-- Ant Design -->
@@ -167,7 +166,7 @@
   <!-- Main App -->
   <script type="text/babel">
     const { useState, useEffect, useCallback, useMemo } = React;
-    const { Layout, Menu, Button, Table, Form, Input, Select, Modal, message, Spin, Card, Row, Col, Tag, Space, Drawer, Badge, Avatar, Dropdown, Empty, Popconfirm, Tooltip } = antd;
+    const { Layout, Menu, Button, Table, Form, Input, Select, Modal, message, Spin, Card, Row, Col, Tag, Space, Badge, Avatar, Empty, Popconfirm, Tooltip, Drawer, Divider } = antd;
     const { Header, Sider, Content } = Layout;
 
     // ============================================
@@ -184,6 +183,7 @@
         'admin': 'Admin',
         'system_manager': 'System Manager',
         'overview': 'Overview',
+        'total_services': 'Total Services',
         'total_orders': 'Total Orders',
         'pending_orders': 'Pending Orders',
         'avg_price': 'Avg Price',
@@ -228,6 +228,8 @@
         'processing': 'Processing',
         'completed': 'Completed',
         'rejected': 'Rejected',
+        'confirm_delete': 'Are you sure you want to delete this?',
+        'confirm_logout': 'Are you sure you want to logout?',
       },
       ar: {
         'dashboard': 'لوحة التحكم',
@@ -239,6 +241,7 @@
         'admin': 'المسؤول',
         'system_manager': 'مدير النظام',
         'overview': 'نظرة عامة',
+        'total_services': 'إجمالي الخدمات',
         'total_orders': 'إجمالي الطلبات',
         'pending_orders': 'الطلبات المعلقة',
         'avg_price': 'متوسط السعر',
@@ -283,6 +286,8 @@
         'processing': 'قيد المعالجة',
         'completed': 'مكتمل',
         'rejected': 'مرفوض',
+        'confirm_delete': 'هل أنت متأكد من حذف هذا العنصر؟',
+        'confirm_logout': 'هل أنت متأكد من تسجيل الخروج؟',
       }
     };
 
@@ -301,14 +306,13 @@
       const [logs, setLogs] = useState([]);
       const [form] = Form.useForm();
       const [editingService, setEditingService] = useState(null);
-      const [searchText, setSearchText] = useState('');
 
       const token = localStorage.getItem('authToken');
 
-      // Translations helper
+      // Helper function
       const t = (key) => translations[lang][key] || key;
 
-      // Update HTML attributes
+      // Update HTML
       useEffect(() => {
         const html = document.documentElement;
         html.lang = lang;
@@ -323,7 +327,7 @@
         if (!token) {
           window.location.href = '/login.html';
         }
-      }, []);
+      }, [token]);
 
       // Fetch data
       const fetchData = useCallback(async () => {
@@ -332,28 +336,27 @@
           const headers = { 'Content-Type': 'application/json', 'x-auth-token': token };
 
           const [statsRes, servicesRes, ordersRes, logsRes] = await Promise.all([
-            fetch('/api/stats', { headers }),
-            fetch('/api/services', { headers }),
-            fetch('/api/orders', { headers }),
-            fetch('/api/logs', { headers })
+            fetch('/api/stats', { headers }).catch(() => null),
+            fetch('/api/services', { headers }).catch(() => null),
+            fetch('/api/orders', { headers }).catch(() => null),
+            fetch('/api/logs', { headers }).catch(() => null)
           ]);
 
-          if (statsRes.status === 401) {
+          if (statsRes && statsRes.status === 401) {
             message.error(t('session_expired'));
             localStorage.removeItem('authToken');
             setTimeout(() => { window.location.href = '/login.html'; }, 1500);
             return;
           }
+    const statsData = statsRes ? await statsRes.json() : {};
+          const servicesData = servicesRes ? await servicesRes.json() : [];
+          const ordersData = ordersRes ? await ordersRes.json() : [];
+          const logsData = logsRes ? await logsRes.json() : [];
 
-          const statsData = await statsRes.json();
-          const servicesData = await servicesRes.json();
-          const ordersData = await ordersRes.json();
-          const logsData = await logsRes.json();
-
-          setStats(statsData);
-          setServices(servicesData || []);
-          setOrders(ordersData || []);
-          setLogs(logsData || []);
+          setStats(statsData || {});
+          setServices(Array.isArray(servicesData) ? servicesData : []);
+          setOrders(Array.isArray(ordersData) ? ordersData : []);
+          setLogs(Array.isArray(logsData) ? logsData : []);
           message.success(t('data_refreshed'));
         } catch (error) {
           console.error('Error fetching data:', error);
@@ -370,17 +373,22 @@
 
       // Logout
       const handleLogout = async () => {
-        try {
-          await fetch('/api/auth/logout', {
-            method: 'POST',
-            headers: { 'x-auth-token': token }
-          });
-        } catch (error) {
-          console.log('Logout error:', error);
-        }
-        localStorage.removeItem('authToken');
-        message.success(t('data_refreshed'));
-        setTimeout(() => { window.location.href = '/login.html'; }, 1000);
+        Modal.confirm({
+          title: t('confirm_logout'),
+          onOk: async () => {
+            try {
+              await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: { 'x-auth-token': token }
+              }).catch(() => null);
+            } catch (error) {
+              console.log('Logout error:', error);
+            }
+            localStorage.removeItem('authToken');
+            message.success(t('data_refreshed'));
+            setTimeout(() => { window.location.href = '/login.html'; }, 1000);
+          }
+        });
       };
 
       // Menu items
@@ -457,7 +465,7 @@
             <Header style={{ background: darkMode ? '#141414' : '#fff', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', position: 'sticky', top: 0, zIndex: 99 }}>
               <Button
                 type="text"
-                icon={collapsed ? <i className="fas fa-bars"></i> : <i className="fas fa-bars"></i>}
+                icon={<i className="fas fa-bars"></i>}
                 onClick={() => setCollapsed(!collapsed)}
               />
               <Space>
@@ -473,7 +481,7 @@
                   onClick={() => setDarkMode(!darkMode)}
                 />
               </Space>
-       /Header>
+            </Header>
 
             {/* Content */}
             <Content style={{ padding: '24px', background: darkMode ? '#141414' : '#f5f5f5', minHeight: 'calc(100vh - 64px)' }}>
@@ -481,7 +489,7 @@
                 {currentPage === 'dashboard' && <DashboardPage stats={stats} onRefresh={fetchData} t={t} />}
                 {currentPage === 'orders' && <OrdersPage orders={orders} services={services} t={t} />}
                 {currentPage === 'services' && <ServicesPage services={services} onRefresh={fetchData} t={t} />}
-                {currentPage === 'add-service' && <AddServicePage onRefresh={fetchData} editingService={editingService} setEditingService={setEditingService} t={t} />}
+                {currentPage === 'add-service' && <AddServicePage onRefresh={fetchData} t={t} />}
                 {currentPage === 'logs' && <LogsPage logs={logs} t={t} />}
               </Spin>
             </Content>
@@ -502,7 +510,7 @@
               <Card className="stat-card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <div className="stat-label">{t('services')}</div>
+                    <div className="stat-label">{t('total_services')}</div>
                     <div className="stat-value">{stats.totalServices || 0}</div>
                   </div>
                   <Avatar size={64} icon={<i className="fas fa-cogs"></i>} style={{ backgroundColor: '#1890ff' }} />
@@ -568,16 +576,41 @@
     function OrdersPage({ orders, services, t }) {
       const serviceMap = useMemo(() => {
         const map = {};
-        services.forEach(s => map[s.id] = s);
+        (services || []).forEach(s => {
+          if (s && s.id) map[s.id] = s;
+        });
         return map;
       }, [services]);
 
       const columns = [
         { title: t('id'), dataIndex: 'id', key: 'id', width: 80 },
-        { title: t('service'), dataIndex: 'serviceId', key: 'serviceId', render: (serviceId) => serviceMap[serviceId]?.name || '-' },
-        { title: t('link'), dataIndex: 'link', key: 'link', render: (link) => link ? <a href={link} target="_blank" rel="noopener">{link.substring(0, 30)}...</a> : '-' },
+        { 
+          title: t('service'), 
+          dataIndex: 'serviceId', 
+          key: 'serviceId', 
+          render: (serviceId) => {
+            const service = serviceMap[serviceId];
+            return service ? service.name : '-';
+          }
+        },
+        { 
+          title: t('link'), 
+          dataIndex: 'link', 
+          key: 'link', 
+          render: (link) => {
+            if (link && typeof link === 'string') {
+              return <a href={link} target="_blank" rel="noopener">{link.substring(0, 30)}...</a>;
+            }
+            return '-';
+          }
+        },
         { title: t('qty'), dataIndex: 'quantity', key: 'quantity', width: 80 },
-        { title: t('price'), dataIndex: 'price', key: 'price', render: (price) => `$${price.toFixed(2)}` },
+        { 
+          title: t('price'), 
+          dataIndex: 'price', 
+          key: 'price', 
+          render: (price) => `$${(price || 0).toFixed(2)}` 
+        },
         {
           title: t('status'),
           dataIndex: 'status',
@@ -593,7 +626,13 @@
         <Card>
           <h1>{t('manage_orders')}</h1>
           <Input placeholder={t('search')} style={{ marginBottom: '16px' }} />
-          <Table columns={columns} dataSource={orders} rowKey="id" pagination={{ pageSize: 10 }} />
+          <Table 
+            columns={columns} 
+            dataSource={orders || []} 
+            rowKey="id" 
+            pagination={{ pageSize: 10 }}
+            locale={{ emptyText: t('no_data') }}
+          />
         </Card>
       );
     }
@@ -606,15 +645,33 @@
         { title: t('id'), dataIndex: 'id', key: 'id', width: 80 },
         { title: t('name'), dataIndex: 'name', key: 'name' },
         { title: t('category'), dataIndex: 'category', key: 'category' },
-        { title: t('type'), dataIndex: 'type', key: 'type', render: (type) => type === 'fixed' ? 'Fixed' : 'Quantity' },
-        { title: t('price'), dataIndex: 'price', key: 'price', render: (price, record) => record.type === 'fixed' ? `$${price}` : `$${record.rate}/1k` },
+        { 
+          title: t('type'), 
+          dataIndex: 'type', 
+          key: 'type', 
+          render: (type) => type === 'fixed' ? 'Fixed' : 'Quantity' 
+        },
+        { 
+          title: t('price'), 
+          dataIndex: 'price', 
+          key: 'price', 
+          render: (price, record) => {
+            if (record.type === 'fixed') {
+              return `$${price || 0}`;
+            }
+            return `$${record.rate || 0}/1k`;
+          }
+        },
         {
           title: t('actions'),
           key: 'actions',
           render: (_, record) => (
             <Space>
               <Button type="primary" size="small" icon={<i className="fas fa-edit"></i>} />
-              <Popconfirm title="Delete?" onConfirm={() => console.log('delete', record.id)}>
+              <Popconfirm 
+                title={t('confirm_delete')} 
+                onConfirm={() => console.log('delete', record.id)}
+              >
                 <Button danger size="small" icon={<i className="fas fa-trash"></i>} />
               </Popconfirm>
             </Space>
@@ -626,7 +683,13 @@
         <Card>
           <h1>{t('manage_services')}</h1>
           <Input placeholder={t('search')} style={{ marginBottom: '16px' }} />
-          <Table columns={columns} dataSource={services} rowKey="id" pagination={{ pageSize: 10 }} />
+          <Table 
+            columns={columns} 
+            dataSource={services || []} 
+            rowKey="id" 
+            pagination={{ pageSize: 10 }}
+            locale={{ emptyText: t('no_data') }}
+          />
         </Card>
       );
     }
@@ -634,7 +697,7 @@
     // ============================================
     // ADD SERVICE PAGE
     // ============================================
-    function AddServicePage({ onRefresh, editingService, setEditingService, t }) {
+    function AddServicePage({ onRefresh, t }) {
       const [form] = Form.useForm();
 
       return (
@@ -673,30 +736,37 @@
     // LOGS PAGE
     // ============================================
     function LogsPage({ logs, t }) {
+      if (!logs || logs.length === 0) {
+        return (
+          <Card>
+            <h1>{t('system_logs')}</h1>
+            <Empty description={t('no_data')} />
+          </Card>
+        );
+      }
+
       return (
         <Card>
           <h1>{t('system_logs')}</h1>
-          {logs && logs.length > 0 ? (
-            <div>
-              {logs.slice(0, 50).map((log, idx) => (
-                <div key={idx} style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', marginBottom: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <strong>{log.user || 'Unknown'}</strong>
-                    <span style={{ fontSize: '12px', color: '#999' }}>{new Date(log.time).toLocaleString()}</span>
-                  </div>
-                  <p style={{ margin: 0, color: '#666' }}>{log.action}</p>
+          <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+            {logs.slice(0, 50).map((log, idx) => (
+              <div key={idx} style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                  <strong>{log.user || 'Unknown'}</strong>
+                  <span style={{ fontSize: '12px', color: '#999' }}>
+                    {log.time ? new Date(log.time).toLocaleString() : '-'}
+                  </span>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <Empty description={t('no_data')} />
-          )}
+                <p style={{ margin: 0, color: '#666' }}>{log.action || '-'}</p>
+              </div>
+            ))}
+          </div>
         </Card>
       );
     }
 
     // ============================================
-    // RENDER APP
+    // RENDER
     // ============================================
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<DashboardApp />);
