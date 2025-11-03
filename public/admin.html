@@ -1,775 +1,1206 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en" dir="ltr" id="htmlElement">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Professional SMM Dashboard - Fully Responsive & Stable" />
-  <title>Dashboard - SMM Management System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title data-i18n="page_title">Dashboard - SMM</title>
 
-  <!-- Ant Design CSS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/5.13.0/antd.min.css" />
+  <!-- Tailwind CSS CDN with Dark Mode Support -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Font Awesome -->
+  <!-- Flowbite CSS CDN -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+
+  <!-- Font Awesome for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  <!-- Google Fonts -->
+  <!-- Google Fonts (Cairo for Arabic) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { 'sans': ['Cairo', 'sans-serif'] },
+        }
+      }
+    }
+
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+
+    const savedLang = localStorage.getItem('language') || 'en';
+    if (savedLang === 'ar') {
+      document.documentElement.lang = 'ar';
+      document.documentElement.dir = 'rtl';
+    }
+  </script>
 
   <style>
-    * { box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
-    body { 
-      font-family: 'Inter', 'Cairo', sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      background: #f5f5f5;
-    }
-
-    #root { width: 100%; height: 100%; }
-
-    body.dark-mode {
-      background: #141414;
-    }
-
-    /* RTL Support */
-    [dir="rtl"] .ant-layout-sider {
-      border-right: none;
-      border-left: 1px solid #f0f0f0;
-    }
-
-    [dir="rtl"] .ant-layout-sider.ant-layout-sider-dark {
-      border-left: 1px solid #434343;
-    }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: #f1f1f1;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: #888;
-      border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: #555;
-    }
-
-    body.dark-mode ::-webkit-scrollbar-track {
-      background: #262626;
-    }
-
-    body.dark-mode ::-webkit-scrollbar-thumb {
-      background: #595959;
-    }
-
-    /* Custom Cards */
-    .stat-card {
-      border-radius: 8px;
-      padding: 24px;
-      background: white;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 1px 6px rgba(0, 0, 0, 0.03), 0 1px 12px rgba(0, 0, 0, 0.12);
-      transition: all 0.3s ease;
-    }
-
-    .stat-card:hover {
-      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12);
-      transform: translateY(-2px);
-    }
-
-    body.dark-mode .stat-card {
-      background: #262626;
-    }
-
-    .stat-value {
-      font-size: 32px;
-      font-weight: 700;
-      color: #1890ff;
-      margin: 12px 0;
-    }
-
-    .stat-label {
-      font-size: 14px;
-      color: #8c8c8c;
-      font-weight: 500;
-    }
-
-    body.dark-mode .stat-label {
-      color: #a6a6a6;
-    }
-
-    /* Loading */
-    .spinner {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(0, 0, 0, 0.1);
-      border-radius: 50%;
-      border-top-color: #1890ff;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Tables */
-    .ant-table {
-      font-size: 14px;
-    }
-
-    .ant-table-thead > tr > th {
-      background: #fafafa;
-      font-weight: 600;
-    }
-
-    body.dark-mode .ant-table-thead > tr > th {
-      background: #1f1f1f;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .stat-card {
-        padding: 16px;
-      }
-
-      .stat-value {
-        font-size: 24px;
-      }
-
-      .ant-table {
-        font-size: 12px;
-      }
-    }
+    body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    .sidebar { transition: transform 0.3s ease-in-out; }
+    
+    /* الإصلاحات: تعديل موضع القائمة الجانبية وزر التبديل للغة وزر القائمة على الموبايل */
+    /* 1. القائمة الجانبية (Sidebar) */
+    [dir="rtl"] .sidebar { right: 0; left: auto; transform: translateX(100%); }
+    [dir="rtl"] .sidebar.open { transform: translateX(0); }
+    [dir="ltr"] .sidebar { left: 0; right: auto; transform: translateX(-100%); }
+    [dir="ltr"] .sidebar.open { transform: translateX(0); }
+    
+    /* 2. زر القائمة (Mobile Menu Button) */
+    [dir="rtl"] #mobileMenuBtn { right: 1rem; left: auto; }
+    [dir="ltr"] #mobileMenuBtn { left: 1rem; right: auto; }
+    
+    /* 3. زر تبديل اللغة (Language Toggle Button) */
+    [dir="rtl"] #langToggleBtn { left: 1rem; right: auto; } /* تم تغيير الموضع ليتناسب مع زر القائمة */
+    [dir="ltr"] #langToggleBtn { right: 1rem; left: auto; } /* تم تغيير الموضع ليتناسب مع زر القائمة */
+    
+    /* 4. إزاحة المحتوى الرئيسي (Main Content) */
+    [dir="rtl"] .md\:ms-64 { margin-right: 16rem; margin-left: 0; }
+    [dir="ltr"] .md\:ms-64 { margin-left: 16rem; margin-right: 0; }
+    
+    /* 5. صندوق التنبيهات (Alert Box) */
+    [dir="rtl"] #alert-box { left: 1rem; right: auto; }
+    [dir="ltr"] #alert-box { right: 1rem; left: auto; }
+    
+    .logs-box { max-height: 400px; overflow-y: auto; }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* ✅ إصلاح تكدس الأقسام على الموبايل */
+    .content-section { display: none !important; }
+    .content-section.active { display: block !important; }
   </style>
 </head>
-<body>
-  <div id="root"></div>
+<body class="bg-gray-50 dark:bg-gray-900">
 
-  <!-- React & ReactDOM -->
-  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/react.production.min.js"></script>
-  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/react-dom.production.min.js"></script>
+  <!-- Token Check Loading Screen -->
+  <div id="tokenCheck" class="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
+    <div class="text-center">
+      <div class="inline-block"><i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i></div>
+      <p class="text-gray-600 dark:text-gray-400 mt-4" data-i18n="checking_session">Checking session...</p>
+    </div>
+  </div>
 
-  <!-- Babel -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <!-- Mobile Menu Toggle Button -->
+  <button id="mobileMenuBtn" class="fixed top-4 md:hidden z-40 p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition" aria-label="Toggle menu" title="Toggle menu">
+    <i class="fas fa-bars fa-lg"></i>
+  </button>
 
-  <!-- Ant Design -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/antd/5.13.0/antd.min.js"></script>
+  <!-- Language Toggle Button -->
+  <button id="langToggleBtn" class="fixed top-4 md:top-6 z-40 p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition" aria-label="Toggle language" title="Toggle language">
+    <span id="langBadge" class="text-xs font-bold">EN</span>
+  </button>
 
-  <!-- Main App -->
-  <script type="text/babel">
-    const { useState, useEffect, useCallback, useMemo } = React;
-    const { Layout, Menu, Button, Table, Form, Input, Select, Modal, message, Spin, Card, Row, Col, Tag, Space, Badge, Avatar, Empty, Popconfirm, Tooltip, Drawer, Divider } = antd;
-    const { Header, Sider, Content } = Layout;
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar fixed top-0 z-30 w-64 h-screen bg-white dark:bg-gray-800 shadow-lg transform md:translate-x-0 transition-transform duration-300">
+    <div class="h-full px-3 py-4 overflow-y-auto flex flex-col">
+      <a href="#" class="flex items-center ps-2.5 mb-5 pb-4 border-b border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-lg">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white ms-3" data-i18n="dashboard">Dashboard</span>
+      </a>
 
+      <ul class="space-y-2 font-medium flex-1">
+        <li><small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400" data-i18n="main">Main</small></li>
+        <li>
+          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item active" data-section="dashboard" aria-label="Dashboard">
+            <i class="fas fa-tachometer-alt text-gray-500 dark:text-gray-400"></i>
+            <span class="ms-3" data-i18n="dashboard">Dashboard</span>
+          </a>
+        </li>
+
+        <li><small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4" data-i18n="content_management">Content Management</small></li>
+        <li>
+          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 nav-item" data-section="orders" aria-label="Orders">
+            <i class="fas fa-shopping-cart text-gray-500 dark:text-gray-400"></i>
+            <span class="flex-1 ms-3 whitespace-nowrap" data-i18n="orders">Orders</span>
+            <span class="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300" id="orders-badge">0</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 nav-item" data-section="services" aria-label="Services">
+            <i class="fas fa-cogs text-gray-500 dark:text-gray-400"></i>
+            <span class="flex-1 ms-3 whitespace-nowrap" data-i18n="services">Services</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 nav-item" data-section="add-service" aria-label="Add Service">
+            <i class="fas fa-plus-circle text-gray-500 dark:text-gray-400"></i>
+            <span class="flex-1 ms-3 whitespace-nowrap" data-i18n="add_service">Add Service</span>
+          </a>
+        </li>
+
+        <li><small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4" data-i18n="system">System</small></li>
+        <li>
+          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 nav-item" data-section="logs" aria-label="Logs">
+            <i class="fas fa-history text-gray-500 dark:text-gray-400"></i>
+            <span class="flex-1 ms-3 whitespace-nowrap" data-i18n="logs">Logs</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="pt-4 mt-auto space-y-2 border-t border-gray-200 dark:border-gray-700">
+        <div class="flex items-center p-2">
+          <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-user text-sm"></i>
+          </div>
+          <div class="ms-3">
+            <p class="text-sm font-medium text-gray-900 dark:text-white" data-i18n="admin">Admin</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400" data-i18n="system_manager">System Manager</p>
+          </div>
+        </div>
+        <button id="logoutBtn" class="w-full flex items-center justify-center p-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition" aria-label="Logout">
+          <i class="fas fa-sign-out-alt me-2"></i>
+          <span data-i18n="logout">Logout</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Mobile Overlay -->
+  <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden hidden"></div>
+
+  <!-- Main Content -->
+  <div class="md:ms-64">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-sm p-4 mb-6">
+      <h1 class="page-title text-2xl font-bold text-gray-800 dark:text-white" data-i18n="dashboard">Dashboard</h1>
+    </header>
+
+    <!-- Content Body -->
+    <div class="p-4 md:p-6 space-y-6">
+
+      <!-- Dashboard Section -->
+      <section id="dashboard" class="content-section">
+        <div class="mb-6">
+          <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
+            <i class="fas fa-chart-bar me-2"></i><span data-i18n="overview">Overview</span>
+          </h2>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="services">Services</p>
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-services">0</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-cogs text-blue-600 dark:text-blue-300 text-lg"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="total_orders">Total Orders</p>
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-orders">0</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-shopping-cart text-green-600 dark:text-green-300 text-lg"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="pending_orders">Pending Orders</p>
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white" id="pending-orders">0</p>
+                </div>
+                <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-hourglass-half text-yellow-600 dark:text-yellow-300 text-lg"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="completed_orders">Completed Orders</p>
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white" id="completed-orders">0</p>
+                </div>
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-check-circle text-red-600 dark:text-red-300 text-lg"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts (Placeholder) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4" data-i18n="orders_by_status">Orders by Status</h3>
+            <div id="orders-status-chart" class="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400" data-i18n="loading_chart">Loading chart...</div>
+          </div>
+          <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4" data-i18n="orders_by_service">Orders by Service</h3>
+            <div id="orders-service-chart" class="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400" data-i18n="loading_chart">Loading chart...</div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Orders Section -->
+      <section id="orders" class="content-section">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
+          <i class="fas fa-shopping-cart me-2"></i><span data-i18n="orders">Orders</span>
+        </h2>
+        
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+          <div class="flex flex-col md:flex-row justify-between items-center mb-4 space-y-3 md:space-y-0">
+            <div class="relative w-full md:w-64">
+              <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                <i class="fas fa-search text-gray-500 dark:text-gray-400"></i>
+              </div>
+              <input type="text" id="searchOrders" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search orders..." data-i18n-placeholder="search_orders">
+            </div>
+            <div class="flex space-x-3 rtl:space-x-reverse">
+              <button id="refreshBtn" class="flex items-center justify-center text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800" aria-label="Refresh">
+                <i class="fas fa-sync-alt me-2"></i><span data-i18n="refresh">Refresh</span>
+              </button>
+              <button id="exportOrders" class="flex items-center justify-center text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none dark:focus:ring-green-800" aria-label="Export CSV">
+                <i class="fas fa-file-csv me-2"></i><span data-i18n="export_csv">Export CSV</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+              <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                <tr>
+                  <th scope="col" class="px-6 py-3" data-i18n="id">ID</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="service">Service</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="link">Link</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="quantity">Quantity</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="status">Status</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="created_at">Created At</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="orders-table-body">
+                <!-- Orders will be injected here -->
+                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                  <td colspan="7" class="px-6 py-4 text-center" data-i18n="no_orders">No orders found.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Services Section -->
+      <section id="services" class="content-section">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
+          <i class="fas fa-cogs me-2"></i><span data-i18n="services">Services</span>
+        </h2>
+        
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+          <div class="flex flex-col md:flex-row justify-between items-center mb-4 space-y-3 md:space-y-0">
+            <div class="relative w-full md:w-64">
+              <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                <i class="fas fa-search text-gray-500 dark:text-gray-400"></i>
+              </div>
+              <input type="text" id="searchServices" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search services..." data-i18n-placeholder="search_services">
+            </div>
+            <div class="flex space-x-3 rtl:space-x-reverse">
+              <button id="refreshBtnServices" class="flex items-center justify-center text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800" aria-label="Refresh">
+                <i class="fas fa-sync-alt me-2"></i><span data-i18n="refresh">Refresh</span>
+              </button>
+              <button id="exportServices" class="flex items-center justify-center text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none dark:focus:ring-green-800" aria-label="Export CSV">
+                <i class="fas fa-file-csv me-2"></i><span data-i18n="export_csv">Export CSV</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+              <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                <tr>
+                  <th scope="col" class="px-6 py-3" data-i18n="id">ID</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="name">Name</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="category">Category</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="type">Type</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="price_rate">Price/Rate</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="min_max">Min/Max</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="services-table-body">
+                <!-- Services will be injected here -->
+                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                  <td colspan="7" class="px-6 py-4 text-center" data-i18n="no_services">No services found.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Add Service Section -->
+      <section id="add-service" class="content-section">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
+          <i class="fas fa-plus-circle me-2"></i><span data-i18n="add_service">Add Service</span>
+        </h2>
+        
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <form id="serviceForm" class="space-y-4">
+            <input type="hidden" id="serviceIdInput" value="">
+            
+            <div>
+              <label for="serviceName" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" data-i18n="service_name">Service Name</label>
+              <input type="text" id="serviceName" name="name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required data-i18n-placeholder="enter_service_name">
+            </div>
+
+            <div>
+              <label for="serviceCategory" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" data-i18n="category">Category</label>
+              <input type="text" id="serviceCategory" name="category" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required data-i18n-placeholder="enter_category">
+            </div>
+
+            <div>
+              <label for="serviceType" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" data-i18n="service_type">Service Type</label>
+              <select id="serviceType" name="type" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required>
+                <option value="fixed" data-i18n="fixed_price">Fixed Price</option>
+                <option value="rate" data-i18n="rate_based">Rate Based</option>
+              </select>
+            </div>
+
+            <div id="fixedPriceFields" class="space-y-4">
+              <div>
+                <label for="servicePrice" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" data-i18n="price">Price</label>
+                <input type="number" step="0.01" id="servicePrice" name="price" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" data-i18n-placeholder="enter_price">
+              </div>
+            </div>
+
+            <div id="rateBasedFields" class="grid grid-cols-1 md:grid-cols-3 gap-4 hidden">
+              <div>
+                <label for="serviceRate" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" data-i18n="rate">Rate</label>
+                <input type="number" step="0.001" id="serviceRate" name="rate" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" data-i18n-placeholder="enter_rate">
+              </div>
+              <div>
+                <label for="serviceMin" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" data-i18n="min_quantity">Min Quantity</label>
+                <input type="number" id="serviceMin" name="min" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" data-i18n-placeholder="enter_min_quantity">
+              </div>
+              <div>
+                <label for="serviceMax" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" data-i18n="max_quantity">Max Quantity</label>
+                <input type="number" id="serviceMax" name="max" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" data-i18n-placeholder="enter_max_quantity">
+              </div>
+            </div>
+
+            <button type="submit" class="w-full flex items-center justify-center text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800" id="submitServiceBtn">
+              <i class="fas fa-save me-2"></i><span data-i18n="save_service">Save Service</span>
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Logs Section -->
+      <section id="logs" class="content-section">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
+          <i class="fas fa-history me-2"></i><span data-i18n="logs">Logs</span>
+        </h2>
+        
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <div class="logs-box bg-gray-100 dark:bg-gray-700 p-4 rounded-lg text-sm text-gray-800 dark:text-gray-200 font-mono">
+            <pre id="logs-content" class="whitespace-pre-wrap"></pre>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Alert Box -->
+  <div id="alert-box" class="fixed top-4 z-50 w-80 p-4 text-sm rounded-lg shadow-lg hidden transition-opacity duration-300" role="alert">
+    <div class="flex items-center">
+      <i id="alert-icon" class="me-2"></i>
+      <span id="alert-message" class="font-medium"></span>
+    </div>
+  </div>
+
+  <!-- Flowbite JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+
+  <!-- Custom JS -->
+  <script>
     // ============================================
-    // TRANSLATIONS
+    // CONFIG & UTILS
     // ============================================
+    const API_BASE = ''; // Base URL for API calls
+    let allServicesData = [];
+    let allOrdersData = [];
+    let servicesCache = null;
+    let ordersCache = null;
+    let logsCache = null;
+    
     const translations = {
       en: {
-        'dashboard': 'Dashboard',
-        'orders': 'Orders',
-        'services': 'Services',
-        'add_service': 'Add Service',
-        'logs': 'Logs',
-        'logout': 'Logout',
-        'admin': 'Admin',
-        'system_manager': 'System Manager',
-        'overview': 'Overview',
-        'total_services': 'Total Services',
-        'total_orders': 'Total Orders',
-        'pending_orders': 'Pending Orders',
-        'avg_price': 'Avg Price',
-        'control_tools': 'Control Tools',
-        'refresh_data': 'Refresh Data',
-        'export_services': 'Export Services (CSV)',
-        'export_orders': 'Export Orders (CSV)',
-        'manage_orders': 'Manage Orders',
-        'manage_services': 'Manage Services',
-        'add_edit_service': 'Add / Edit Service',
-        'system_logs': 'System Logs',
-        'search': 'Search',
-        'id': 'ID',
-        'service': 'Service',
-        'link': 'Link',
-        'qty': 'Qty',
-        'price': 'Price',
-        'status': 'Status',
-        'actions': 'Actions',
-        'name': 'Name',
-        'category': 'Category',
-        'type': 'Type',
-        'service_name': 'Service Name',
-        'service_type': 'Service Type',
-        'quantity_service': 'Quantity Service (per 1000)',
-        'fixed_price': 'Fixed Price',
-        'price_per_1000': 'Price per 1000',
-        'min_quantity': 'Min Quantity',
-        'max_quantity': 'Max Quantity',
-        'save': 'Save',
-        'cancel': 'Cancel',
-        'delete': 'Delete',
-        'edit': 'Edit',
-        'data_refreshed': 'Data refreshed successfully',
-        'order_status_updated': 'Order status updated successfully',
-        'session_expired': 'Session expired. Please login again.',
-        'failed_to_update': 'Failed to update',
-        'failed_to_delete': 'Failed to delete',
-        'no_data': 'No data available',
-        'loading': 'Loading...',
-        'pending': 'Pending',
-        'processing': 'Processing',
-        'completed': 'Completed',
-        'rejected': 'Rejected',
-        'confirm_delete': 'Are you sure you want to delete this?',
-        'confirm_logout': 'Are you sure you want to logout?',
+        page_title: "Dashboard - SMM",
+        dashboard: "Dashboard",
+        main: "Main",
+        content_management: "Content Management",
+        orders: "Orders",
+        services: "Services",
+        add_service: "Add Service",
+        system: "System",
+        logs: "Logs",
+        admin: "Admin",
+        system_manager: "System Manager",
+        logout: "Logout",
+        overview: "Overview",
+        total_orders: "Total Orders",
+        pending_orders: "Pending Orders",
+        completed_orders: "Completed Orders",
+        orders_by_status: "Orders by Status",
+        orders_by_service: "Orders by Service",
+        loading_chart: "Loading chart...",
+        search_orders: "Search orders...",
+        search_services: "Search services...",
+        refresh: "Refresh",
+        export_csv: "Export CSV",
+        id: "ID",
+        link: "Link",
+        quantity: "Quantity",
+        status: "Status",
+        created_at: "Created At",
+        actions: "Actions",
+        no_orders: "No orders found.",
+        name: "Name",
+        category: "Category",
+        type: "Type",
+        price_rate: "Price/Rate",
+        min_max: "Min/Max",
+        no_services: "No services found.",
+        service_name: "Service Name",
+        enter_service_name: "Enter service name",
+        enter_category: "Enter category",
+        service_type: "Service Type",
+        fixed_price: "Fixed Price",
+        rate_based: "Rate Based",
+        price: "Price",
+        enter_price: "Enter price",
+        rate: "Rate",
+        enter_rate: "Enter rate",
+        min_quantity: "Min Quantity",
+        enter_min_quantity: "Enter min quantity",
+        max_quantity: "Max Quantity",
+        enter_max_quantity: "Enter max quantity",
+        save_service: "Save Service",
+        
+        // Alerts
+        checking_session: "Checking session...",
+        data_refreshed: "Data refreshed successfully.",
+        failed_to_update: "Failed to update data.",
+        failed_to_delete: "Failed to delete item.",
+        login_success: "Login successful. Redirecting...",
+        login_failed: "Login failed. Please check your credentials.",
+        
+        // Order Statuses
+        status_pending: "Pending",
+        status_processing: "Processing",
+        status_completed: "Completed",
+        status_cancelled: "Cancelled",
+        status_error: "Error",
       },
-      ar: {
-        'dashboard': 'لوحة التحكم',
-        'orders': 'الطلبات',
-        'services': 'الخدمات',
-        'add_service': 'إضافة خدمة',
-        'logs': 'السجلات',
-        'logout': 'تسجيل الخروج',
-        'admin': 'المسؤول',
-        'system_manager': 'مدير النظام',
-        'overview': 'نظرة عامة',
-        'total_services': 'إجمالي الخدمات',
-        'total_orders': 'إجمالي الطلبات',
-        'pending_orders': 'الطلبات المعلقة',
-        'avg_price': 'متوسط السعر',
-        'control_tools': 'أدوات التحكم',
-        'refresh_data': 'تحديث البيانات',
-        'export_services': 'تصدير الخدمات (CSV)',
-        'export_orders': 'تصدير الطلبات (CSV)',
-        'manage_orders': 'إدارة الطلبات',
-        'manage_services': 'إدارة الخدمات',
-        'add_edit_service': 'إضافة / تعديل خدمة',
-        'system_logs': 'سجلات النظام',
-        'search': 'بحث',
-        'id': 'المعرّف',
-        'service': 'الخدمة',
-        'link': 'الرابط',
-        'qty': 'الكمية',
-        'price': 'السعر',
-        'status': 'الحالة',
-        'actions': 'الإجراءات',
-        'name': 'الاسم',
-        'category': 'الفئة',
-        'type': 'النوع',
-        'service_name': 'اسم الخدمة',
-        'service_type': 'نوع الخدمة',
-        'quantity_service': 'خدمة كمية (لكل 1000)',
-        'fixed_price': 'سعر ثابت',
-        'price_per_1000': 'السعر لكل 1000',
-        'min_quantity': 'الحد الأدنى للكمية',
-        'max_quantity': 'الحد الأقصى للكمية',
-        'save': 'حفظ',
-        'cancel': 'إلغاء',
-        'delete': 'حذف',
-        'edit': 'تعديل',
-        'data_refreshed': 'تم تحديث البيانات بنجاح',
-        'order_status_updated': 'تم تحديث حالة الطلب بنجاح',
-        'session_expired': 'انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.',
-        'failed_to_update': 'فشل التحديث',
-        'failed_to_delete': 'فشل الحذف',
-        'no_data': 'لا توجد بيانات',
-        'loading': 'جاري التحميل...',
-        'pending': 'معلق',
-        'processing': 'قيد المعالجة',
-        'completed': 'مكتمل',
-        'rejected': 'مرفوض',
-        'confirm_delete': 'هل أنت متأكد من حذف هذا العنصر؟',
-        'confirm_logout': 'هل أنت متأكد من تسجيل الخروج؟',
+     ar: {
+        page_title: "لوحة التحكم - SMM",
+        dashboard: "لوحة التحكم",
+        main: "الرئيسية",
+        content_management: "إدارة المحتوى",
+        orders: "الطلبات",
+        services: "الخدمات",
+        add_service: "إضافة خدمة",
+        system: "النظام",
+        logs: "السجلات",
+        admin: "المشرف",
+        system_manager: "مدير النظام",
+        logout: "تسجيل الخروج",
+        overview: "نظرة عامة",
+        total_orders: "إجمالي الطلبات",
+        pending_orders: "الطلبات المعلقة",
+        completed_orders: "الطلبات المكتملة",
+        orders_by_status: "الطلبات حسب الحالة",
+        orders_by_service: "الطلبات حسب الخدمة",
+        loading_chart: "جاري تحميل الرسم البياني...",
+        search_orders: "ابحث عن الطلبات...",
+        search_services: "ابحث عن الخدمات...",
+        refresh: "تحديث",
+        export_csv: "تصدير CSV",
+        id: "الرقم",
+        link: "الرابط",
+        quantity: "الكمية",
+        status: "الحالة",
+        created_at: "تاريخ الإنشاء",
+        actions: "الإجراءات",
+        no_orders: "لم يتم العثور على طلبات.",
+        name: "الاسم",
+        category: "الفئة",
+        type: "النوع",
+        price_rate: "السعر/المعدل",
+        min_max: "الحد الأدنى/الأقصى",
+        no_services: "لم يتم العثور على خدمات.",
+        service_name: "اسم الخدمة",
+        enter_service_name: "أدخل اسم الخدمة",
+        enter_category: "أدخل الفئة",
+        service_type: "نوع الخدمة",
+        fixed_price: "سعر ثابت",
+        rate_based: "معدل",
+        price: "السعر",
+        enter_price: "أدخل السعر",
+        rate: "المعدل",
+        enter_rate: "أدخل المعدل",
+        min_quantity: "الحد الأدنى للكمية",
+        enter_min_quantity: "أدخل الحد الأدنى للكمية",
+        max_quantity: "الحد الأقصى للكمية",
+        enter_max_quantity: "أدخل الحد الأقصى للكمية",
+        save_service: "حفظ الخدمة",
+        
+        // Alerts
+        checking_session: "جاري التحقق من الجلسة...",
+        data_refreshed: "تم تحديث البيانات بنجاح.",
+        failed_to_update: "فشل تحديث البيانات.",
+        failed_to_delete: "فشل حذف العنصر.",
+        login_success: "تم تسجيل الدخول بنجاح. جاري التحويل...",
+        login_failed: "فشل تسجيل الدخول. يرجى التحقق من بيانات الاعتماد.",
+        
+        // Order Statuses
+        status_pending: "معلق",
+        status_processing: "قيد المعالجة",
+        status_completed: "مكتمل",
+        status_cancelled: "ملغي",
+        status_error: "خطأ",
       }
     };
 
-    // ============================================
-    // MAIN APP COMPONENT
-    // ============================================
-    function DashboardApp() {
-      const [lang, setLang] = useState(localStorage.getItem('language') || 'en');
-      const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark' || window.matchMedia('(prefers-color-scheme: dark)').matches);
-      const [collapsed, setCollapsed] = useState(false);
-      const [currentPage, setCurrentPage] = useState('dashboard');
-      const [loading, setLoading] = useState(false);
-      const [stats, setStats] = useState({ totalServices: 0, totalOrders: 0, pendingOrders: 0, avgPrice: 0 });
-      const [services, setServices] = useState([]);
-      const [orders, setOrders] = useState([]);
-      const [logs, setLogs] = useState([]);
-      const [form] = Form.useForm();
-      const [editingService, setEditingService] = useState(null);
-
-      const token = localStorage.getItem('authToken');
-
-      // Helper function
-      const t = (key) => translations[lang][key] || key;
-
-      // Update HTML
-      useEffect(() => {
-        const html = document.documentElement;
-        html.lang = lang;
-        html.dir = lang === 'ar' ? 'rtl' : 'ltr';
-        localStorage.setItem('language', lang);
-        document.body.classList.toggle('dark-mode', darkMode);
-        localStorage.setItem('theme', darkMode ? 'dark' : 'light');
-      }, [lang, darkMode]);
-
-      // Check token
-      useEffect(() => {
-        if (!token) {
-          window.location.href = '/login.html';
-        }
-      }, [token]);
-
-      // Fetch data
-      const fetchData = useCallback(async () => {
-        setLoading(true);
-        try {
-          const headers = { 'Content-Type': 'application/json', 'x-auth-token': token };
-
-          const [statsRes, servicesRes, ordersRes, logsRes] = await Promise.all([
-            fetch('/api/stats', { headers }).catch(() => null),
-            fetch('/api/services', { headers }).catch(() => null),
-            fetch('/api/orders', { headers }).catch(() => null),
-            fetch('/api/logs', { headers }).catch(() => null)
-          ]);
-
-          if (statsRes && statsRes.status === 401) {
-            message.error(t('session_expired'));
-            localStorage.removeItem('authToken');
-            setTimeout(() => { window.location.href = '/login.html'; }, 1500);
-            return;
-          }
-    const statsData = statsRes ? await statsRes.json() : {};
-          const servicesData = servicesRes ? await servicesRes.json() : [];
-          const ordersData = ordersRes ? await ordersRes.json() : [];
-          const logsData = logsRes ? await logsRes.json() : [];
-
-          setStats(statsData || {});
-          setServices(Array.isArray(servicesData) ? servicesData : []);
-          setOrders(Array.isArray(ordersData) ? ordersData : []);
-          setLogs(Array.isArray(logsData) ? logsData : []);
-          message.success(t('data_refreshed'));
-        } catch (error) {
-          console.error('Error fetching data:', error);
-          message.error(t('failed_to_update'));
-        } finally {
-          setLoading(false);
-        }
-      }, [token, t]);
-
-      // Initial load
-      useEffect(() => {
-        fetchData();
-      }, [fetchData]);
-
-      // Logout
-      const handleLogout = async () => {
-        Modal.confirm({
-          title: t('confirm_logout'),
-          onOk: async () => {
-            try {
-              await fetch('/api/auth/logout', {
-                method: 'POST',
-                headers: { 'x-auth-token': token }
-              }).catch(() => null);
-            } catch (error) {
-              console.log('Logout error:', error);
-            }
-            localStorage.removeItem('authToken');
-            message.success(t('data_refreshed'));
-            setTimeout(() => { window.location.href = '/login.html'; }, 1000);
-          }
-        });
-      };
-
-      // Menu items
-      const menuItems = [
-        {
-          key: 'dashboard',
-          icon: <i className="fas fa-tachometer-alt"></i>,
-          label: t('dashboard'),
-        },
-        {
-          key: 'orders',
-          icon: <i className="fas fa-shopping-cart"></i>,
-          label: t('orders'),
-        },
-        {
-          key: 'services',
-          icon: <i className="fas fa-cogs"></i>,
-          label: t('services'),
-        },
-        {
-          key: 'add-service',
-          icon: <i className="fas fa-plus-circle"></i>,
-          label: t('add_service'),
-        },
-        {
-          key: 'logs',
-          icon: <i className="fas fa-history"></i>,
-          label: t('logs'),
-        },
-      ];
-
-      return (
-        <Layout style={{ minHeight: '100vh' }}>
-          {/* Sidebar */}
-          <Sider
-            trigger={null}
-            collapsible
-            collapsed={collapsed}
-            width={256}
-            theme={darkMode ? 'dark' : 'light'}
-            breakpoint="md"
-            onBreakpoint={(broken) => setCollapsed(broken)}
-            style={{
-              overflow: 'auto',
-              height: '100vh',
-              position: 'fixed',
-              left: lang === 'ar' ? 'auto' : 0,
-              right: lang === 'ar' ? 0 : 'auto',
-              top: 0,
-              bottom: 0,
-            }}
-          >
-            <div style={{ padding: '16px', textAlign: 'center', borderBottom: '1px solid #f0f0f0' }}>
-              <Avatar size={48} icon={<i className="fas fa-chart-line"></i>} style={{ backgroundColor: '#1890ff' }} />
-              {!collapsed && <div style={{ marginTop: '12px', fontWeight: 'bold' }}>SMM Dashboard</div>}
-            </div>
-            <Menu
-              theme={darkMode ? 'dark' : 'light'}
-              mode="inline"
-              selectedKeys={[currentPage]}
-              items={menuItems}
-              onClick={(e) => setCurrentPage(e.key)}
-            />
-            <div style={{ padding: '16px', borderTop: '1px solid #f0f0f0', marginTop: 'auto' }}>
-              <Button block danger onClick={handleLogout} icon={<i className="fas fa-sign-out-alt"></i>}>
-                {!collapsed && t('logout')}
-              </Button>
-            </div>
-          </Sider>
-
-          {/* Main Layout */}
-          <Layout style={{ marginLeft: lang === 'ar' ? 0 : (collapsed ? 80 : 256), marginRight: lang === 'ar' ? (collapsed ? 80 : 256) : 0, transition: 'all 0.2s' }}>
-            {/* Header */}
-            <Header style={{ background: darkMode ? '#141414' : '#fff', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', position: 'sticky', top: 0, zIndex: 99 }}>
-              <Button
-                type="text"
-                icon={<i className="fas fa-bars"></i>}
-                onClick={() => setCollapsed(!collapsed)}
-              />
-              <Space>
-                <Button
-                  type="text"
-                  onClick={() => setLang(lang === 'en' ? 'ar' : 'en')}
-                >
-                  {lang === 'en' ? '🇸🇦 AR' : '🇺🇸 EN'}
-                </Button>
-                <Button
-                  type="text"
-                  icon={darkMode ? <i className="fas fa-sun"></i> : <i className="fas fa-moon"></i>}
-                  onClick={() => setDarkMode(!darkMode)}
-                />
-              </Space>
-            </Header>
-
-            {/* Content */}
-            <Content style={{ padding: '24px', background: darkMode ? '#141414' : '#f5f5f5', minHeight: 'calc(100vh - 64px)' }}>
-              <Spin spinning={loading} tip={t('loading')}>
-                {currentPage === 'dashboard' && <DashboardPage stats={stats} onRefresh={fetchData} t={t} />}
-                {currentPage === 'orders' && <OrdersPage orders={orders} services={services} t={t} />}
-                {currentPage === 'services' && <ServicesPage services={services} onRefresh={fetchData} t={t} />}
-                {currentPage === 'add-service' && <AddServicePage onRefresh={fetchData} t={t} />}
-                {currentPage === 'logs' && <LogsPage logs={logs} t={t} />}
-              </Spin>
-            </Content>
-          </Layout>
-        </Layout>
-      );
-    }
-
-    // ============================================
-    // DASHBOARD PAGE
-    // ============================================
-    function DashboardPage({ stats, onRefresh, t }) {
-      return (
-        <div>
-          <h1 style={{ marginBottom: '24px' }}>{t('overview')}</h1>
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={12} lg={6}>
-              <Card className="stat-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div className="stat-label">{t('total_services')}</div>
-                    <div className="stat-value">{stats.totalServices || 0}</div>
-                  </div>
-                  <Avatar size={64} icon={<i className="fas fa-cogs"></i>} style={{ backgroundColor: '#1890ff' }} />
-                </div>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <Card className="stat-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div className="stat-label">{t('total_orders')}</div>
-                    <div className="stat-value">{stats.totalOrders || 0}</div>
-                  </div>
-                  <Avatar size={64} icon={<i className="fas fa-shopping-cart"></i>} style={{ backgroundColor: '#52c41a' }} />
-                </div>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <Card className="stat-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div className="stat-label">{t('pending_orders')}</div>
-                    <div className="stat-value">{stats.pendingOrders || 0}</div>
-                  </div>
-                  <Avatar size={64} icon={<i className="fas fa-hourglass-half"></i>} style={{ backgroundColor: '#faad14' }} />
-                </div>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <Card className="stat-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div className="stat-label">{t('avg_price')}</div>
-                    <div className="stat-value">${(stats.avgPrice || 0).toFixed(2)}</div>
-                  </div>
-                  <Avatar size={64} icon={<i className="fas fa-dollar-sign"></i>} style={{ backgroundColor: '#722ed1' }} />
-                </div>
-              </Card>
-            </Col>
-          </Row>
-
-          <Card style={{ marginTop: '24px' }}>
-            <h2>{t('control_tools')}</h2>
-            <Space wrap>
-              <Button type="primary" icon={<i className="fas fa-sync-alt"></i>} onClick={onRefresh}>
-                {t('refresh_data')}
-              </Button>
-              <Button icon={<i className="fas fa-download"></i>}>
-                {t('export_services')}
-              </Button>
-              <Button icon={<i className="fas fa-download"></i>}>
-                {t('export_orders')}
-              </Button>
-            </Space>
-          </Card>
-        </div>
-      );
-    }
-
-    // ============================================
-    // ORDERS PAGE
-    // ============================================
-    function OrdersPage({ orders, services, t }) {
-      const serviceMap = useMemo(() => {
-        const map = {};
-        (services || []).forEach(s => {
-          if (s && s.id) map[s.id] = s;
-        });
-        return map;
-      }, [services]);
-
-      const columns = [
-        { title: t('id'), dataIndex: 'id', key: 'id', width: 80 },
-        { 
-          title: t('service'), 
-          dataIndex: 'serviceId', 
-          key: 'serviceId', 
-          render: (serviceId) => {
-            const service = serviceMap[serviceId];
-            return service ? service.name : '-';
-          }
-        },
-        { 
-          title: t('link'), 
-          dataIndex: 'link', 
-          key: 'link', 
-          render: (link) => {
-            if (link && typeof link === 'string') {
-              return <a href={link} target="_blank" rel="noopener">{link.substring(0, 30)}...</a>;
-            }
-            return '-';
-          }
-        },
-        { title: t('qty'), dataIndex: 'quantity', key: 'quantity', width: 80 },
-        { 
-          title: t('price'), 
-          dataIndex: 'price', 
-          key: 'price', 
-          render: (price) => `$${(price || 0).toFixed(2)}` 
-        },
-        {
-          title: t('status'),
-          dataIndex: 'status',
-          key: 'status',
-          render: (status) => {
-            const colors = { pending: 'gold', processing: 'blue', completed: 'green', rejected: 'red' };
-            return <Tag color={colors[status] || 'default'}>{status}</Tag>;
-          }
-        },
-      ];
-
-      return (
-        <Card>
-          <h1>{t('manage_orders')}</h1>
-          <Input placeholder={t('search')} style={{ marginBottom: '16px' }} />
-          <Table 
-            columns={columns} 
-            dataSource={orders || []} 
-            rowKey="id" 
-            pagination={{ pageSize: 10 }}
-            locale={{ emptyText: t('no_data') }}
-          />
-        </Card>
-      );
-    }
-
-    // ============================================
-    // SERVICES PAGE
-    // ============================================
-    function ServicesPage({ services, onRefresh, t }) {
-      const columns = [
-        { title: t('id'), dataIndex: 'id', key: 'id', width: 80 },
-        { title: t('name'), dataIndex: 'name', key: 'name' },
-        { title: t('category'), dataIndex: 'category', key: 'category' },
-        { 
-          title: t('type'), 
-          dataIndex: 'type', 
-          key: 'type', 
-          render: (type) => type === 'fixed' ? 'Fixed' : 'Quantity' 
-        },
-        { 
-          title: t('price'), 
-          dataIndex: 'price', 
-          key: 'price', 
-          render: (price, record) => {
-            if (record.type === 'fixed') {
-              return `$${price || 0}`;
-            }
-            return `$${record.rate || 0}/1k`;
-          }
-        },
-        {
-          title: t('actions'),
-          key: 'actions',
-          render: (_, record) => (
-            <Space>
-              <Button type="primary" size="small" icon={<i className="fas fa-edit"></i>} />
-              <Popconfirm 
-                title={t('confirm_delete')} 
-                onConfirm={() => console.log('delete', record.id)}
-              >
-                <Button danger size="small" icon={<i className="fas fa-trash"></i>} />
-              </Popconfirm>
-            </Space>
-          ),
-        },
-      ];
-
-      return (
-        <Card>
-          <h1>{t('manage_services')}</h1>
-          <Input placeholder={t('search')} style={{ marginBottom: '16px' }} />
-          <Table 
-            columns={columns} 
-            dataSource={services || []} 
-            rowKey="id" 
-            pagination={{ pageSize: 10 }}
-            locale={{ emptyText: t('no_data') }}
-          />
-        </Card>
-      );
-    }
-
-    // ============================================
-    // ADD SERVICE PAGE
-    // ============================================
-    function AddServicePage({ onRefresh, t }) {
-      const [form] = Form.useForm();
-
-      return (
-        <Card>
-          <h1>{t('add_edit_service')}</h1>
-          <Form layout="vertical" form={form}>
-            <Form.Item label={t('service_name')} name="name" rules={[{ required: true }]}>
-              <Input />
-            </Form.Item>
-            <Form.Item label={t('category')} name="category" rules={[{ required: true }]}>
-              <Input />
-            </Form.Item>
-            <Form.Item label={t('service_type')} name="type" rules={[{ required: true }]}>
-              <Select options={[
-                { label: t('quantity_service'), value: 'quantity' },
-                { label: t('fixed_price'), value: 'fixed' }
-              ]} />
-            </Form.Item>
-            <Form.Item label={t('price_per_1000')} name="rate" rules={[{ required: true }]}>
-              <Input type="number" step="0.01" />
-            </Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit" icon={<i className="fas fa-save"></i>}>
-                {t('save')}
-              </Button>
-              <Button onClick={() => form.resetFields()}>
-                {t('cancel')}
-              </Button>
-            </Space>
-          </Form>
-        </Card>
-      );
-    }
-
-    // ============================================
-    // LOGS PAGE
-    // ============================================
-    function LogsPage({ logs, t }) {
-      if (!logs || logs.length === 0) {
-        return (
-          <Card>
-            <h1>{t('system_logs')}</h1>
-            <Empty description={t('no_data')} />
-          </Card>
-        );
+    function translateElement(element, lang) {
+      const key = element.getAttribute('data-i18n');
+      const placeholderKey = element.getAttribute('data-i18n-placeholder');
+      
+      if (key && translations[lang][key]) {
+        element.textContent = translations[lang][key];
       }
+      
+      if (placeholderKey && translations[lang][placeholderKey]) {
+        element.setAttribute('placeholder', translations[lang][placeholderKey]);
+      }
+    }
 
-      return (
-        <Card>
-          <h1>{t('system_logs')}</h1>
-          <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
-            {logs.slice(0, 50).map((log, idx) => (
-              <div key={idx} style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', marginBottom: '8px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <strong>{log.user || 'Unknown'}</strong>
-                  <span style={{ fontSize: '12px', color: '#999' }}>
-                    {log.time ? new Date(log.time).toLocaleString() : '-'}
-                  </span>
-                </div>
-                <p style={{ margin: 0, color: '#666' }}>{log.action || '-'}</p>
-              </div>
-            ))}
-          </div>
-        </Card>
-      );
+    function updateLanguage(lang) {
+      const htmlElement = document.getElementById('htmlElement');
+      htmlElement.lang = lang;
+      htmlElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      localStorage.setItem('language', lang);
+      
+      document.querySelectorAll('[data-i18n]').forEach(el => translateElement(el, lang));
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => translateElement(el, lang));
+      
+      document.getElementById('langBadge').textContent = lang === 'ar' ? 'AR' : 'EN';
+      
+      // ✅ تحديث موضع زر تبديل اللغة وزر القائمة عند تغيير اللغة
+      const langToggleBtn = document.getElementById('langToggleBtn');
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      
+      if (lang === 'ar') {
+        langToggleBtn.style.right = 'auto';
+        langToggleBtn.style.left = '1rem';
+        mobileMenuBtn.style.left = 'auto';
+        mobileMenuBtn.style.right = '1rem';
+      } else {
+        langToggleBtn.style.left = 'auto';
+        langToggleBtn.style.right = '1rem';
+        mobileMenuBtn.style.right = 'auto';
+        mobileMenuBtn.style.left = '1rem';
+      }
+    }
+
+    // Apply initial language setting
+    updateLanguage(savedLang);
+
+    document.getElementById('langToggleBtn').addEventListener('click', () => {
+      const currentLang = document.documentElement.lang;
+      const newLang = currentLang === 'ar' ? 'en' : 'ar';
+      updateLanguage(newLang);
+    });
+
+    function show(key, type = 'success') {
+      const alertBox = document.getElementById('alert-box');
+      const alertMessage = document.getElementById('alert-message');
+      const alertIcon = document.getElementById('alert-icon');
+      
+      alertBox.classList.remove('hidden', 'opacity-0', 'bg-green-100', 'text-green-800', 'border-green-300', 'bg-red-100', 'text-red-800', 'border-red-300');
+      alertBox.classList.add('opacity-100');
+      
+      if (type === 'success') {
+        alertBox.classList.add('bg-green-100', 'text-green-800', 'border-green-300', 'dark:bg-green-900', 'dark:text-green-300', 'dark:border-green-800');
+        alertIcon.className = 'fas fa-check-circle';
+      } else if (type === 'error') {
+        alertBox.classList.add('bg-red-100', 'text-red-800', 'border-red-300', 'dark:bg-red-900', 'dark:text-red-300', 'dark:border-red-800');
+        alertIcon.className = 'fas fa-times-circle';
+      }
+      
+      const lang = document.documentElement.lang;
+      alertMessage.textContent = translations[lang][key] || key;
+      
+      setTimeout(() => {
+        alertBox.classList.remove('opacity-100');
+        alertBox.classList.add('opacity-0');
+        setTimeout(() => {
+          alertBox.classList.add('hidden');
+        }, 300);
+      }, 3000);
+    }
+
+    async function fetchWithAuth(url, options = {}) {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = 'login-final.html';
+        return null;
+      }
+      
+      options.headers = {
+        ...options.headers,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+      
+      try {
+        const response = await fetch(API_BASE + url, options);
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          window.location.href = 'login-final.html';
+          return null;
+        }
+        return response;
+      } catch (error) {
+        console.error('Fetch error:', error);
+        show('failed_to_update', 'error');
+        return null;
+      }
     }
 
     // ============================================
-    // RENDER
+    // DATA LOADING & RENDERING
     // ============================================
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<DashboardApp />);
+    
+    // Placeholder for chart rendering functions
+    function renderOrdersStatusChart(data) {
+      const chartEl = document.getElementById('orders-status-chart');
+      chartEl.textContent = translations[document.documentElement.lang]['loading_chart'] + ' (Placeholder)';
+      // Actual chart rendering logic would go here (e.g., using Chart.js)
+    }
+
+    function renderOrdersServiceChart(data) {
+      const chartEl = document.getElementById('orders-service-chart');
+      chartEl.textContent = translations[document.documentElement.lang]['loading_chart'] + ' (Placeholder)';
+      // Actual chart rendering logic would go here (e.g., using Chart.js)
+    }
+
+    async function loadStats() {
+      try {
+        const res = await fetchWithAuth('/api/stats');
+        if (!res) return;
+        const stats = await res.json();
+        
+        document.getElementById('total-services').textContent = stats.totalServices || 0;
+        document.getElementById('total-orders').textContent = stats.totalOrders || 0;
+        document.getElementById('pending-orders').textContent = stats.pendingOrders || 0;
+        document.getElementById('completed-orders').textContent = stats.completedOrders || 0;
+        
+        renderOrdersStatusChart(stats.ordersByStatus);
+        renderOrdersServiceChart(stats.ordersByService);
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+
+    function renderServices(services) {
+      const tbody = document.getElementById('services-table-body');
+      tbody.innerHTML = '';
+      
+      if (services.length === 0) {
+        const lang = document.documentElement.lang;
+        tbody.innerHTML = `
+          <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+            <td colspan="7" class="px-6 py-4 text-center">${translations[lang]['no_services']}</td>
+          </tr>
+        `;
+        return;
+      }
+      
+      services.forEach(s => {
+        const lang = document.documentElement.lang;
+        const typeText = translations[lang][s.type === 'fixed' ? 'fixed_price' : 'rate_based'];
+        const priceRate = s.type === 'fixed' ? s.price : s.rate;
+        const minMax = s.type === 'rate' ? `${s.min}/${s.max}` : '-';
+        
+        const row = `
+          <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+            <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">${s.id}</td>
+            <td class="px-6 py-4">${s.name}</td>
+            <td class="px-6 py-4">${s.category}</td>
+            <td class="px-6 py-4">${typeText}</td>
+            <td class="px-6 py-4">${priceRate}</td>
+            <td class="px-6 py-4">${minMax}</td>
+            <td class="px-6 py-4">
+              <button onclick="editService(${s.id})" class="font-medium text-blue-600 dark:text-blue-500 hover:underline me-3" data-i18n="edit">Edit</button>
+              <button onclick="deleteService(${s.id})" class="font-medium text-red-600 dark:text-red-500 hover:underline" data-i18n="delete">Delete</button>
+            </td>
+          </tr>
+        `;
+        tbody.innerHTML += row;
+      });
+      
+      // Re-translate buttons in the table
+      document.querySelectorAll('#services-table-body button').forEach(btn => translateElement(btn, document.documentElement.lang));
+    }
+
+    async function loadServices() {
+      if (servicesCache) {
+        allServicesData = servicesCache;
+        renderServices(allServicesData);
+        return;
+      }
+      
+      try {
+        const res = await fetchWithAuth('/api/services');
+        if (!res) return;
+        const services = await res.json();
+        allServicesData = services;
+        servicesCache = services;
+        renderServices(allServicesData);
+      } catch (error) {
+        console.error('Error loading services:', error);
+      }
+    }
+
+    function renderOrders(orders, svcMap) {
+      const tbody = document.getElementById('orders-table-body');
+      tbody.innerHTML = '';
+      
+      if (orders.length === 0) {
+        const lang = document.documentElement.lang;
+        tbody.innerHTML = `
+          <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+            <td colspan="7" class="px-6 py-4 text-center">${translations[lang]['no_orders']}</td>
+          </tr>
+        `;
+        return;
+      }
+      
+      orders.forEach(o => {
+        const lang = document.documentElement.lang;
+        const serviceName = svcMap[o.serviceId] ? svcMap[o.serviceId].name : 'Unknown';
+        const statusKey = `status_${o.status.toLowerCase()}`;
+        const statusText = translations[lang][statusKey] || o.status;
+        
+        let statusClass = 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+        if (o.status === 'Pending') statusClass = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+        else if (o.status === 'Processing') statusClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+        else if (o.status === 'Completed') statusClass = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+        else if (o.status === 'Cancelled' || o.status === 'Error') statusClass = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+        
+        const row = `
+          <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+            <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">${o.id}</td>
+            <td class="px-6 py-4">${serviceName}</td>
+            <td class="px-6 py-4 truncate max-w-xs">${o.link}</td>
+            <td class="px-6 py-4">${o.quantity}</td>
+            <td class="px-6 py-4">
+              <span class="text-xs font-medium me-2 px-2.5 py-0.5 rounded ${statusClass}">${statusText}</span>
+            </td>
+            <td class="px-6 py-4">${new Date(o.createdAt).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')}</td>
+            <td class="px-6 py-4">
+              <button onclick="editOrder(${o.id})" class="font-medium text-blue-600 dark:text-blue-500 hover:underline me-3" data-i18n="edit">Edit</button>
+              <button onclick="deleteOrder(${o.id})" class="font-medium text-red-600 dark:text-red-500 hover:underline" data-i18n="delete">Delete</button>
+            </td>
+          </tr>
+        `;
+        tbody.innerHTML += row;
+      });
+      
+      // Re-translate buttons in the table
+      document.querySelectorAll('#orders-table-body button').forEach(btn => translateElement(btn, document.documentElement.lang));
+    }
+
+    async function loadOrders() {
+      let svcMap = {};
+      try {
+        const servicesRes = await fetchWithAuth('/api/services');
+        if (!servicesRes) return;
+        const services = await servicesRes.json();
+        services.forEach(s => svcMap[s.id] = s);
+      } catch (error) {
+        console.error('Error loading services for orders:', error);
+      }
+      
+      if (ordersCache) {
+        allOrdersData = ordersCache;
+        renderOrders(allOrdersData, svcMap);
+        document.getElementById('orders-badge').textContent = allOrdersData.filter(o => o.status === 'Pending').length;
+        return;
+      }
+      
+      try {
+        const res = await fetchWithAuth('/api/orders');
+        if (!res) return;
+        const orders = await res.json();
+        allOrdersData = orders;
+        ordersCache = orders;
+        renderOrders(allOrdersData, svcMap);
+        document.getElementById('orders-badge').textContent = allOrdersData.filter(o => o.status === 'Pending').length;
+      } catch (error) {
+        console.error('Error loading orders:', error);
+      }
+    }
+
+    async function loadLogs() {
+      if (logsCache) {
+        document.getElementById('logs-content').textContent = logsCache;
+        return;
+      }
+      
+      try {
+        const res = await fetchWithAuth('/api/logs');
+        if (!res) return;
+        const logs = await res.text();
+        logsCache = logs;
+        document.getElementById('logs-content').textContent = logs;
+      } catch (error) {
+        console.error('Error loading logs:', error);
+      }
+    }
+
+    // ============================================
+    // SERVICE FORM LOGIC
+    // ============================================
+    const typeSelect = document.getElementById('serviceType');
+    const fixedPriceFields = document.getElementById('fixedPriceFields');
+    const rateBasedFields = document.getElementById('rateBasedFields');
+
+    function updateFormFields() {
+      if (typeSelect.value === 'fixed') {
+        fixedPriceFields.classList.remove('hidden');
+        rateBasedFields.classList.add('hidden');
+        document.getElementById('servicePrice').setAttribute('required', 'required');
+        document.getElementById('serviceRate').removeAttribute('required');
+        document.getElementById('serviceMin').removeAttribute('required');
+        document.getElementById('serviceMax').removeAttribute('required');
+      } else {
+        fixedPriceFields.classList.add('hidden');
+        rateBasedFields.classList.remove('hidden');
+        document.getElementById('servicePrice').removeAttribute('required');
+        document.getElementById('serviceRate').setAttribute('required', 'required');
+        document.getElementById('serviceMin').setAttribute('required', 'required');
+        document.getElementById('serviceMax').setAttribute('required', 'required');
+      }
+    }
+
+    typeSelect.addEventListener('change', updateFormFields);
+    updateFormFields(); // Initial call
+
+    document.getElementById('serviceForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const form = e.target;
+      const id = document.getElementById('serviceIdInput').value;
+      const isEdit = !!id;
+      
+      const name = form.elements['name'].value;
+      const category = form.elements['category'].value;
+      const type = form.elements['type'].value;
+      
+      let data = { name, category, type };
+      
+      if (type === 'fixed') {
+        data.price = parseFloat(form.elements['price'].value);
+      } else {
+        data.rate = parseFloat(form.elements['rate'].value);
+        data.min = parseInt(form.elements['min'].value);
+        data.max = parseInt(form.elements['max'].value);
+      }
+      
+      const url = isEdit ? `/api/services/${id}` : '/api/services';
+      const method = isEdit ? 'PUT' : 'POST';
+      
+      try {
+        const res = await fetchWithAuth(url, { 
+          method, 
+          body: JSON.stringify(data) 
+        });
+        
+        if (res && res.ok) {
+          show('data_refreshed');
+          form.reset();
+          document.getElementById('serviceIdInput').value = '';
+          updateFormFields();
+          servicesCache = null;
+          reloadAll();
+          
+          setTimeout(() => {
+            document.querySelector('[data-section="services"]').click();
+          }, 1000);
+        } else {
+          show('failed_to_update', 'error');
+        }
+      } catch (error) {
+        show('failed_to_update', 'error');
+      }
+    });
+
+    // ============================================
+    // EDIT / DELETE SERVICE
+    // ============================================
+    window.editService = async function(id) {
+      const s = allServicesData.find(x => x.id === id);
+      if (!s) return;
+      
+      document.querySelector('[name="name"]').value = s.name || '';
+      document.querySelector('[name="category"]').value = s.category || '';
+      document.getElementById('serviceIdInput').value = s.id;
+      typeSelect.value = s.type;
+      updateFormFields();
+      
+      setTimeout(() => {
+        if (s.type === 'fixed') {
+          document.querySelector('[name="price"]').value = s.price || '';
+        } else {
+          document.querySelector('[name="rate"]').value = s.rate || '';
+          document.querySelector('[name="min"]').value = s.min || '';
+          document.querySelector('[name="max"]').value = s.max || '';
+        }
+      }, 100);
+      
+      document.querySelector('[data-section="add-service"]').click();
+    };
+
+    window.deleteService = async function(id) {
+      const lang = document.documentElement.lang;
+      const confirmMessage = lang === 'ar' ? 'هل أنت متأكد أنك تريد حذف هذه الخدمة؟' : 'Are you sure you want to delete this service?';
+      if (!confirm(confirmMessage)) return;
+      
+      try {
+        const res = await fetchWithAuth('/api/services/' + id, { method: 'DELETE' });
+        if (res && res.ok) { 
+          show('data_refreshed'); 
+          servicesCache = null;
+          reloadAll(); 
+        } else {
+          show('failed_to_delete', 'error');
+        }
+      } catch (error) {
+        show('failed_to_delete', 'error');
+      }
+    };
+    
+    // Placeholder for edit/delete order functions
+    window.editOrder = function(id) {
+      show('failed_to_update', 'error'); // Placeholder for non-implemented function
+    };
+    window.deleteOrder = function(id) {
+      show('failed_to_delete', 'error'); // Placeholder for non-implemented function
+    };
+
+    
+    // ============================================
+    // SEARCH & FILTER (FIXED)
+    // ============================================
+    document.getElementById('searchServices')?.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase();
+      const filtered = allServicesData.filter(s => {
+        const name = (s.name || '').toLowerCase();
+        const category = (s.category || '').toLowerCase();
+        return name.includes(query) || category.includes(query);
+      });
+      renderServices(filtered);
+    });
+
+    document.getElementById('searchOrders')?.addEventListener('input', async (e) => {
+      const query = e.target.value.toLowerCase();
+      try {
+        const servicesRes = await fetchWithAuth('/api/services');
+        if (!servicesRes) return;
+        const services = await servicesRes.json();
+        const svcMap = {};
+        services.forEach(s => svcMap[s.id] = s);
+        
+        const filtered = allOrdersData.filter(o => {
+          const id = (o.id || '').toString().toLowerCase();
+          const link = (o.link && typeof o.link === 'string') ? o.link.toLowerCase() : '';
+          const serviceName = svcMap[o.serviceId] ? (svcMap[o.serviceId].name || '').toLowerCase() : '';
+          return id.includes(query) || link.includes(query) || serviceName.includes(query);
+        });
+        renderOrders(filtered, svcMap);
+      } catch (error) {
+        console.error('Error searching orders:', error);
+      }
+    });
+
+    // ============================================
+    // REFRESH & EXPORT
+    // ============================================
+    document.getElementById('refreshBtn').onclick = async () => {
+      servicesCache = null;
+      ordersCache = null;
+      try {
+        await reloadAll();
+        show('data_refreshed');
+      } catch (error) {
+        show('failed_to_update', 'error');
+      }
+    };
+    
+    document.getElementById('refreshBtnServices').onclick = async () => {
+      servicesCache = null;
+      ordersCache = null;
+      try {
+        await reloadAll();
+        show('data_refreshed');
+      } catch (error) {
+        show('failed_to_update', 'error');
+      }
+    };
+
+    async function downloadCSV(endpoint, filename) {
+      try {
+        const r = await fetchWithAuth(endpoint);
+        if (!r || !r.ok) { 
+          show('failed_to_update', 'error'); 
+          return; 
+        }
+        const text = await r.text();
+        const blob = new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8;" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        show('data_refreshed');
+      } catch (error) {
+        show('failed_to_update', 'error');
+      }
+    }
+    
+    document.getElementById('exportServices').onclick = () => {
+      downloadCSV('/api/export/services.csv', 'services.csv');
+    };
+    
+    document.getElementById('exportOrders').onclick = () => {
+      downloadCSV('/api/export/orders.csv', 'orders.csv');
+    };
+
+    // ============================================
+    // SIDEBAR & NAVIGATION
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      const langToggleBtn = document.getElementById('langToggleBtn'); // زر اللغة
+      const navItems = document.querySelectorAll('.nav-item');
+      const contentSections = document.querySelectorAll('.content-section');
+      
+      // ✅ تعديل كود فتح وإغلاق القائمة الجانبية
+      mobileMenuBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('hidden');
+      });
+
+      overlay.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        overlay.classList.add('hidden');
+      });
+      
+      // ✅ تعديل موضع زر اللغة ليتناسب مع زر القائمة
+      // يتم تحديد موضع زر اللغة بناءً على اتجاه الصفحة (RTL/LTR)
+      function updateMobileButtonPositions() {
+        const isRTL = document.documentElement.dir === 'rtl';
+        
+        if (isRTL) {
+          // في وضع RTL: زر القائمة على اليمين، زر اللغة على اليسار
+          mobileMenuBtn.style.right = '1rem';
+          mobileMenuBtn.style.left = 'auto';
+          langToggleBtn.style.left = '1rem';
+          langToggleBtn.style.right = 'auto';
+        } else {
+          // في وضع LTR: زر القائمة على اليسار، زر اللغة على اليمين
+          mobileMenuBtn.style.left = '1rem';
+          mobileMenuBtn.style.right = 'auto';
+          langToggleBtn.style.right = '1rem';
+          langToggleBtn.style.left = 'auto';
+        }
+      }
+      
+      // استدعاء الدالة عند تحميل الصفحة
+      updateMobileButtonPositions();
+      
+      // ربط الدالة بحدث تغيير اللغة لضمان التحديث
+      document.getElementById('langToggleBtn').addEventListener('click', () => {
+        // تأخير بسيط لضمان تحديث dir قبل تحديث المواضع
+        setTimeout(updateMobileButtonPositions, 50);
+      });
+
+      navItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          navItems.forEach(nav => nav.classList.remove('bg-gray-100', 'dark:bg-gray-700'));
+          contentSections.forEach(section => {
+            section.classList.remove('active');
+            section.style.display = 'none';
+          });
+          
+          this.classList.add('bg-gray-100', 'dark:bg-gray-700');
+          
+          const targetSection = this.getAttribute('data-section');
+          const sectionToShow = document.getElementById(targetSection);
+          if (sectionToShow) {
+            sectionToShow.classList.add('active');
+            sectionToShow.style.display = 'block';
+          }
+          
+          const pageTitle = document.querySelector('.page-title');
+          if (pageTitle) {
+            pageTitle.textContent = this.querySelector('span').textContent;
+          }
+          
+          if (window.innerWidth < 768) {
+            // ✅ إغلاق القائمة بعد اختيار عنصر على الموبايل
+            sidebar.classList.remove('open');
+            overlay.classList.add('hidden');
+          }
+        });
+      });
+    });
+
+    // ============================================
+    // RELOAD ALL DATA
+    // ============================================
+    async function reloadAll() { 
+      await Promise.all([loadStats(), loadServices(), loadOrders(), loadLogs()]); 
+    }
+
+    // Initialize
+    setTimeout(() => {
+      // ✅ إظهار قسم Dashboard عند التحميل الأولي
+      const dashboardSection = document.getElementById('dashboard');
+      if (dashboardSection) {
+        dashboardSection.classList.add('active');
+        dashboardSection.style.display = 'block';
+      }
+      
+      reloadAll();
+      tokenCheck.classList.add('hidden');
+      updateLanguage(document.documentElement.lang);
+    }, 1500);
   </script>
 </body>
 </html>
