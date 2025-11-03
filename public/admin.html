@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard - SMM</title>
+  <title>لوحة التحكم - SMM</title>
 
   <!-- Tailwind CSS CDN with Dark Mode Support -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -22,7 +22,7 @@
   <script>
     // Configure Tailwind with Dark Mode Support
     tailwind.config = {
-      darkMode: 'class', // Enable class-based dark mode
+      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
@@ -45,9 +45,11 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
+    
     .sidebar {
       transition: transform 0.3s ease-in-out;
     }
+    
     /* Fix for RTL/LTR support */
     [dir="rtl"] .sidebar {
       right: 0;
@@ -57,27 +59,113 @@
       left: 0;
       right: auto;
     }
+    
+    /* Logs Box with Fixed Height */
+    .logs-box {
+      max-height: 500px;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+    
+    .logs-box::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .logs-box::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    
+    .dark .logs-box::-webkit-scrollbar-track {
+      background: #374151;
+    }
+    
+    .logs-box::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 10px;
+    }
+    
+    .logs-box::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+    
+    /* Loading Spinner */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+    
+    /* Fade In Animation */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    /* Improved Alert Box */
+    .alert-container {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      z-index: 9999;
+      max-width: 400px;
+    }
+    
+    [dir="rtl"] .alert-container {
+      right: auto;
+      left: 1rem;
+    }
   </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900">
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
 
   <!-- Token Check Loading Screen -->
-  <div id="tokenCheck" class="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
+  <div id="tokenCheck" class="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50 transition-colors duration-200">
     <div class="text-center">
       <div class="inline-block">
         <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
       </div>
-      <p class="text-gray-600 dark:text-gray-400 mt-4">Checking session...</p>
+      <p class="text-gray-600 dark:text-gray-400 mt-4" data-i18n="checking_session">جاري التحقق من الجلسة...</p>
     </div>
   </div>
 
   <!-- Mobile Menu Toggle Button -->
-  <button id="mobileMenuBtn" class="fixed top-4 left-4 md:hidden z-40 p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
+  <button id="mobileMenuBtn" 
+          class="fixed top-4 left-4 md:hidden z-40 p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200"
+          aria-label="فتح القائمة">
     <i class="fas fa-bars fa-lg"></i>
   </button>
 
+  <!-- Dark Mode Toggle Button -->
+  <button id="darkModeToggle" 
+          class="fixed top-4 right-4 z-40 p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200"
+          aria-label="تبديل الوضع الليلي">
+    <i class="fas fa-moon dark:hidden"></i>
+    <i class="fas fa-sun hidden dark:inline"></i>
+  </button>
+
+  <!-- Language Toggle Button -->
+  <button id="langToggle" 
+          class="fixed top-16 right-4 z-40 p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200 text-sm font-medium"
+          aria-label="تبديل اللغة">
+    <i class="fas fa-language me-1"></i>
+    <span id="currentLang">العربية</span>
+  </button>
+
   <!-- Sidebar (Fixed Position) -->
-  <aside id="sidebar" class="sidebar fixed top-0 left-0 z-30 w-64 h-screen bg-white dark:bg-gray-800 shadow-lg transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+  <aside id="sidebar" class="sidebar fixed top-0 right-0 z-30 w-64 h-screen bg-white dark:bg-gray-800 shadow-lg transform translate-x-full md:translate-x-0 transition-all duration-300">
     <div class="h-full px-3 py-4 overflow-y-auto flex flex-col">
       
       <!-- Header -->
@@ -85,51 +173,51 @@
         <div class="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-lg">
           <i class="fas fa-chart-line"></i>
         </div>
-        <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white ms-3">Dashboard</span>
+        <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white ms-3" data-i18n="dashboard">لوحة التحكم</span>
       </a>
 
       <!-- Navigation Links -->
       <ul class="space-y-2 font-medium flex-1">
         <li>
-          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Main</small>
+          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400" data-i18n="main">الرئيسية</small>
         </li>
         <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item active" data-section="dashboard">
-            <i class="fas fa-tachometer-alt text-gray-500 dark:text-gray-400"></i>
-            <span class="ms-3">Dashboard</span>
+          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item bg-gray-100 dark:bg-gray-700" data-section="dashboard" aria-label="الانتقال إلى لوحة التحكم">
+            <i class="fas fa-tachometer-alt text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i>
+            <span class="ms-3" data-i18n="dashboard">لوحة التحكم</span>
           </a>
         </li>
 
         <li>
-          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4">Content Management</small>
+          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4" data-i18n="content_management">إدارة المحتوى</small>
         </li>
         <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item" data-section="orders">
-            <i class="fas fa-shopping-cart text-gray-500 dark:text-gray-400"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap">Orders</span>
+          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item" data-section="orders" aria-label="الانتقال إلى الطلبات">
+            <i class="fas fa-shopping-cart text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i>
+            <span class="flex-1 ms-3 whitespace-nowrap" data-i18n="orders">الطلبات</span>
             <span class="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300" id="orders-badge">0</span>
           </a>
         </li>
         <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item" data-section="services">
-            <i class="fas fa-cogs text-gray-500 dark:text-gray-400"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap">Services</span>
+          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item" data-section="services" aria-label="الانتقال إلى الخدمات">
+            <i class="fas fa-cogs text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i>
+            <span class="flex-1 ms-3 whitespace-nowrap" data-i18n="services">الخدمات</span>
           </a>
         </li>
         <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item" data-section="add-service">
-            <i class="fas fa-plus-circle text-gray-500 dark:text-gray-400"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap">Add Service</span>
+          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item" data-section="add-service" aria-label="الانتقال إلى إضافة خدمة">
+            <i class="fas fa-plus-circle text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i>
+            <span class="flex-1 ms-3 whitespace-nowrap" data-i18n="add_service">إضافة خدمة</span>
           </a>
         </li>
 
         <li>
-          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4">System</small>
+          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4" data-i18n="system">النظام</small>
         </li>
         <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item" data-section="logs">
-            <i class="fas fa-history text-gray-500 dark:text-gray-400"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap">Logs</span>
+          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item" data-section="logs" aria-label="الانتقال إلى السجلات">
+            <i class="fas fa-history text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i>
+            <span class="flex-1 ms-3 whitespace-nowrap" data-i18n="logs">السجلات</span>
           </a>
         </li>
       </ul>
@@ -141,13 +229,15 @@
             <i class="fas fa-user text-sm"></i>
           </div>
           <div class="ms-3">
-            <p class="text-sm font-medium text-gray-900 dark:text-white">Admin</p>
-            <p class="text-xs text-gray-500 dark:text-gray-400">System Manager</p>
+            <p class="text-sm font-medium text-gray-900 dark:text-white" data-i18n="admin">المسؤول</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400" data-i18n="system_manager">مدير النظام</p>
           </div>
         </div>
-        <button id="logoutBtn" class="w-full flex items-center justify-center p-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition">
+        <button id="logoutBtn" 
+                class="w-full flex items-center justify-center p-2 text-white bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 rounded-lg transition-colors duration-200"
+                aria-label="تسجيل الخروج">
           <i class="fas fa-sign-out-alt me-2"></i>
-          <span>Logout</span>
+          <span data-i18n="logout">تسجيل الخروج</span>
         </button>
       </div>
     </div>
@@ -157,10 +247,10 @@
   <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden hidden"></div>
 
   <!-- Main Content -->
-  <div class="md:ms-64">
+  <div class="md:me-64">
     <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 shadow-sm p-4 mb-6">
-      <h1 class="page-title text-2xl font-bold text-gray-800 dark:text-white">Dashboard</h1>
+    <header class="bg-white dark:bg-gray-800 shadow-sm p-4 mb-6 transition-colors duration-200">
+      <h1 class="page-title text-2xl font-bold text-gray-800 dark:text-white" data-i18n="dashboard">لوحة التحكم</h1>
     </header>
 
     <!-- Content Body -->
@@ -171,16 +261,16 @@
         <!-- Overview -->
         <div class="mb-6">
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-chart-bar me-2"></i>Overview
+            <i class="fas fa-chart-bar me-2"></i><span data-i18n="overview">نظرة عامة</span>
           </h2>
           
           <!-- Stats Grid -->
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <!-- Stat Card 1 -->
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md transition-colors duration-200">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Services</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="services">الخدمات</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-services">0</p>
                 </div>
                 <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
@@ -190,10 +280,10 @@
             </div>
 
             <!-- Stat Card 2 -->
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md transition-colors duration-200">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Total Orders</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="total_orders">إجمالي الطلبات</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-orders">0</p>
                 </div>
                 <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
@@ -203,10 +293,10 @@
             </div>
 
             <!-- Stat Card 3 -->
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md transition-colors duration-200">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Pending Orders</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="pending_orders">الطلبات المعلقة</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white" id="pending-orders">0</p>
                 </div>
                 <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
@@ -216,10 +306,10 @@
             </div>
 
             <!-- Stat Card 4 -->
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md transition-colors duration-200">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Avg Price</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="avg_price">متوسط السعر</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white" id="avg-price">$0</p>
                 </div>
                 <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
@@ -233,18 +323,24 @@
         <!-- Control Tools -->
         <div>
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-tools me-2"></i>Control Tools
+            <i class="fas fa-tools me-2"></i><span data-i18n="control_tools">أدوات التحكم</span>
           </h2>
           
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <button id="refreshBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2">
-              <i class="fas fa-sync-alt"></i> Refresh Data
+            <button id="refreshBtn" 
+                    class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                    aria-label="تحديث البيانات">
+              <i class="fas fa-sync-alt"></i> <span data-i18n="refresh_data">تحديث البيانات</span>
             </button>
-            <button id="exportServices" class="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2">
-              <i class="fas fa-download"></i> Export Services (CSV)
+            <button id="exportServices" 
+                    class="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                    aria-label="تصدير الخدمات">
+              <i class="fas fa-download"></i> <span data-i18n="export_services">تصدير الخدمات (CSV)</span>
             </button>
-            <button id="exportOrders" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2">
-              <i class="fas fa-download"></i> Export Orders (CSV)
+            <button id="exportOrders" 
+                    class="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                    aria-label="تصدير الطلبات">
+              <i class="fas fa-download"></i> <span data-i18n="export_orders">تصدير الطلبات (CSV)</span>
             </button>
           </div>
         </div>
@@ -252,31 +348,42 @@
 
       <!-- Orders Section -->
       <section id="orders" class="content-section hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-shopping-cart me-2"></i>Manage Orders
+            <i class="fas fa-shopping-cart me-2"></i><span data-i18n="manage_orders">إدارة الطلبات</span>
           </h2>
           
           <!-- Search Box -->
           <div class="mb-4">
             <div class="relative">
-              <input id="searchOrders" type="text" placeholder="Search by order ID or link..." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <input id="searchOrders" 
+                     type="text" 
+                     placeholder="البحث برقم الطلب أو الرابط..." 
+                     data-i18n-placeholder="search_orders"
+                     class="w-full px-4 py-2 pe-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+                     aria-label="البحث في الطلبات">
               <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
             </div>
           </div>
 
+          <!-- Loading Indicator -->
+          <div id="ordersLoading" class="hidden text-center py-8">
+            <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-2"></i>
+            <p class="text-gray-600 dark:text-gray-400" data-i18n="loading">جاري التحميل...</p>
+          </div>
+
           <!-- Table -->
           <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+            <table class="w-full text-sm text-right text-gray-500 dark:text-gray-400">
               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                  <th scope="col" class="px-6 py-3">ID</th>
-                  <th scope="col" class="px-6 py-3">Service</th>
-                  <th scope="col" class="px-6 py-3">Link</th>
-                  <th scope="col" class="px-6 py-3">Qty</th>
-                  <th scope="col" class="px-6 py-3">Price</th>
-                  <th scope="col" class="px-6 py-3">Status</th>
-                  <th scope="col" class="px-6 py-3">Actions</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="id">المعرف</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="service">الخدمة</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="link">الرابط</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="qty">الكمية</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="price">السعر</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="status">الحالة</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="actions">الإجراءات</th>
                 </tr>
               </thead>
               <tbody id="orders-table">
@@ -289,30 +396,42 @@
 
       <!-- Services Section -->
       <section id="services" class="content-section hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-cogs me-2"></i>Manage Services
+            <i class="fas fa-cogs me-2"></i><span data-i18n="manage_services">إدارة الخدمات</span>
           </h2>
           
           <!-- Search Box -->
           <div class="mb-4">
             <div class="relative">
-              <input id="searchServices" type="text" placeholder="Search by service name or category..." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <input id="searchServices" 
+                     type="text" 
+                     placeholder="البحث باسم الخدمة أو الفئة..." 
+                     data-i18n-placeholder="search_services"
+                     class="w-full px-4 py-2 pe-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+                     aria-label="البحث في الخدمات">
               <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
             </div>
           </div>
 
+          <!-- Loading Indicator -->
+          <div id="servicesLoading" class="hidden text-center py-8">
+            <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-2"></i>
+            <p class="text-gray-600 dark:text-gray-400" data-i18n="loading">جاري التحميل...</p>
+          </div>
+
+          
           <!-- Table -->
           <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+            <table class="w-full text-sm text-right text-gray-500 dark:text-gray-400">
               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                  <th scope="col" class="px-6 py-3">ID</th>
-                  <th scope="col" class="px-6 py-3">Name</th>
-                  <th scope="col" class="px-6 py-3">Category</th>
-                  <th scope="col" class="px-6 py-3">Type</th>
-                  <th scope="col" class="px-6 py-3">Price</th>
-                  <th scope="col" class="px-6 py-3">Actions</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="id">المعرف</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="name">الاسم</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="category">الفئة</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="type">النوع</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="price">السعر</th>
+                  <th scope="col" class="px-6 py-3" data-i18n="actions">الإجراءات</th>
                 </tr>
               </thead>
               <tbody id="services-table">
@@ -325,51 +444,84 @@
 
       <!-- Add Service Section -->
       <section id="add-service" class="content-section hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-6">
-            <i class="fas fa-plus-circle me-2"></i>Add / Edit Service
+            <i class="fas fa-plus-circle me-2"></i><span data-i18n="add_edit_service">إضافة / تعديل خدمة</span>
           </h2>
           
           <form id="serviceForm" class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <!-- Service Name -->
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Service Name</label>
-                <input name="name" type="text" placeholder="Enter service name" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="service_name">اسم الخدمة</label>
+                <input name="name" 
+                       type="text" 
+                       placeholder="أدخل اسم الخدمة" 
+                       data-i18n-placeholder="enter_service_name"
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200" 
+                       required
+                       aria-label="اسم الخدمة">
               </div>
 
               <!-- Category -->
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
-                <input name="category" type="text" placeholder="e.g., instagram, twitter, etc." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="category">الفئة</label>
+                <input name="category" 
+                       type="text" 
+                       placeholder="مثال: instagram, twitter, إلخ." 
+                       data-i18n-placeholder="enter_category"
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200" 
+                       required
+                       aria-label="الفئة">
               </div>
 
-          
               <!-- Service Type -->
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Service Type</label>
-                <select name="type" id="typeSelect" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="quantity">Quantity Service (per 1000)</option>
-                  <option value="fixed">Fixed Price</option>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="service_type">نوع الخدمة</label>
+                <select name="type" 
+                        id="typeSelect" 
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+                        aria-label="نوع الخدمة">
+                  <option value="quantity" data-i18n="quantity_service">خدمة بالكمية (لكل 1000)</option>
+                  <option value="fixed" data-i18n="fixed_price">سعر ثابت</option>
                 </select>
               </div>
 
               <!-- Price -->
               <div id="priceContainer">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price per 1000</label>
-                <input name="rate" type="number" step="0.01" placeholder="Price per 1000" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="price_per_1000">السعر لكل 1000</label>
+                <input name="rate" 
+                       type="number" 
+                       step="0.01" 
+                       placeholder="السعر لكل 1000" 
+                       data-i18n-placeholder="price_per_1000"
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200" 
+                       required
+                       aria-label="السعر">
               </div>
             </div>
 
             <!-- Quantity Limits -->
             <div id="qtyContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Min Quantity</label>
-                <input name="min" type="number" placeholder="Minimum quantity" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="min_quantity">الحد الأدنى للكمية</label>
+                <input name="min" 
+                       type="number" 
+                       placeholder="الحد الأدنى للكمية" 
+                       data-i18n-placeholder="min_quantity"
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200" 
+                       required
+                       aria-label="الحد الأدنى للكمية">
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Max Quantity</label>
-                <input name="max" type="number" placeholder="Maximum quantity" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="max_quantity">الحد الأقصى للكمية</label>
+                <input name="max" 
+                       type="number" 
+                       placeholder="الحد الأقصى للكمية" 
+                       data-i18n-placeholder="max_quantity"
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200" 
+                       required
+                       aria-label="الحد الأقصى للكمية">
               </div>
             </div>
 
@@ -377,11 +529,16 @@
 
             <!-- Buttons -->
             <div class="flex gap-4 pt-4">
-              <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center gap-2">
-                <i class="fas fa-save"></i> Save Service
+              <button type="submit" 
+                      class="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                      aria-label="حفظ الخدمة">
+                <i class="fas fa-save"></i> <span data-i18n="save_service">حفظ الخدمة</span>
               </button>
-              <button type="button" id="clearFormBtn" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center gap-2">
-                <i class="fas fa-times"></i> Cancel
+              <button type="button" 
+                      id="clearFormBtn" 
+                      class="flex-1 bg-gray-400 hover:bg-gray-500 dark:bg-gray-600 dark:hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                      aria-label="إلغاء">
+                <i class="fas fa-times"></i> <span data-i18n="cancel">إلغاء</span>
               </button>
             </div>
           </form>
@@ -390,17 +547,26 @@
 
       <!-- Logs Section -->
       <section id="logs" class="content-section hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
           <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-bold text-gray-800 dark:text-white">
-              <i class="fas fa-history me-2"></i>System Logs
+              <i class="fas fa-history me-2"></i><span data-i18n="system_logs">سجلات النظام</span>
             </h2>
-            <button onclick="loadLogs()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center gap-2">
-              <i class="fas fa-sync-alt"></i> Refresh
+            <button onclick="loadLogs()" 
+                    class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center gap-2"
+                    aria-label="تحديث السجلات">
+              <i class="fas fa-sync-alt"></i> <span data-i18n="refresh">تحديث</span>
             </button>
           </div>
 
-          <div id="logsBox" class="space-y-3">
+          <!-- Loading Indicator -->
+          <div id="logsLoading" class="hidden text-center py-8">
+            <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-2"></i>
+            <p class="text-gray-600 dark:text-gray-400" data-i18n="loading">جاري التحميل...</p>
+          </div>
+
+          <!-- Logs Box with Fixed Height and Scroll -->
+          <div id="logsBox" class="logs-box space-y-3 border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900">
             <!-- Logs will be filled by JavaScript -->
           </div>
         </div>
@@ -410,15 +576,271 @@
   </div>
 
   <!-- Notification Container -->
-  <div id="alert-box" class="fixed bottom-4 right-4 z-50"></div>
+  <div id="alert-box" class="alert-container"></div>
 
   <!-- Flowbite JS CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
 
-  <!-- Main JavaScript (Same as original) -->
+  <!-- Main JavaScript -->
   <script>
   // =======================================================
-  //  Token Check & Authentication
+  //  TRANSLATION SYSTEM (نظام الترجمة المتقدم)
+  // =======================================================
+  
+  const translations = {
+    ar: {
+      // Navigation & General
+      dashboard: "لوحة التحكم",
+      main: "الرئيسية",
+      content_management: "إدارة المحتوى",
+      system: "النظام",
+      admin: "المسؤول",
+      system_manager: "مدير النظام",
+      logout: "تسجيل الخروج",
+      checking_session: "جاري التحقق من الجلسة...",
+      loading: "جاري التحميل...",
+      refresh: "تحديث",
+      
+      // Sections
+      orders: "الطلبات",
+      services: "الخدمات",
+      add_service: "إضافة خدمة",
+      logs: "السجلات",
+      overview: "نظرة عامة",
+      control_tools: "أدوات التحكم",
+      
+      // Stats
+      total_orders: "إجمالي الطلبات",
+      pending_orders: "الطلبات المعلقة",
+      avg_price: "متوسط السعر",
+      
+      // Actions
+      manage_orders: "إدارة الطلبات",
+      manage_services: "إدارة الخدمات",
+      add_edit_service: "إضافة / تعديل خدمة",
+      system_logs: "سجلات النظام",
+      refresh_data: "تحديث البيانات",
+      export_services: "تصدير الخدمات (CSV)",
+      export_orders: "تصدير الطلبات (CSV)",
+      save_service: "حفظ الخدمة",
+      cancel: "إلغاء",
+      edit: "تعديل",
+      delete: "حذف",
+      
+      // Form Fields
+      service_name: "اسم الخدمة",
+      category: "الفئة",
+      service_type: "نوع الخدمة",
+      quantity_service: "خدمة بالكمية (لكل 1000)",
+      fixed_price: "سعر ثابت",
+      price_per_1000: "السعر لكل 1000",
+      total_price: "السعر الإجمالي",
+      min_quantity: "الحد الأدنى للكمية",
+      max_quantity: "الحد الأقصى للكمية",
+      
+      // Table Headers
+      id: "المعرف",
+      name: "الاسم",
+      service: "الخدمة",
+      link: "الرابط",
+      qty: "الكمية",
+      price: "السعر",
+      status: "الحالة",
+      type: "النوع",
+      actions: "الإجراءات",
+      
+      // Placeholders
+      search_orders: "البحث برقم الطلب أو الرابط...",
+      search_services: "البحث باسم الخدمة أو الفئة...",
+      enter_service_name: "أدخل اسم الخدمة",
+      enter_category: "مثال: instagram, twitter, إلخ.",
+      
+      // Status
+      pending: "⏳ معلق",
+      processing: "⚙️ قيد المعالجة",
+      completed: "✅ مكتمل",
+      rejected: "❌ مرفوض",
+      
+      // Messages
+      session_expired: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.",
+      logout_confirm: "هل أنت متأكد من تسجيل الخروج؟",
+      logged_out: "تم تسجيل الخروج بنجاح",
+      data_refreshed: "✅ تم تحديث البيانات بنجاح",
+      refresh_failed: "❌ فشل تحديث البيانات",
+      service_added: "✅ تمت إضافة الخدمة بنجاح",
+      service_updated: "✅ تم تحديث الخدمة بنجاح",
+      service_deleted: "✅ تم حذف الخدمة بنجاح",
+      service_add_failed: "❌ فشل في إضافة الخدمة",
+      service_update_failed: "❌ فشل في تحديث الخدمة",
+      service_delete_failed: "❌ فشل في حذف الخدمة",
+      delete_confirm: "⚠️ هل أنت متأكد من حذف هذه الخدمة؟ سيتم حذفها نهائياً.",
+      order_updated: "تم تحديث حالة الطلب بنجاح",
+      order_update_failed: "فشل في تحديث حالة الطلب",
+      update_status_confirm: "تأكيد تحديث حالة الطلب إلى",
+      download_success: "✅ تم تنزيل الملف بنجاح",
+      download_failed: "❌ فشل في تنزيل الملف",
+      no_logs: "لا توجد سجلات متاحة",
+      logs_load_failed: "فشل في تحميل السجلات",
+      fixed: "ثابت",
+      quantity: "بالكمية"
+    },
+    en: {
+      // Navigation & General
+      dashboard: "Dashboard",
+      main: "Main",
+      content_management: "Content Management",
+      system: "System",
+      admin: "Admin",
+      system_manager: "System Manager",
+      logout: "Logout",
+      checking_session: "Checking session...",
+      loading: "Loading...",
+      refresh: "Refresh",
+      
+      // Sections
+      orders: "Orders",
+      services: "Services",
+      add_service: "Add Service",
+      logs: "Logs",
+      overview: "Overview",
+      control_tools: "Control Tools",
+      
+      // Stats
+      total_orders: "Total Orders",
+      pending_orders: "Pending Orders",
+      avg_price: "Avg Price",
+      
+      // Actions
+      manage_orders: "Manage Orders",
+      manage_services: "Manage Services",
+      add_edit_service: "Add / Edit Service",
+      system_logs: "System Logs",
+      refresh_data: "Refresh Data",
+      export_services: "Export Services (CSV)",
+      export_orders: "Export Orders (CSV)",
+      save_service: "Save Service",
+      cancel: "Cancel",
+      edit: "Edit",
+      delete: "Delete",
+      
+      // Form Fields
+      service_name: "Service Name",
+      category: "Category",
+      service_type: "Service Type",
+      quantity_service: "Quantity Service (per 1000)",
+      fixed_price: "Fixed Price",
+      price_per_1000: "Price per 1000",
+      total_price: "Total Price",
+      min_quantity: "Min Quantity",
+      max_quantity: "Max Quantity",
+      
+      // Table Headers
+      id: "ID",
+      name: "Name",
+      service: "Service",
+      link: "Link",
+      qty: "Qty",
+      price: "Price",
+      status: "Status",
+      type: "Type",
+      actions: "Actions",
+      
+      // Placeholders
+      search_orders: "Search by order ID or link...",
+      search_services: "Search by service name or category...",
+      enter_service_name: "Enter service name",
+      enter_category: "e.g., instagram, twitter, etc.",
+      
+      // Status
+      pending: "⏳ Pending",
+      processing: "⚙️ Processing",
+      completed: "✅ Completed",
+      rejected: "❌ Rejected",
+      
+      // Messages
+      session_expired: "Session expired. Please login again.",
+      logout_confirm: "Are you sure you want to logout?",
+      logged_out: "Logged out successfully",
+      data_refreshed: "✅ Data refreshed successfully",
+      refresh_failed: "❌ Failed to refresh data",
+      service_added: "✅ Service added successfully",
+      service_updated: "✅ Service updated successfully",
+      service_deleted: "✅ Service deleted successfully",
+      service_add_failed: "❌ Failed to add service",
+      service_update_failed: "❌ Failed to update service",
+      service_delete_failed: "❌ Failed to delete service",
+      delete_confirm: "⚠️ Are you sure you want to delete this service? It will be permanently deleted.",
+      order_updated: "Order status updated successfully",
+      order_update_failed: "Failed to update order status",
+      update_status_confirm: "Confirm update order status to",
+      download_success: "✅ File downloaded successfully",
+      download_failed: "❌ Failed to download file",
+      no_logs: "No logs available",
+      logs_load_failed: "Failed to load logs",
+      fixed: "Fixed",
+      quantity: "Quantity"
+    }
+  };
+
+  // Current Language
+  let currentLang = localStorage.getItem('lang') || 'ar';
+  
+  // Translation Function
+  function t(key) {
+    return translations[currentLang][key] || key;
+  }
+  
+  // Apply Translations to DOM
+  function applyTranslations() {
+    // Translate elements with data-i18n attribute
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      el.textContent = t(key);
+    });
+    
+    // Translate placeholders
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      el.placeholder = t(key);
+    });
+    
+    // Update HTML lang and dir
+    document.documentElement.lang = currentLang;
+    document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+    
+    // Update language button text
+    document.getElementById('currentLang').textContent = currentLang === 'ar' ? 'العربية' : 'English';
+  }
+  
+  // Language Toggle
+  document.getElementById('langToggle').addEventListener('click', () => {
+    currentLang = currentLang === 'ar' ? 'en' : 'ar';
+    localStorage.setItem('lang', currentLang);
+    applyTranslations();
+    
+    // Reload data to apply translations
+    reloadAll();
+  });
+
+  // =======================================================
+  //  DARK MODE TOGGLE
+  // =======================================================
+  
+  document.getElementById('darkModeToggle').addEventListener('click', () => {
+    const html = document.documentElement;
+    const isDark = html.classList.contains('dark');
+    
+    if (isDark) {
+      html.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    } else {
+      html.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    }
+  });
+
+  // =======================================================
+  //  TOKEN CHECK & AUTHENTICATION
   // =======================================================
   
   const token = localStorage.getItem('authToken');
@@ -435,26 +857,40 @@
   const headers = { 'Content-Type': 'application/json', 'x-auth-token': token };
   const alertBox = document.getElementById('alert-box');
 
-  // Notification System
+  // =======================================================
+  //  NOTIFICATION SYSTEM (نظام الإشعارات المحسّن)
+  // =======================================================
   function show(msg, type='success'){
-    const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+    const bgColor = type === 'success' ? 'bg-green-500 dark:bg-green-600' : 'bg-red-500 dark:bg-red-600';
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+    
     const alertHTML = `
-      <div class="bg-${bgColor} text-white p-4 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in">
-        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+      <div class="${bgColor} text-white p-4 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in mb-2">
+        <i class="fas ${icon}"></i>
         <span>${msg}</span>
       </div>
     `;
-    alertBox.innerHTML = alertHTML;
+    
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = alertHTML;
+    alertBox.appendChild(tempDiv.firstElementChild);
+    
     setTimeout(() => {
-        alertBox.innerHTML = '';
+      if (alertBox.firstElementChild) {
+        alertBox.firstElementChild.remove();
+      }
     }, 5000);
   }
 
+  // =======================================================
+  //  FETCH WITH AUTHENTICATION
+  // =======================================================
+  
   async function fetchWithAuth(url, options={}) {
     options.headers = {...headers, ...(options.headers||{})};
     const r = await fetch(url, options);
     if (r.status === 401) {
-      show("Session expired. Please login again.", 'error');
+      show(t('session_expired'), 'error');
       localStorage.removeItem('authToken');
       setTimeout(() => {
         window.location.href = '/login.html';
@@ -464,9 +900,12 @@
     return r;
   }
 
-  // Logout
+  // =======================================================
+  //  LOGOUT FUNCTIONALITY
+  // =======================================================
+  
   document.getElementById('logoutBtn').onclick = async ()=>{
-    if (!confirm('Are you sure you want to logout?')) return;
+    if (!confirm(t('logout_confirm'))) return;
     
     try {
       await fetchWithAuth('/api/auth/logout', { method:'POST' });
@@ -475,11 +914,26 @@
     }
     
     localStorage.removeItem('authToken');
-    show('Logged out successfully', 'success');
+    show(t('logged_out'), 'success');
     setTimeout(() => {
       window.location.href = '/login.html';
     }, 1500);
   };
+
+  // =======================================================
+  //  DATA LOADING FUNCTIONS
+  // =======================================================
+  
+  // Loading Indicators
+  function showLoading(section) {
+    const loadingEl = document.getElementById(`${section}Loading`);
+    if (loadingEl) loadingEl.classList.remove('hidden');
+  }
+  
+  function hideLoading(section) {
+    const loadingEl = document.getElementById(`${section}Loading`);
+    if (loadingEl) loadingEl.classList.add('hidden');
+  }
 
   // --------- STATS ----------
   async function loadStats(){
@@ -503,14 +957,29 @@
 
   // --------- SERVICES ----------
   let allServicesData = [];
-  async function loadServices(){
+  let servicesCache = null;
+  let servicesCacheTime = 0;
+  const CACHE_DURATION = 30000; // 30 seconds
+
+  async function loadServices(forceReload = false){
+    // Use cache if available and not expired
+    if (!forceReload && servicesCache && (Date.now() - servicesCacheTime < CACHE_DURATION)) {
+      renderServices(servicesCache);
+      return;
+    }
+    
+    showLoading('services');
     try {
       const r = await fetchWithAuth('/api/services');
       if (!r) return;
       allServicesData = await r.json();
+      servicesCache = allServicesData;
+      servicesCacheTime = Date.now();
       renderServices(allServicesData);
     } catch (error) {
       console.error('Error loading services:', error);
+    } finally {
+      hideLoading('services');
     }
   }
 
@@ -519,21 +988,42 @@
     if (!tbody) return;
     
     tbody.innerHTML = '';
+    
+    if (!list || list.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+            <i class="fas fa-inbox text-3xl mb-2"></i>
+            <p>${t('no_logs')}</p>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+    
     list.forEach(s => {
       const tr = document.createElement('tr');
-      tr.className = 'border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700';
+      tr.className = 'border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150';
+      
+      const typeText = s.type === 'fixed' ? t('fixed') : t('quantity');
+      const priceText = s.type === 'fixed' ? '$' + (s.price || '0') : '$' + (s.rate || '0') + ' /1k';
+      
       tr.innerHTML = `
-        <td class="px-6 py-4">${s.id}</td>
-        <td class="px-6 py-4">${s.name}</td>
-        <td class="px-6 py-4">${s.category}</td>
-        <td class="px-6 py-4">${s.type === 'fixed' ? 'Fixed' : 'Quantity'}</td>
-        <td class="px-6 py-4">${s.type === 'fixed' ? '$' + (s.price || '0') : '$' + (s.rate || '0') + ' /1k'}</td>
+        <td class="px-6 py-4 text-gray-900 dark:text-white">${s.id}</td>
+        <td class="px-6 py-4 text-gray-900 dark:text-white font-medium">${s.name}</td>
+        <td class="px-6 py-4 text-gray-700 dark:text-gray-300">${s.category}</td>
+        <td class="px-6 py-4 text-gray-700 dark:text-gray-300">${typeText}</td>
+        <td class="px-6 py-4 text-gray-700 dark:text-gray-300">${priceText}</td>
         <td class="px-6 py-4">
           <div class="flex gap-2">
-            <button onclick="editService(${s.id})" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition">
+            <button onclick="editService(${s.id})" 
+                    class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white px-3 py-1 rounded text-sm transition-colors duration-150"
+                    aria-label="${t('edit')} ${s.name}">
               <i class="fas fa-edit"></i>
             </button>
-            <button onclick="deleteService(${s.id})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition">
+            <button onclick="deleteService(${s.id})" 
+                    class="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white px-3 py-1 rounded text-sm transition-colors duration-150"
+                    aria-label="${t('delete')} ${s.name}">
               <i class="fas fa-trash"></i>
             </button>
           </div>
@@ -545,18 +1035,36 @@
 
   // --------- ORDERS ----------
   const statusMap = {
-    pending: { text: "⏳ Pending", class: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
-    processing: { text: "⚙️ Processing", class: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
-    completed: { text: "✅ Completed", class: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
-    rejected: { text: "❌ Rejected", class: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" }
+    pending: { text: "pending", class: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
+    processing: { text: "processing", class: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
+    completed: { text: "completed", class: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
+    rejected: { text: "rejected", class: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" }
   };
 
   let allOrdersData = [];
-  async function loadOrders(){
+  let ordersCache = null;
+  let ordersCacheTime = 0;
+
+  async function loadOrders(forceReload = false){
+    // Use cache if available and not expired
+    if (!forceReload && ordersCache && (Date.now() - ordersCacheTime < CACHE_DURATION)) {
+      const servicesRes = await fetchWithAuth('/api/services');
+      if (!servicesRes) return;
+      const services = await servicesRes.json();
+      const svcMap = {};
+      services.forEach(s => svcMap[s.id] = s);
+      renderOrders(ordersCache, svcMap);
+      return;
+    }
+    
+    showLoading('orders');
     try {
       const r = await fetchWithAuth('/api/orders');
       if (!r) return;
       allOrdersData = await r.json();
+      ordersCache = allOrdersData;
+      ordersCacheTime = Date.now();
+      
       const servicesRes = await fetchWithAuth('/api/services');
       if (!servicesRes) return;
       const services = await servicesRes.json();
@@ -565,6 +1073,8 @@
       renderOrders(allOrdersData, svcMap);
     } catch (error) {
       console.error('Error loading orders:', error);
+    } finally {
+      hideLoading('orders');
     }
   }
 
@@ -573,32 +1083,58 @@
     if (!tbody) return;
     
     tbody.innerHTML = '';
+    
+    if (!list || list.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+            <i class="fas fa-inbox text-3xl mb-2"></i>
+            <p>${t('no_logs')}</p>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+    
     list.forEach(o => {
       const status = statusMap[o.status] || { text: o.status, class: '' };
       const tr = document.createElement('tr');
-      tr.className = 'border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700';
+      tr.className = 'border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150';
+      
+      const serviceName = svcMap[o.serviceId] ? svcMap[o.serviceId].name : o.serviceId;
+      const statusText = t(status.text);
+      
       tr.innerHTML = `
-        <td class="px-6 py-4">${o.id}</td>
-        <td class="px-6 py-4">${svcMap[o.serviceId] ? svcMap[o.serviceId].name : o.serviceId}</td>
+        <td class="px-6 py-4 text-gray-900 dark:text-white">${o.id}</td>
+        <td class="px-6 py-4 text-gray-900 dark:text-white font-medium">${serviceName}</td>
         <td class="px-6 py-4">
-          <a href="${o.link}" target="_blank" rel="noopener" class="text-blue-600 hover:underline truncate block max-w-xs">
-            ${o.link}
+          <a href="${o.link || '#'}" target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline truncate block max-w-xs">
+            ${o.link || 'N/A'}
           </a>
         </td>
-        <td class="px-6 py-4">${o.quantity || ''}</td>
-        <td class="px-6 py-4">$${(o.price || 0).toFixed(2)}</td>
+        <td class="px-6 py-4 text-gray-700 dark:text-gray-300">${o.quantity || ''}</td>
+        <td class="px-6 py-4 text-gray-700 dark:text-gray-300">$${(o.price || 0).toFixed(2)}</td>
         <td class="px-6 py-4">
-          <span class="px-3 py-1 rounded-full text-xs font-medium ${status.class}">${status.text}</span>
+          <span class="px-3 py-1 rounded-full text-xs font-medium ${status.class}">${statusText}</span>
         </td>
         <td class="px-6 py-4">
           <div class="flex gap-2">
-            <button onclick="updateOrderStatus(${o.id},'processing')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition" title="Processing">
+            <button onclick="updateOrderStatus(${o.id},'processing')" 
+                    class="bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-800 text-white px-3 py-1 rounded text-sm transition-colors duration-150" 
+                    title="${t('processing')}"
+                    aria-label="${t('processing')}">
               <i class="fas fa-hourglass-half"></i>
             </button>
-            <button onclick="updateOrderStatus(${o.id},'completed')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition" title="Completed">
+            <button onclick="updateOrderStatus(${o.id},'completed')" 
+                    class="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white px-3 py-1 rounded text-sm transition-colors duration-150" 
+                    title="${t('completed')}"
+                    aria-label="${t('completed')}">
               <i class="fas fa-check"></i>
             </button>
-            <button onclick="updateOrderStatus(${o.id},'rejected')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition" title="Rejected">
+            <button onclick="updateOrderStatus(${o.id},'rejected')" 
+                    class="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white px-3 py-1 rounded text-sm transition-colors duration-150" 
+                    title="${t('rejected')}"
+                    aria-label="${t('rejected')}">
               <i class="fas fa-times"></i>
             </button>
           </div>
@@ -609,25 +1145,29 @@
   }
 
   async function updateOrderStatus(id, status) {
-    if (!confirm(`Confirm update order status to "${statusMap[status].text}"?`)) return;
+    const statusText = t(statusMap[status].text);
+    if (!confirm(`${t('update_status_confirm')} "${statusText}"?`)) return;
+    
     try {
       const res = await fetchWithAuth('/api/orders/' + id, { 
         method: 'PUT', 
         body: JSON.stringify({ status }) 
       });
       if (res && res.ok) { 
-        show('Order status updated successfully'); 
+        show(t('order_updated')); 
+        ordersCache = null; // Clear cache
         reloadAll(); 
       } else {
-        show('Failed to update order status', 'error');
+        show(t('order_update_failed'), 'error');
       }
     } catch (error) {
-      show('Failed to update order status', 'error');
+      show(t('order_update_failed'), 'error');
     }
   }
 
   // --------- LOGS ----------
   async function loadLogs(){
+    showLoading('logs');
     try {
       const r = await fetchWithAuth('/api/logs');
       if (!r) return;
@@ -635,13 +1175,23 @@
       const box = document.getElementById('logsBox');
       if (!box) return;
       
+      if (!logs || logs.length === 0) {
+        box.innerHTML = `
+          <div class="text-center text-gray-500 dark:text-gray-400 p-8">
+            <i class="fas fa-inbox text-3xl mb-2"></i>
+            <p>${t('no_logs')}</p>
+          </div>
+        `;
+        return;
+      }
+      
       box.innerHTML = logs.slice(0, 50).map(l => {
-        const time = new Date(l.time).toLocaleString();
+        const time = new Date(l.time).toLocaleString(currentLang === 'ar' ? 'ar-SA' : 'en-US');
         const user = l.user || 'Unknown';
         const action = l.action || 'No description';
         
         return `
-          <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+          <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 transition-colors duration-200">
             <div class="flex justify-between items-start mb-2">
               <span class="font-medium text-gray-900 dark:text-white">${user}</span>
               <span class="text-xs text-gray-500 dark:text-gray-400">${time}</span>
@@ -651,19 +1201,26 @@
         `;
       }).join('');
       
-      if (logs.length === 0) {
-        box.innerHTML = '<div class="text-center text-gray-500 dark:text-gray-400 p-4">No logs available</div>';
-      }
     } catch (error) {
       console.error('Error loading logs:', error);
       const box = document.getElementById('logsBox');
       if (box) {
-        box.innerHTML = '<div class="text-center text-red-500 p-4">Failed to load logs</div>';
+        box.innerHTML = `
+          <div class="text-center text-red-500 dark:text-red-400 p-4">
+            <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
+            <p>${t('logs_load_failed')}</p>
+          </div>
+        `;
       }
+    } finally {
+      hideLoading('logs');
     }
   }
 
-  // --------- SERVICE FORM ----------
+  // =======================================================
+  //  SERVICE FORM MANAGEMENT
+  // =======================================================
+  
   const form = document.getElementById('serviceForm');
   const typeSelect = document.getElementById('typeSelect');
 
@@ -674,14 +1231,14 @@
     
     if (isFixed) {
       priceContainer.innerHTML = `
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total Price</label>
-        <input name="price" type="number" step="0.01" placeholder="Total price" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="total_price">${t('total_price')}</label>
+        <input name="price" type="number" step="0.01" placeholder="${t('total_price')}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200" required aria-label="${t('total_price')}">
       `;
       qtyContainer.style.display = 'none';
     } else {
       priceContainer.innerHTML = `
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price per 1000</label>
-        <input name="rate" type="number" step="0.01" placeholder="Price per 1000" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="price_per_1000">${t('price_per_1000')}</label>
+        <input name="rate" type="number" step="0.01" placeholder="${t('price_per_1000')}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200" required aria-label="${t('price_per_1000')}">
       `;
       qtyContainer.style.display = 'grid';
     }
@@ -712,6 +1269,12 @@
     const url = id ? `/api/services/${id}` : '/api/services';
     const method = id ? 'PUT' : 'POST';
     
+    // Disable submit button during request
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalHTML = submitBtn.innerHTML;
+    submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t('loading')}`;
+    submitBtn.disabled = true;
+    
     try {
       const res = await fetchWithAuth(url, { 
         method, 
@@ -719,24 +1282,31 @@
       });
       
       if (res && res.ok) {
-        show(`✅ Service ${id ? 'updated' : 'added'} successfully`);
+        show(id ? t('service_updated') : t('service_added'));
         form.reset();
         document.getElementById('serviceIdInput').value = '';
         updateFormFields();
+        servicesCache = null; // Clear cache
         reloadAll();
         
         setTimeout(() => {
           document.querySelector('[data-section="services"]').click();
         }, 1000);
       } else {
-        show(`❌ Failed to ${id ? 'update' : 'add'} service`, 'error');
+        show(id ? t('service_update_failed') : t('service_add_failed'), 'error');
       }
     } catch (error) {
-      show(`❌ Failed to ${id ? 'update' : 'add'} service`, 'error');
+      show(id ? t('service_update_failed') : t('service_add_failed'), 'error');
+    } finally {
+      submitBtn.innerHTML = originalHTML;
+      submitBtn.disabled = false;
     }
   });
-    
-  // --------- EDIT / DELETE SERVICE ----------
+
+  // =======================================================
+  //  EDIT / DELETE SERVICE
+  // =======================================================
+  
   window.editService = async function(id) {
     const s = allServicesData.find(x => x.id === id);
     if (!s) return;
@@ -761,33 +1331,62 @@
   };
 
   window.deleteService = async function(id) {
-    if (!confirm('⚠️ Are you sure you want to delete this service? It will be permanently deleted.')) return;
+    if (!confirm(t('delete_confirm'))) return;
     
     try {
       const res = await fetchWithAuth('/api/services/' + id, { method: 'DELETE' });
       if (res && res.ok) { 
-        show('✅ Service deleted successfully'); 
+        show(t('service_deleted')); 
+        servicesCache = null; // Clear cache
         reloadAll(); 
       } else {
-        show('❌ Failed to delete service', 'error');
+        show(t('service_delete_failed'), 'error');
       }
     } catch (error) {
-      show('❌ Failed to delete service', 'error');
+      show(t('service_delete_failed'), 'error');
     }
   };
 
-  // --------- SEARCH FUNCTIONALITY ----------
+  
+  // =======================================================
+  //  SEARCH FUNCTIONALITY (محسّن)
+  // =======================================================
+  
   document.getElementById('searchServices')?.addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase();
-    const filtered = allServicesData.filter(s => 
-      s.name.toLowerCase().includes(query) || 
-      s.category.toLowerCase().includes(query)
-    );
+    const query = e.target.value.toLowerCase().trim();
+    
+    if (!query) {
+      renderServices(allServicesData);
+      return;
+    }
+    
+    const filtered = allServicesData.filter(s => {
+      // Safe property access
+      const name = (s.name || '').toLowerCase();
+      const category = (s.category || '').toLowerCase();
+      const id = String(s.id || '');
+      
+      return name.includes(query) || 
+             category.includes(query) || 
+             id.includes(query);
+    });
+    
     renderServices(filtered);
   });
 
   document.getElementById('searchOrders')?.addEventListener('input', async (e) => {
-    const query = e.target.value.toLowerCase();
+    const query = e.target.value.toLowerCase().trim();
+    
+    if (!query) {
+      const servicesRes = await fetchWithAuth('/api/services');
+      if (!servicesRes) return;
+      const services = await servicesRes.json();
+      const svcMap = {};
+      services.forEach(s => svcMap[s.id] = s);
+      renderOrders(allOrdersData, svcMap);
+      return;
+    }
+    
     try {
       const servicesRes = await fetchWithAuth('/api/services');
       if (!servicesRes) return;
@@ -795,38 +1394,70 @@
       const svcMap = {};
       services.forEach(s => svcMap[s.id] = s);
       
-      const filtered = allOrdersData.filter(o => 
-        String(o.id).includes(query) || 
-        o.link.toLowerCase().includes(query) || 
-        (svcMap[o.serviceId] && svcMap[o.serviceId].name.toLowerCase().includes(query))
-      );
+      const filtered = allOrdersData.filter(o => {
+        // Safe property access
+        const id = String(o.id || '');
+        const link = (o.link || '').toLowerCase();
+        const serviceName = svcMap[o.serviceId] ? (svcMap[o.serviceId].name || '').toLowerCase() : '';
+        
+        return id.includes(query) || 
+               link.includes(query) || 
+               serviceName.includes(query);
+      });
+      
       renderOrders(filtered, svcMap);
     } catch (error) {
       console.error('Error searching orders:', error);
     }
   });
 
-  // Refresh Button
+  // =======================================================
+  //  REFRESH BUTTON
+  // =======================================================
+  
   document.getElementById('refreshBtn').onclick = async () => {
+    const btn = document.getElementById('refreshBtn');
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t('loading')}`;
+    btn.disabled = true;
+    
     try {
+      // Clear all caches
+      servicesCache = null;
+      ordersCache = null;
+      
       await reloadAll();
-      show('✅ Data refreshed successfully');
+      show(t('data_refreshed'));
     } catch (error) {
-      show('❌ Failed to refresh data', 'error');
+      show(t('refresh_failed'), 'error');
+    } finally {
+      btn.innerHTML = originalHTML;
+      btn.disabled = false;
     }
   };
 
-  // --------- RELOAD ----------
+  // =======================================================
+  //  RELOAD ALL DATA
+  // =======================================================
+  
   async function reloadAll() { 
-    await Promise.all([loadStats(), loadServices(), loadOrders(), loadLogs()]); 
+    await Promise.all([
+      loadStats(), 
+      loadServices(true), // Force reload
+      loadOrders(true),   // Force reload
+      loadLogs()
+    ]); 
   }
 
-  // --------- EXPORT CSV ----------
+  // =======================================================
+  //  EXPORT CSV
+  // =======================================================
+  
   async function downloadCSV(endpoint, filename) {
     try {
       const r = await fetchWithAuth(endpoint);
       if (!r || !r.ok) { 
-        show('❌ Failed to download file', 'error'); 
+        show(t('download_failed'), 'error'); 
         return; 
       }
       const text = await r.text();
@@ -839,9 +1470,9 @@
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-      show('✅ File downloaded successfully');
+      show(t('download_success'));
     } catch (error) {
-      show('❌ Failed to download file', 'error');
+      show(t('download_failed'), 'error');
     }
   }
   
@@ -853,7 +1484,10 @@
     downloadCSV('/api/export/orders.csv', 'orders.csv');
   };
 
-  // --------- SIDEBAR & NAVIGATION CONTROL ----------
+  // =======================================================
+  //  SIDEBAR & NAVIGATION CONTROL
+  // =======================================================
+  
   document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
@@ -863,13 +1497,13 @@
     
     // Mobile menu toggle
     mobileMenuBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('-translate-x-full');
+      sidebar.classList.toggle('translate-x-full');
       overlay.classList.toggle('hidden');
     });
 
     // Close sidebar when clicking overlay
     overlay.addEventListener('click', () => {
-      sidebar.classList.add('-translate-x-full');
+      sidebar.classList.add('translate-x-full');
       overlay.classList.add('hidden');
     });
 
@@ -889,11 +1523,21 @@
           sectionToShow.classList.remove('hidden');
         }
         
-        updatePageTitle(this.querySelector('span').textContent);
+        const sectionTitle = this.querySelector('span').textContent;
+        updatePageTitle(sectionTitle);
+        
+        // Load section data if needed
+        if (targetSection === 'services') {
+          loadServices();
+        } else if (targetSection === 'orders') {
+          loadOrders();
+        } else if (targetSection === 'logs') {
+          loadLogs();
+        }
         
         // Close sidebar on mobile
         if (window.innerWidth < 768) {
-          sidebar.classList.add('-translate-x-full');
+          sidebar.classList.add('translate-x-full');
           overlay.classList.add('hidden');
         }
       });
@@ -905,9 +1549,15 @@
         pageTitle.textContent = title;
       }
     }
+    
+    // Apply translations on load
+    applyTranslations();
   });
 
-  // Initialize
+  // =======================================================
+  //  INITIALIZE APPLICATION
+  // =======================================================
+  
   setTimeout(() => {
     reloadAll();
     tokenCheck.classList.add('hidden');
