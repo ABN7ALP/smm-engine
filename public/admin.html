@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" id="htmlElement">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title data-i18n="page_title">Dashboard - SMM</title>
+  <title>Dashboard - SMM</title>
 
   <!-- Tailwind CSS CDN with Dark Mode Support -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -20,44 +20,43 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <script>
+    // Configure Tailwind with Dark Mode Support
     tailwind.config = {
-      darkMode: 'class',
+      darkMode: 'class', // Enable class-based dark mode
       theme: {
         extend: {
-          fontFamily: { 'sans': ['Cairo', 'sans-serif'] },
+          fontFamily: {
+            'sans': ['Cairo', 'sans-serif'],
+          },
         }
       }
     }
 
+    // Auto-detect system dark mode preference
     if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       document.documentElement.classList.add('dark');
-    }
-
-    const savedLang = localStorage.getItem('language') || 'en';
-document.documentElement.lang = savedLang;
-document.documentElement.dir = savedLang === 'ar' ? 'rtl' : 'ltr';
+    } else {
+      document.documentElement.classList.remove('dark');
     }
   </script>
 
   <style>
-    body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-    [dir="rtl"] .sidebar { transform: translateX(0) !important; }
-    [dir="rtl"] .sidebar { right: 0; left: auto; }
-    [dir="ltr"] .sidebar { left: 0; right: auto; }
-    [dir="rtl"] #mobileMenuBtn { right: 1rem; left: auto; }
-    [dir="ltr"] #mobileMenuBtn { left: 1rem; right: auto; }
-    [dir="rtl"] #langToggleBtn { left: 4rem; right: auto; }
-    [dir="ltr"] #langToggleBtn { right: 4rem; left: auto; }
-    [dir="rtl"] .md\:ms-64 { margin-right: 16rem; margin-left: 0; }
-    [dir="ltr"] .md\:ms-64 { margin-left: 16rem; margin-right: 0; }
-    [dir="rtl"] #alert-box { left: 1rem; right: auto; }
-    [dir="ltr"] #alert-box { right: 1rem; left: auto; }
-    .logs-box { max-height: 400px; overflow-y: auto; }
-    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    /* ✅ إصلاح تكدس الأقسام على الموبايل */
-    .content-section { display: none !important; }
-    .content-section.active { display: block !important; }
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .sidebar {
+      transition: transform 0.3s ease-in-out;
+    }
+    /* Fix for RTL/LTR support */
+    [dir="rtl"] .sidebar {
+      right: 0;
+      left: auto;
+    }
+    [dir="ltr"] .sidebar {
+      left: 0;
+      right: auto;
+    }
   </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900">
@@ -65,96 +64,103 @@ document.documentElement.dir = savedLang === 'ar' ? 'rtl' : 'ltr';
   <!-- Token Check Loading Screen -->
   <div id="tokenCheck" class="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
     <div class="text-center">
-      <div class="inline-block"><i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i></div>
-      <p class="text-gray-600 dark:text-gray-400 mt-4" data-i18n="checking_session">Checking session...</p>
+      <div class="inline-block">
+        <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
+      </div>
+      <p class="text-gray-600 dark:text-gray-400 mt-4">Checking session...</p>
     </div>
   </div>
 
   <!-- Mobile Menu Toggle Button -->
-  <button id="mobileMenuBtn" class="fixed top-4 md:hidden z-40 p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition" aria-label="Toggle menu" title="Toggle menu">
+  <button id="mobileMenuBtn" class="fixed top-4 left-4 md:hidden z-40 p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
     <i class="fas fa-bars fa-lg"></i>
   </button>
 
-  <!-- Language Toggle Button -->
-  <button id="langToggleBtn" class="fixed top-4 md:top-6 z-40 p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition" aria-label="Toggle language" title="Toggle language">
-    <span id="langBadge" class="text-xs font-bold">EN</span>
-  </button>
-
-  <!-- Sidebar -->
+  <!-- Sidebar (Fixed Position) -->
   <aside id="sidebar" class="sidebar fixed top-0 left-0 z-30 w-64 h-screen bg-white dark:bg-gray-800 shadow-lg transform -translate-x-full md:translate-x-0 transition-transform duration-300">
     <div class="h-full px-3 py-4 overflow-y-auto flex flex-col">
+      
+      <!-- Header -->
       <a href="#" class="flex items-center ps-2.5 mb-5 pb-4 border-b border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-lg">
           <i class="fas fa-chart-line"></i>
         </div>
-        <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white ms-3" data-i18n="dashboard">Dashboard</span>
+        <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white ms-3">Dashboard</span>
       </a>
 
+      <!-- Navigation Links -->
       <ul class="space-y-2 font-medium flex-1">
-        <li><small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400" data-i18n="main">Main</small></li>
         <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item active" data-section="dashboard" aria-label="Dashboard">
+          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Main</small>
+        </li>
+        <li>
+          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item active" data-section="dashboard">
             <i class="fas fa-tachometer-alt text-gray-500 dark:text-gray-400"></i>
-            <span class="ms-3" data-i18n="dashboard">Dashboard</span>
+            <span class="ms-3">Dashboard</span>
           </a>
         </li>
 
-        <li><small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4" data-i18n="content_management">Content Management</small></li>
         <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 nav-item" data-section="orders" aria-label="Orders">
+          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4">Content Management</small>
+        </li>
+        <li>
+          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item" data-section="orders">
             <i class="fas fa-shopping-cart text-gray-500 dark:text-gray-400"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap" data-i18n="orders">Orders</span>
+            <span class="flex-1 ms-3 whitespace-nowrap">Orders</span>
             <span class="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300" id="orders-badge">0</span>
           </a>
         </li>
         <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 nav-item" data-section="services" aria-label="Services">
+          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item" data-section="services">
             <i class="fas fa-cogs text-gray-500 dark:text-gray-400"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap" data-i18n="services">Services</span>
+            <span class="flex-1 ms-3 whitespace-nowrap">Services</span>
           </a>
         </li>
         <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 nav-item" data-section="add-service" aria-label="Add Service">
+          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item" data-section="add-service">
             <i class="fas fa-plus-circle text-gray-500 dark:text-gray-400"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap" data-i18n="add_service">Add Service</span>
+            <span class="flex-1 ms-3 whitespace-nowrap">Add Service</span>
           </a>
         </li>
 
-        <li><small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4" data-i18n="system">System</small></li>
         <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 nav-item" data-section="logs" aria-label="Logs">
+          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4">System</small>
+        </li>
+        <li>
+          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item" data-section="logs">
             <i class="fas fa-history text-gray-500 dark:text-gray-400"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap" data-i18n="logs">Logs</span>
+            <span class="flex-1 ms-3 whitespace-nowrap">Logs</span>
           </a>
         </li>
       </ul>
 
+      <!-- Footer -->
       <div class="pt-4 mt-auto space-y-2 border-t border-gray-200 dark:border-gray-700">
         <div class="flex items-center p-2">
           <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0">
             <i class="fas fa-user text-sm"></i>
           </div>
           <div class="ms-3">
-            <p class="text-sm font-medium text-gray-900 dark:text-white" data-i18n="admin">Admin</p>
-            <p class="text-xs text-gray-500 dark:text-gray-400" data-i18n="system_manager">System Manager</p>
+            <p class="text-sm font-medium text-gray-900 dark:text-white">Admin</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">System Manager</p>
           </div>
         </div>
-        <button id="logoutBtn" class="w-full flex items-center justify-center p-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition" aria-label="Logout">
+        <button id="logoutBtn" class="w-full flex items-center justify-center p-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition">
           <i class="fas fa-sign-out-alt me-2"></i>
-          <span data-i18n="logout">Logout</span>
+          <span>Logout</span>
         </button>
       </div>
     </div>
   </aside>
 
-  <!-- Mobile Overlay -->
+  <!-- Mobile Overlay (closes sidebar when clicked) -->
   <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden hidden"></div>
 
   <!-- Main Content -->
   <div class="md:ms-64">
     <!-- Header -->
     <header class="bg-white dark:bg-gray-800 shadow-sm p-4 mb-6">
-      <h1 class="page-title text-2xl font-bold text-gray-800 dark:text-white" data-i18n="dashboard">Dashboard</h1>
+      <h1 class="page-title text-2xl font-bold text-gray-800 dark:text-white">Dashboard</h1>
     </header>
 
     <!-- Content Body -->
@@ -162,16 +168,19 @@ document.documentElement.dir = savedLang === 'ar' ? 'rtl' : 'ltr';
 
       <!-- Dashboard Section -->
       <section id="dashboard" class="content-section">
+        <!-- Overview -->
         <div class="mb-6">
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-chart-bar me-2"></i><span data-i18n="overview">Overview</span>
+            <i class="fas fa-chart-bar me-2"></i>Overview
           </h2>
           
+          <!-- Stats Grid -->
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Stat Card 1 -->
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="services">Services</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Services</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-services">0</p>
                 </div>
                 <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
@@ -180,10 +189,11 @@ document.documentElement.dir = savedLang === 'ar' ? 'rtl' : 'ltr';
               </div>
             </div>
 
+            <!-- Stat Card 2 -->
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="total_orders">Total Orders</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Total Orders</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-orders">0</p>
                 </div>
                 <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
@@ -192,10 +202,11 @@ document.documentElement.dir = savedLang === 'ar' ? 'rtl' : 'ltr';
               </div>
             </div>
 
+            <!-- Stat Card 3 -->
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="pending_orders">Pending Orders</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Pending Orders</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white" id="pending-orders">0</p>
                 </div>
                 <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
@@ -204,10 +215,11 @@ document.documentElement.dir = savedLang === 'ar' ? 'rtl' : 'ltr';
               </div>
             </div>
 
+            <!-- Stat Card 4 -->
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="avg_price">Avg Price</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Avg Price</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white" id="avg-price">$0</p>
                 </div>
                 <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
@@ -218,141 +230,158 @@ document.documentElement.dir = savedLang === 'ar' ? 'rtl' : 'ltr';
           </div>
         </div>
 
+        <!-- Control Tools -->
         <div>
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-tools me-2"></i><span data-i18n="control_tools">Control Tools</span>
+            <i class="fas fa-tools me-2"></i>Control Tools
           </h2>
           
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <button id="refreshBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Refresh data">
-              <i class="fas fa-sync-alt"></i> <span data-i18n="refresh_data">Refresh Data</span>
+            <button id="refreshBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2">
+              <i class="fas fa-sync-alt"></i> Refresh Data
             </button>
-            <button id="exportServices" class="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Export services">
-              <i class="fas fa-download"></i> <span data-i18n="export_services">Export Services (CSV)</span>
+            <button id="exportServices" class="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2">
+              <i class="fas fa-download"></i> Export Services (CSV)
             </button>
-            <button id="exportOrders" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Export orders">
-              <i class="fas fa-download"></i> <span data-i18n="export_orders">Export Orders (CSV)</span>
+            <button id="exportOrders" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2">
+              <i class="fas fa-download"></i> Export Orders (CSV)
             </button>
           </div>
         </div>
       </section>
 
       <!-- Orders Section -->
-      <section id="orders" class="content-section">
+      <section id="orders" class="content-section hidden">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-shopping-cart me-2"></i><span data-i18n="manage_orders">Manage Orders</span>
+            <i class="fas fa-shopping-cart me-2"></i>Manage Orders
           </h2>
           
+          <!-- Search Box -->
           <div class="mb-4">
             <div class="relative">
-              <input id="searchOrders" type="text" placeholder="Search by order ID or link..." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" data-i18n-placeholder="search_orders">
+              <input id="searchOrders" type="text" placeholder="Search by order ID or link..." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
               <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
             </div>
           </div>
 
+          <!-- Table -->
           <div class="overflow-x-auto">
             <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                  <th scope="col" class="px-6 py-3" data-i18n="id">ID</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="service">Service</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="link">Link</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="qty">Qty</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="price">Price</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="status">Status</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="actions">Actions</th>
+                  <th scope="col" class="px-6 py-3">ID</th>
+                  <th scope="col" class="px-6 py-3">Service</th>
+                  <th scope="col" class="px-6 py-3">Link</th>
+                  <th scope="col" class="px-6 py-3">Qty</th>
+                  <th scope="col" class="px-6 py-3">Price</th>
+                  <th scope="col" class="px-6 py-3">Status</th>
+                  <th scope="col" class="px-6 py-3">Actions</th>
                 </tr>
               </thead>
-              <tbody id="orders-table"></tbody>
+              <tbody id="orders-table">
+                <!-- Data will be filled by JavaScript -->
+              </tbody>
             </table>
           </div>
         </div>
       </section>
-       <!-- Services Section -->
-      <section id="services" class="content-section">
+
+      <!-- Services Section -->
+      <section id="services" class="content-section hidden">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-cogs me-2"></i><span data-i18n="manage_services">Manage Services</span>
+            <i class="fas fa-cogs me-2"></i>Manage Services
           </h2>
           
+          <!-- Search Box -->
           <div class="mb-4">
             <div class="relative">
-              <input id="searchServices" type="text" placeholder="Search by service name or category..." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" data-i18n-placeholder="search_services">
+              <input id="searchServices" type="text" placeholder="Search by service name or category..." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
               <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
             </div>
           </div>
 
+          <!-- Table -->
           <div class="overflow-x-auto">
             <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                  <th scope="col" class="px-6 py-3" data-i18n="id">ID</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="name">Name</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="category">Category</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="type">Type</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="price">Price</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="actions">Actions</th>
+                  <th scope="col" class="px-6 py-3">ID</th>
+                  <th scope="col" class="px-6 py-3">Name</th>
+                  <th scope="col" class="px-6 py-3">Category</th>
+                  <th scope="col" class="px-6 py-3">Type</th>
+                  <th scope="col" class="px-6 py-3">Price</th>
+                  <th scope="col" class="px-6 py-3">Actions</th>
                 </tr>
               </thead>
-              <tbody id="services-table"></tbody>
+              <tbody id="services-table">
+                <!-- Data will be filled by JavaScript -->
+              </tbody>
             </table>
           </div>
         </div>
       </section>
 
       <!-- Add Service Section -->
-      <section id="add-service" class="content-section">
+      <section id="add-service" class="content-section hidden">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-6">
-            <i class="fas fa-plus-circle me-2"></i><span data-i18n="add_edit_service">Add / Edit Service</span>
+            <i class="fas fa-plus-circle me-2"></i>Add / Edit Service
           </h2>
           
           <form id="serviceForm" class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Service Name -->
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="service_name">Service Name</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Service Name</label>
                 <input name="name" type="text" placeholder="Enter service name" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
               </div>
 
+              <!-- Category -->
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="category">Category</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
                 <input name="category" type="text" placeholder="e.g., instagram, twitter, etc." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
               </div>
 
+          
+              <!-- Service Type -->
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="service_type">Service Type</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Service Type</label>
                 <select name="type" id="typeSelect" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="quantity" data-i18n="quantity_service">Quantity Service (per 1000)</option>
-                  <option value="fixed" data-i18n="fixed_price">Fixed Price</option>
+                  <option value="quantity">Quantity Service (per 1000)</option>
+                  <option value="fixed">Fixed Price</option>
                 </select>
               </div>
 
+              <!-- Price -->
               <div id="priceContainer">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="price_per_1000">Price per 1000</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price per 1000</label>
                 <input name="rate" type="number" step="0.01" placeholder="Price per 1000" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
               </div>
             </div>
 
+            <!-- Quantity Limits -->
             <div id="qtyContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="min_quantity">Min Quantity</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Min Quantity</label>
                 <input name="min" type="number" placeholder="Minimum quantity" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="max_quantity">Max Quantity</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Max Quantity</label>
                 <input name="max" type="number" placeholder="Maximum quantity" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
               </div>
             </div>
 
             <input type="hidden" name="id" id="serviceIdInput">
 
+            <!-- Buttons -->
             <div class="flex gap-4 pt-4">
-              <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Save service">
-                <i class="fas fa-save"></i> <span data-i18n="save_service">Save Service</span>
+              <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center gap-2">
+                <i class="fas fa-save"></i> Save Service
               </button>
-              <button type="button" id="clearFormBtn" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center gap-2" aria-label="Cancel">
-                <i class="fas fa-times"></i> <span data-i18n="cancel">Cancel</span>
+              <button type="button" id="clearFormBtn" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center gap-2">
+                <i class="fas fa-times"></i> Cancel
               </button>
             </div>
           </form>
@@ -360,18 +389,18 @@ document.documentElement.dir = savedLang === 'ar' ? 'rtl' : 'ltr';
       </section>
 
       <!-- Logs Section -->
-      <section id="logs" class="content-section">
+      <section id="logs" class="content-section hidden">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-bold text-gray-800 dark:text-white">
-              <i class="fas fa-history me-2"></i><span data-i18n="system_logs">System Logs</span>
+              <i class="fas fa-history me-2"></i>System Logs
             </h2>
-            <button onclick="loadLogs()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center gap-2" aria-label="Refresh logs">
-              <i class="fas fa-sync-alt"></i> <span data-i18n="refresh">Refresh</span>
+            <button onclick="loadLogs()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center gap-2">
+              <i class="fas fa-sync-alt"></i> Refresh
             </button>
           </div>
 
-          <div id="logsBox" class="logs-box space-y-3 border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
+          <div id="logsBox" class="space-y-3">
             <!-- Logs will be filled by JavaScript -->
           </div>
         </div>
@@ -381,690 +410,508 @@ document.documentElement.dir = savedLang === 'ar' ? 'rtl' : 'ltr';
   </div>
 
   <!-- Notification Container -->
-  <div id="alert-box" class="fixed bottom-4 z-50"></div>
+  <div id="alert-box" class="fixed bottom-4 right-4 z-50"></div>
 
   <!-- Flowbite JS CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
 
-  <!-- Main JavaScript -->
+  <!-- Main JavaScript (Same as original) -->
   <script>
-    // ============================================
-    // TRANSLATIONS SYSTEM (data-i18n)
-    // ============================================
-    const translations = {
-      en: {
-        'page_title': 'Dashboard - SMM',
-        'checking_session': 'Checking session...',
-        'dashboard': 'Dashboard',
-        'main': 'Main',
-        'content_management': 'Content Management',
-        'system': 'System',
-        'orders': 'Orders',
-        'services': 'Services',
-        'add_service': 'Add Service',
-        'logs': 'Logs',
-        'admin': 'Admin',
-        'system_manager': 'System Manager',
-        'logout': 'Logout',
-        'overview': 'Overview',
-        'total_orders': 'Total Orders',
-        'pending_orders': 'Pending Orders',
-        'avg_price': 'Avg Price',
-        'control_tools': 'Control Tools',
-        'refresh_data': 'Refresh Data',
-        'export_services': 'Export Services (CSV)',
-        'export_orders': 'Export Orders (CSV)',
-        'manage_orders': 'Manage Orders',
-        'manage_services': 'Manage Services',
-        'add_edit_service': 'Add / Edit Service',
-        'system_logs': 'System Logs',
-        'refresh': 'Refresh',
-        'search_orders': 'Search by order ID or link...',
-        'search_services': 'Search by service name or category...',
-        'id': 'ID',
-        'service': 'Service',
-        'link': 'Link',
-        'qty': 'Qty',
-        'price': 'Price',
-        'status': 'Status',
-        'actions': 'Actions',
-        'name': 'Name',
-        'category': 'Category',
-        'type': 'Type',
-        'service_name': 'Service Name',
-        'service_type': 'Service Type',
-        'quantity_service': 'Quantity Service (per 1000)',
-        'fixed_price': 'Fixed Price',
-        'price_per_1000': 'Price per 1000',
-        'min_quantity': 'Min Quantity',
-        'max_quantity': 'Max Quantity',
-        'save_service': 'Save Service',
-        'cancel': 'Cancel',
-        'data_refreshed': 'Data refreshed successfully',
-        'order_status_updated': 'Order status updated successfully',
-        'session_expired': 'Session expired. Please login again.',
-        'login_failed': 'Login failed',
-        'failed_to_update': 'Failed to update order status',
-        'failed_to_delete': 'Failed to delete service',
-        'no_logs': 'No logs available',
-        'failed_to_load_logs': 'Failed to load logs',
-      },
-      ar: {
-        'page_title': 'لوحة التحكم - SMM',
-        'checking_session': 'جاري التحقق من الجلسة...',
-        'dashboard': 'لوحة التحكم',
-        'main': 'الرئيسية',
-        'content_management': 'إدارة المحتوى',
-        'system': 'النظام',
-        'orders': 'الطلبات',
-        'services': 'الخدمات',
-        'add_service': 'إضافة خدمة',
-        'logs': 'السجلات',
-        'admin': 'المسؤول',
-        'system_manager': 'مدير النظام',
-        'logout': 'تسجيل الخروج',
-        'overview': 'نظرة عامة',
-        'total_orders': 'إجمالي الطلبات',
-        'pending_orders': 'الطلبات المعلقة',
-        'avg_price': 'متوسط السعر',
-        'control_tools': 'أدوات التحكم',
-        'refresh_data': 'تحديث البيانات',
-        'export_services': 'تصدير الخدمات (CSV)',
-        'export_orders': 'تصدير الطلبات (CSV)',
-        'manage_orders': 'إدارة الطلبات',
-        'manage_services': 'إدارة الخدمات',
-        'add_edit_service': 'إضافة / تعديل خدمة',
-        'system_logs': 'سجلات النظام',
-        'refresh': 'تحديث',
-        'search_orders': 'ابحث برقم الطلب أو الرابط...',
-        'search_services': 'ابحث باسم الخدمة أو الفئة...',
-        'id': 'المعرّف',
-        'service': 'الخدمة',
-        'link': 'الرابط',
-        'qty': 'الكمية',
-        'price': 'السعر',
-        'status': 'الحالة',
-        'actions': 'الإجراءات',
-        'name': 'الاسم',
-        'category': 'الفئة',
-        'type': 'النوع',
-        'service_name': 'اسم الخدمة',
-        'service_type': 'نوع الخدمة',
-        'quantity_service': 'خدمة كمية (لكل 1000)',
-        'fixed_price': 'سعر ثابت',
-        'price_per_1000': 'السعر لكل 1000',
-        'min_quantity': 'الحد الأدنى للكمية',
-        'max_quantity': 'الحد الأقصى للكمية',
-        'save_service': 'حفظ الخدمة',
-        'cancel': 'إلغاء',
-        'data_refreshed': 'تم تحديث البيانات بنجاح',
-        'order_status_updated': 'تم تحديث حالة الطلب بنجاح',
-        'session_expired': 'انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.',
-        'login_failed': 'فشل تسجيل الدخول',
-        'failed_to_update': 'فشل تحديث حالة الطلب',
-        'failed_to_delete': 'فشل حذف الخدمة',
-        'no_logs': 'لا توجد سجلات',
-        'failed_to_load_logs': 'فشل تحميل السجلات',
-      }
-    };
+  // =======================================================
+  //  Token Check & Authentication
+  // =======================================================
+  
+  const token = localStorage.getItem('authToken');
+  const tokenCheck = document.getElementById('tokenCheck');
+  
+  if (!token) {
+    window.location.href = '/login.html';
+  } else {
+    setTimeout(() => {
+      tokenCheck.classList.add('hidden');
+    }, 1000);
+  }
 
-    function updateLanguage(lang) {
-      const html = document.documentElement;
-      html.lang = lang;
-      html.dir = lang === 'ar' ? 'rtl' : 'ltr';
-      localStorage.setItem('language', lang);
-      document.getElementById('langBadge').textContent = lang === 'ar' ? 'AR' : 'EN';
-      
-      // Update all data-i18n elements
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (translations[lang][key]) {
-          el.textContent = translations[lang][key];
-        }
-      });
-      
-      // Update placeholders
-      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        const key = el.getAttribute('data-i18n-placeholder');
-        if (translations[lang][key]) {
-          el.placeholder = translations[lang][key];
-        }
-      });
-    }
+  const headers = { 'Content-Type': 'application/json', 'x-auth-token': token };
+  const alertBox = document.getElementById('alert-box');
 
-    document.getElementById('langToggleBtn').addEventListener('click', () => {
-      const currentLang = document.documentElement.lang;
-      const newLang = currentLang === 'en' ? 'ar' : 'en';
-      updateLanguage(newLang);
-    });
+  // Notification System
+  function show(msg, type='success'){
+    const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+    const alertHTML = `
+      <div class="bg-${bgColor} text-white p-4 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in">
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+        <span>${msg}</span>
+      </div>
+    `;
+    alertBox.innerHTML = alertHTML;
+    setTimeout(() => {
+        alertBox.innerHTML = '';
+    }, 5000);
+  }
 
-    // ============================================
-    // AUTHENTICATION & CORE FUNCTIONS
-    // ============================================
-    const token = localStorage.getItem('authToken');
-    const tokenCheck = document.getElementById('tokenCheck');
-    
-    if (!token) {
-      window.location.href = '/login.html';
-    } else {
-      setTimeout(() => {
-        tokenCheck.classList.add('hidden');
-      }, 1000);
-    }
-
-    const headers = { 'Content-Type': 'application/json', 'x-auth-token': token };
-    const alertBox = document.getElementById('alert-box');
-
-    // Notification System
-    function show(msgKey, type='success'){
-      const lang = document.documentElement.lang;
-      const msg = translations[lang][msgKey] || msgKey;
-      const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
-      const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-      const alertHTML = `
-        <div class="bg-${bgColor} text-white p-4 rounded-lg shadow-lg flex items-center gap-3">
-          <i class="fas ${icon}"></i>
-          <span>${msg}</span>
-        </div>
-      `;
-      alertBox.innerHTML = alertHTML;
-      setTimeout(() => { alertBox.innerHTML = ''; }, 5000);
-    }
-
-    async function fetchWithAuth(url, options={}) {
-      options.headers = {...headers, ...(options.headers||{})};
-      const r = await fetch(url, options);
-      if (r.status === 401) {
-        show('session_expired', 'error');
-        localStorage.removeItem('authToken');
-        setTimeout(() => { window.location.href = '/login.html'; }, 2000);
-        return null;
-      }
-      return r;
-    }
-    // Logout
-    document.getElementById('logoutBtn').onclick = async ()=>{
-      if (!confirm('Are you sure you want to logout?')) return;
-      try {
-        await fetchWithAuth('/api/auth/logout', { method:'POST' });
-      } catch (error) {
-        console.log('Error during logout:', error);
-      }
+  async function fetchWithAuth(url, options={}) {
+    options.headers = {...headers, ...(options.headers||{})};
+    const r = await fetch(url, options);
+    if (r.status === 401) {
+      show("Session expired. Please login again.", 'error');
       localStorage.removeItem('authToken');
-      show('data_refreshed', 'success');
-      setTimeout(() => { window.location.href = '/login.html'; }, 1500);
-    };
-
-    // ============================================
-    // DATA LOADING & CACHING
-    // ============================================
-    let allServicesData = [];
-    let allOrdersData = [];
-    let servicesCache = null;
-    let ordersCache = null;
-
-    async function loadStats(){
-      try {
-        const r = await fetchWithAuth('/api/stats');
-        if (!r) return;
-        const s = await r.json();
-        document.getElementById('total-services').textContent = s.totalServices || 0;
-        document.getElementById('total-orders').textContent = s.totalOrders || 0;
-        document.getElementById('pending-orders').textContent = s.pendingOrders || 0;
-        document.getElementById('avg-price').textContent = '$' + (s.avgPrice || 0).toFixed(2);
-        document.getElementById('orders-badge').textContent = s.pendingOrders || 0;
-      } catch (error) {
-        console.error('Error loading stats:', error);
-      }
+      setTimeout(() => {
+        window.location.href = '/login.html';
+      }, 2000);
+      return null;
     }
+    return r;
+  }
 
-    async function loadServices(){
-      if (servicesCache) return servicesCache;
-      try {
-        const r = await fetchWithAuth('/api/services');
-        if (!r) return;
-        allServicesData = await r.json();
-        servicesCache = allServicesData;
-        renderServices(allServicesData);
-        return allServicesData;
-      } catch (error) {
-        console.error('Error loading services:', error);
-      }
+  // Logout
+  document.getElementById('logoutBtn').onclick = async ()=>{
+    if (!confirm('Are you sure you want to logout?')) return;
+    
+    try {
+      await fetchWithAuth('/api/auth/logout', { method:'POST' });
+    } catch (error) {
+      console.log('Error during logout:', error);
     }
+    
+    localStorage.removeItem('authToken');
+    show('Logged out successfully', 'success');
+    setTimeout(() => {
+      window.location.href = '/login.html';
+    }, 1500);
+  };
 
-    function renderServices(list) {
-      const tbody = document.querySelector('#services-table');
-      if (!tbody) return;
-      tbody.innerHTML = '';
-      list.forEach(s => {
-        const tr = document.createElement('tr');
-        tr.className = 'border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700';
-        tr.innerHTML = `
-          <td class="px-6 py-4">${s.id || ''}</td>
-          <td class="px-6 py-4">${s.name || ''}</td>
-          <td class="px-6 py-4">${s.category || ''}</td>
-          <td class="px-6 py-4">${s.type === 'fixed' ? 'Fixed' : 'Quantity'}</td>
-          <td class="px-6 py-4">${s.type === 'fixed' ? '$' + (s.price || '0') : '$' + (s.rate || '0') + ' /1k'}</td>
-          <td class="px-6 py-4">
-            <div class="flex gap-2">
-              <button onclick="editService(${s.id})" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition" aria-label="Edit">
-                <i class="fas fa-edit"></i>
-              </button>
-              <button onclick="deleteService(${s.id})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition" aria-label="Delete">
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    // ============================================
-    // ORDERS MANAGEMENT
-    // ============================================
-    const statusMap = {
-      pending: { text: "⏳ Pending", class: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
-      processing: { text: "⚙️ Processing", class: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
-      completed: { text: "✅ Completed", class: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
-      rejected: { text: "❌ Rejected", class: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" }
-    };
-
-    async function loadOrders(){
-      if (ordersCache) {
-        renderOrdersWithServices(ordersCache);
-        return;
+  // --------- STATS ----------
+  async function loadStats(){
+    try {
+      const r = await fetchWithAuth('/api/stats');
+      if (!r) return;
+      const s = await r.json();
+      document.getElementById('total-services').textContent = s.totalServices || 0;
+      document.getElementById('total-orders').textContent = s.totalOrders || 0;
+      document.getElementById('pending-orders').textContent = s.pendingOrders || 0;
+      document.getElementById('avg-price').textContent = '$' + (s.avgPrice || 0).toFixed(2);
+      
+      const ordersBadge = document.getElementById('orders-badge');
+      if (ordersBadge) {
+        ordersBadge.textContent = s.pendingOrders || 0;
       }
-      try {
-        const r = await fetchWithAuth('/api/orders');
-        if (!r) return;
-        allOrdersData = await r.json();
-        ordersCache = allOrdersData;
-        renderOrdersWithServices(allOrdersData);
-      } catch (error) {
-        console.error('Error loading orders:', error);
-      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
     }
+  }
 
-    async function renderOrdersWithServices(list) {
+  // --------- SERVICES ----------
+  let allServicesData = [];
+  async function loadServices(){
+    try {
+      const r = await fetchWithAuth('/api/services');
+      if (!r) return;
+      allServicesData = await r.json();
+      renderServices(allServicesData);
+    } catch (error) {
+      console.error('Error loading services:', error);
+    }
+  }
+
+  function renderServices(list) {
+    const tbody = document.querySelector('#services-table');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    list.forEach(s => {
+      const tr = document.createElement('tr');
+      tr.className = 'border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700';
+      tr.innerHTML = `
+        <td class="px-6 py-4">${s.id}</td>
+        <td class="px-6 py-4">${s.name}</td>
+        <td class="px-6 py-4">${s.category}</td>
+        <td class="px-6 py-4">${s.type === 'fixed' ? 'Fixed' : 'Quantity'}</td>
+        <td class="px-6 py-4">${s.type === 'fixed' ? '$' + (s.price || '0') : '$' + (s.rate || '0') + ' /1k'}</td>
+        <td class="px-6 py-4">
+          <div class="flex gap-2">
+            <button onclick="editService(${s.id})" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button onclick="deleteService(${s.id})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // --------- ORDERS ----------
+  const statusMap = {
+    pending: { text: "⏳ Pending", class: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
+    processing: { text: "⚙️ Processing", class: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
+    completed: { text: "✅ Completed", class: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
+    rejected: { text: "❌ Rejected", class: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" }
+  };
+
+  let allOrdersData = [];
+  async function loadOrders(){
+    try {
+      const r = await fetchWithAuth('/api/orders');
+      if (!r) return;
+      allOrdersData = await r.json();
       const servicesRes = await fetchWithAuth('/api/services');
       if (!servicesRes) return;
       const services = await servicesRes.json();
       const svcMap = {};
       services.forEach(s => svcMap[s.id] = s);
-      renderOrders(list, svcMap);
+      renderOrders(allOrdersData, svcMap);
+    } catch (error) {
+      console.error('Error loading orders:', error);
     }
+  }
 
-    function renderOrders(list, svcMap) {
-      const tbody = document.querySelector('#orders-table');
-      if (!tbody) return;
-      tbody.innerHTML = '';
-      list.forEach(o => {
-        const status = statusMap[o.status] || { text: o.status, class: '' };
-        const tr = document.createElement('tr');
-        tr.className = 'border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700';
-        
-        const link = o.link && typeof o.link === 'string' ? o.link : '';
-        const serviceName = svcMap[o.serviceId] ? svcMap[o.serviceId].name : (o.serviceId || '');
-        
-        tr.innerHTML = `
-          <td class="px-6 py-4">${o.id || ''}</td>
-          <td class="px-6 py-4">${serviceName}</td>
-          <td class="px-6 py-4">
-            ${link ? `<a href="${link}" target="_blank" rel="noopener" class="text-blue-600 hover:underline truncate block max-w-xs">${link}</a>` : ''}
-          </td>
-          <td class="px-6 py-4">${o.quantity || ''}</td>
-          <td class="px-6 py-4">$${(o.price || 0).toFixed(2)}</td>
-          <td class="px-6 py-4">
-            <span class="px-3 py-1 rounded-full text-xs font-medium ${status.class}">${status.text}</span>
-          </td>
-          <td class="px-6 py-4">
-            <div class="flex gap-2">
-              <button onclick="updateOrderStatus(${o.id},'processing')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition" aria-label="Processing">
-                <i class="fas fa-hourglass-half"></i>
-              </button>
-              <button onclick="updateOrderStatus(${o.id},'completed')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition" aria-label="Completed">
-                <i class="fas fa-check"></i>
-              </button>
-              <button onclick="updateOrderStatus(${o.id},'rejected')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition" aria-label="Rejected">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    async function updateOrderStatus(id, status) {
-      if (!confirm(`Confirm update order status?`)) return;
-      try {
-        const res = await fetchWithAuth('/api/orders/' + id, { 
-          method: 'PUT', 
-          body: JSON.stringify({ status }) 
-        });
-        if (res && res.ok) { 
-          show('order_status_updated'); 
-          ordersCache = null;
-          reloadAll(); 
-        } else {
-          show('failed_to_update', 'error');
-        }
-      } catch (error) {
-        show('failed_to_update', 'error');
-      }
-    }
-
-    // ============================================
-    // LOGS MANAGEMENT (FIXED)
-    // ============================================
-    async function loadLogs(){
-      try {
-        const r = await fetchWithAuth('/api/logs');
-        if (!r) return;
-        const logs = await r.json();
-        const box = document.getElementById('logsBox');
-        if (!box) return;
-        
-        if (!logs || logs.length === 0) {
-          box.innerHTML = `<div class="text-center text-gray-500 dark:text-gray-400 p-4">${translations[document.documentElement.lang]['no_logs']}</div>`;
-          return;
-        }
-        
-        box.innerHTML = logs.slice(0, 50).map(l => {
-          const time = new Date(l.time || Date.now()).toLocaleString();
-          const user = l.user || 'Unknown';
-          const action = l.action || 'No description';
-          
-          return `
-            <div class="bg-gray-100 dark:bg-gray-600 p-3 rounded border border-gray-300 dark:border-gray-500">
-              <div class="flex justify-between items-start mb-1">
-                <span class="font-medium text-gray-900 dark:text-white text-sm">${user}</span>
-                <span class="text-xs text-gray-600 dark:text-gray-300">${time}</span>
-              </div>
-              <p class="text-gray-700 dark:text-gray-200 text-sm">${action}</p>
-            </div>
-          `;
-        }).join('');
-      } catch (error) {
-        console.error('Error loading logs:', error);
-        const box = document.getElementById('logsBox');
-        if (box) {
-          box.innerHTML = `<div class="text-center text-red-500 p-4">${translations[document.documentElement.lang]['failed_to_load_logs']}</div>`;
-        }
-      }
-    }
-
-    // ============================================
-    // SERVICE FORM MANAGEMENT
-    // ============================================
-    const form = document.getElementById('serviceForm');
-    const typeSelect = document.getElementById('typeSelect');
-
-    function updateFormFields() {
-      const isFixed = typeSelect.value === 'fixed';
-      const priceContainer = document.getElementById('priceContainer');
-      const qtyContainer = document.getElementById('qtyContainer');
-      
-      if (isFixed) {
-        priceContainer.innerHTML = `
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total Price</label>
-          <input name="price" type="number" step="0.01" placeholder="Total price" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-        `;
-        qtyContainer.style.display = 'none';
-      } else {
-        priceContainer.innerHTML = `
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price per 1000</label>
-          <input name="rate" type="number" step="0.01" placeholder="Price per 1000" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-        `;
-        qtyContainer.style.display = 'grid';
-      }
-    }
-
-    typeSelect.addEventListener('change', updateFormFields);
-
-    document.getElementById('clearFormBtn').addEventListener('click', () => {
-      form.reset();
-      document.getElementById('serviceIdInput').value = '';
-      updateFormFields();
-    });
-
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      const formData = new FormData(form);
-      const data = Object.fromEntries(formData.entries());
-      const id = data.id;
-
-      if (data.type === 'fixed') {
-        delete data.rate;
-        delete data.min;
-        delete data.max;
-      } else {
-        delete data.price;
-      }
-
-      const url = id ? `/api/services/${id}` : '/api/services';
-      const method = id ? 'PUT' : 'POST';
-      
-      try {
-        const res = await fetchWithAuth(url, { 
-          method, 
-          body: JSON.stringify(data) 
-        });
-        
-        if (res && res.ok) {
-          show('data_refreshed');
-          form.reset();
-          document.getElementById('serviceIdInput').value = '';
-          updateFormFields();
-          servicesCache = null;
-          reloadAll();
-          
-          setTimeout(() => {
-            document.querySelector('[data-section="services"]').click();
-          }, 1000);
-        } else {
-          show('failed_to_delete', 'error');
-        }
-      } catch (error) {
-        show('failed_to_delete', 'error');
-      }
-    });
-
-    // ============================================
-    // EDIT / DELETE SERVICE
-    // ============================================
-    window.editService = async function(id) {
-      const s = allServicesData.find(x => x.id === id);
-      if (!s) return;
-      
-      document.querySelector('[name="name"]').value = s.name || '';
-      document.querySelector('[name="category"]').value = s.category || '';
-      document.getElementById('serviceIdInput').value = s.id;
-      typeSelect.value = s.type;
-      updateFormFields();
-      
-      setTimeout(() => {
-        if (s.type === 'fixed') {
-          document.querySelector('[name="price"]').value = s.price || '';
-        } else {
-          document.querySelector('[name="rate"]').value = s.rate || '';
-          document.querySelector('[name="min"]').value = s.min || '';
-          document.querySelector('[name="max"]').value = s.max || '';
-        }
-      }, 100);
-      
-      document.querySelector('[data-section="add-service"]').click();
-    };
-
-    window.deleteService = async function(id) {
-      if (!confirm('Are you sure you want to delete this service?')) return;
-      
-      try {
-        const res = await fetchWithAuth('/api/services/' + id, { method: 'DELETE' });
-        if (res && res.ok) { 
-          show('data_refreshed'); 
-          servicesCache = null;
-          reloadAll(); 
-        } else {
-          show('failed_to_delete', 'error');
-        }
-      } catch (error) {
-        show('failed_to_delete', 'error');
-      }
-    };
-
-    // ============================================
-    // SEARCH & FILTER (FIXED)
-    // ============================================
-    document.getElementById('searchServices')?.addEventListener('input', (e) => {
-      const query = e.target.value.toLowerCase();
-      const filtered = allServicesData.filter(s => {
-        const name = (s.name || '').toLowerCase();
-        const category = (s.category || '').toLowerCase();
-        return name.includes(query) || category.includes(query);
-      });
-      renderServices(filtered);
-    });
-
-    document.getElementById('searchOrders')?.addEventListener('input', async (e) => {
-      const query = e.target.value.toLowerCase();
-      try {
-        const servicesRes = await fetchWithAuth('/api/services');
-        if (!servicesRes) return;
-        const services = await servicesRes.json();
-        const svcMap = {};
-        services.forEach(s => svcMap[s.id] = s);
-        
-        const filtered = allOrdersData.filter(o => {
-          const id = (o.id || '').toString().toLowerCase();
-          const link = (o.link && typeof o.link === 'string') ? o.link.toLowerCase() : '';
-          const serviceName = svcMap[o.serviceId] ? (svcMap[o.serviceId].name || '').toLowerCase() : '';
-          return id.includes(query) || link.includes(query) || serviceName.includes(query);
-        });
-        renderOrders(filtered, svcMap);
-      } catch (error) {
-        console.error('Error searching orders:', error);
-      }
-    });
-
-    // ============================================
-    // REFRESH & EXPORT
-    // ============================================
-    document.getElementById('refreshBtn').onclick = async () => {
-      servicesCache = null;
-      ordersCache = null;
-      try {
-        await reloadAll();
-        show('data_refreshed');
-      } catch (error) {
-        show('failed_to_update', 'error');
-      }
-    };
-
-    async function downloadCSV(endpoint, filename) {
-      try {
-        const r = await fetchWithAuth(endpoint);
-        if (!r || !r.ok) { 
-          show('failed_to_update', 'error'); 
-          return; 
-        }
-        const text = await r.text();
-        const blob = new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8;" });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-        show('data_refreshed');
-      } catch (error) {
-        show('failed_to_update', 'error');
-      }
-    }
+  function renderOrders(list, svcMap) {
+    const tbody = document.querySelector('#orders-table');
+    if (!tbody) return;
     
-    document.getElementById('exportServices').onclick = () => {
-      downloadCSV('/api/export/services.csv', 'services.csv');
-    };
-    
-    document.getElementById('exportOrders').onclick = () => {
-      downloadCSV('/api/export/orders.csv', 'orders.csv');
-    };
-
-    // ============================================
-    // SIDEBAR & NAVIGATION
-    // ============================================
-    document.addEventListener('DOMContentLoaded', function() {
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('sidebarOverlay');
-      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-      const navItems = document.querySelectorAll('.nav-item');
-      const contentSections = document.querySelectorAll('.content-section');
-      
-      mobileMenuBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('-translate-x-full');
-        overlay.classList.toggle('hidden');
-      });
-
-      overlay.addEventListener('click', () => {
-        sidebar.classList.add('-translate-x-full');
-        overlay.classList.add('hidden');
-      });
-
-      navItems.forEach(item => {
-        item.addEventListener('click', function(e) {
-          e.preventDefault();
-          
-          navItems.forEach(nav => nav.classList.remove('bg-gray-100', 'dark:bg-gray-700'));
-          contentSections.forEach(section => {
-            section.classList.remove('active');
-            section.style.display = 'none';
-          });
-          
-          this.classList.add('bg-gray-100', 'dark:bg-gray-700');
-          
-          const targetSection = this.getAttribute('data-section');
-          const sectionToShow = document.getElementById(targetSection);
-          if (sectionToShow) {
-            sectionToShow.classList.add('active');
-            sectionToShow.style.display = 'block';
-          }
-          
-          const pageTitle = document.querySelector('.page-title');
-          if (pageTitle) {
-            pageTitle.textContent = this.querySelector('span').textContent;
-          }
-          
-          if (window.innerWidth < 768) {
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.add('hidden');
-          }
-        });
-      });
+    tbody.innerHTML = '';
+    list.forEach(o => {
+      const status = statusMap[o.status] || { text: o.status, class: '' };
+      const tr = document.createElement('tr');
+      tr.className = 'border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700';
+      tr.innerHTML = `
+        <td class="px-6 py-4">${o.id}</td>
+        <td class="px-6 py-4">${svcMap[o.serviceId] ? svcMap[o.serviceId].name : o.serviceId}</td>
+        <td class="px-6 py-4">
+          <a href="${o.link}" target="_blank" rel="noopener" class="text-blue-600 hover:underline truncate block max-w-xs">
+            ${o.link}
+          </a>
+        </td>
+        <td class="px-6 py-4">${o.quantity || ''}</td>
+        <td class="px-6 py-4">$${(o.price || 0).toFixed(2)}</td>
+        <td class="px-6 py-4">
+          <span class="px-3 py-1 rounded-full text-xs font-medium ${status.class}">${status.text}</span>
+        </td>
+        <td class="px-6 py-4">
+          <div class="flex gap-2">
+            <button onclick="updateOrderStatus(${o.id},'processing')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition" title="Processing">
+              <i class="fas fa-hourglass-half"></i>
+            </button>
+            <button onclick="updateOrderStatus(${o.id},'completed')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition" title="Completed">
+              <i class="fas fa-check"></i>
+            </button>
+            <button onclick="updateOrderStatus(${o.id},'rejected')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition" title="Rejected">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
     });
+  }
 
-    // ============================================
-    // RELOAD ALL DATA
-    // ============================================
-    async function reloadAll() { 
-      await Promise.all([loadStats(), loadServices(), loadOrders(), loadLogs()]); 
+  async function updateOrderStatus(id, status) {
+    if (!confirm(`Confirm update order status to "${statusMap[status].text}"?`)) return;
+    try {
+      const res = await fetchWithAuth('/api/orders/' + id, { 
+        method: 'PUT', 
+        body: JSON.stringify({ status }) 
+      });
+      if (res && res.ok) { 
+        show('Order status updated successfully'); 
+        reloadAll(); 
+      } else {
+        show('Failed to update order status', 'error');
+      }
+    } catch (error) {
+      show('Failed to update order status', 'error');
+    }
+  }
+
+  // --------- LOGS ----------
+  async function loadLogs(){
+    try {
+      const r = await fetchWithAuth('/api/logs');
+      if (!r) return;
+      const logs = await r.json();
+      const box = document.getElementById('logsBox');
+      if (!box) return;
+      
+      box.innerHTML = logs.slice(0, 50).map(l => {
+        const time = new Date(l.time).toLocaleString();
+        const user = l.user || 'Unknown';
+        const action = l.action || 'No description';
+        
+        return `
+          <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+            <div class="flex justify-between items-start mb-2">
+              <span class="font-medium text-gray-900 dark:text-white">${user}</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400">${time}</span>
+            </div>
+            <p class="text-gray-700 dark:text-gray-300">${action}</p>
+          </div>
+        `;
+      }).join('');
+      
+      if (logs.length === 0) {
+        box.innerHTML = '<div class="text-center text-gray-500 dark:text-gray-400 p-4">No logs available</div>';
+      }
+    } catch (error) {
+      console.error('Error loading logs:', error);
+      const box = document.getElementById('logsBox');
+      if (box) {
+        box.innerHTML = '<div class="text-center text-red-500 p-4">Failed to load logs</div>';
+      }
+    }
+  }
+
+  // --------- SERVICE FORM ----------
+  const form = document.getElementById('serviceForm');
+  const typeSelect = document.getElementById('typeSelect');
+
+  function updateFormFields() {
+    const isFixed = typeSelect.value === 'fixed';
+    const priceContainer = document.getElementById('priceContainer');
+    const qtyContainer = document.getElementById('qtyContainer');
+    
+    if (isFixed) {
+      priceContainer.innerHTML = `
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total Price</label>
+        <input name="price" type="number" step="0.01" placeholder="Total price" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+      `;
+      qtyContainer.style.display = 'none';
+    } else {
+      priceContainer.innerHTML = `
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price per 1000</label>
+        <input name="rate" type="number" step="0.01" placeholder="Price per 1000" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+      `;
+      qtyContainer.style.display = 'grid';
+    }
+  }
+
+  typeSelect.addEventListener('change', updateFormFields);
+
+  document.getElementById('clearFormBtn').addEventListener('click', () => {
+    form.reset();
+    document.getElementById('serviceIdInput').value = '';
+    updateFormFields();
+  });
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    const id = data.id;
+
+    if (data.type === 'fixed') {
+      delete data.rate;
+      delete data.min;
+      delete data.max;
+    } else {
+      delete data.price;
     }
 
-    // Initialize
+    const url = id ? `/api/services/${id}` : '/api/services';
+    const method = id ? 'PUT' : 'POST';
+    
+    try {
+      const res = await fetchWithAuth(url, { 
+        method, 
+        body: JSON.stringify(data) 
+      });
+      
+      if (res && res.ok) {
+        show(`✅ Service ${id ? 'updated' : 'added'} successfully`);
+        form.reset();
+        document.getElementById('serviceIdInput').value = '';
+        updateFormFields();
+        reloadAll();
+        
+        setTimeout(() => {
+          document.querySelector('[data-section="services"]').click();
+        }, 1000);
+      } else {
+        show(`❌ Failed to ${id ? 'update' : 'add'} service`, 'error');
+      }
+    } catch (error) {
+      show(`❌ Failed to ${id ? 'update' : 'add'} service`, 'error');
+    }
+  });
+    
+  // --------- EDIT / DELETE SERVICE ----------
+  window.editService = async function(id) {
+    const s = allServicesData.find(x => x.id === id);
+    if (!s) return;
+    
+    document.querySelector('[name="name"]').value = s.name || '';
+    document.querySelector('[name="category"]').value = s.category || '';
+    document.getElementById('serviceIdInput').value = s.id;
+    typeSelect.value = s.type;
+    updateFormFields();
+    
     setTimeout(() => {
-      // ✅ إظهار قسم Dashboard عند التحميل الأولي
-      const dashboardSection = document.getElementById('dashboard');
-      if (dashboardSection) {
-        dashboardSection.classList.add('active');
-        dashboardSection.style.display = 'block';
+      if (s.type === 'fixed') {
+        document.querySelector('[name="price"]').value = s.price || '';
+      } else {
+        document.querySelector('[name="rate"]').value = s.rate || '';
+        document.querySelector('[name="min"]').value = s.min || '';
+        document.querySelector('[name="max"]').value = s.max || '';
       }
+    }, 100);
+    
+    document.querySelector('[data-section="add-service"]').click();
+  };
+
+  window.deleteService = async function(id) {
+    if (!confirm('⚠️ Are you sure you want to delete this service? It will be permanently deleted.')) return;
+    
+    try {
+      const res = await fetchWithAuth('/api/services/' + id, { method: 'DELETE' });
+      if (res && res.ok) { 
+        show('✅ Service deleted successfully'); 
+        reloadAll(); 
+      } else {
+        show('❌ Failed to delete service', 'error');
+      }
+    } catch (error) {
+      show('❌ Failed to delete service', 'error');
+    }
+  };
+
+  // --------- SEARCH FUNCTIONALITY ----------
+  document.getElementById('searchServices')?.addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    const filtered = allServicesData.filter(s => 
+      s.name.toLowerCase().includes(query) || 
+      s.category.toLowerCase().includes(query)
+    );
+    renderServices(filtered);
+  });
+
+  document.getElementById('searchOrders')?.addEventListener('input', async (e) => {
+    const query = e.target.value.toLowerCase();
+    try {
+      const servicesRes = await fetchWithAuth('/api/services');
+      if (!servicesRes) return;
+      const services = await servicesRes.json();
+      const svcMap = {};
+      services.forEach(s => svcMap[s.id] = s);
       
-      reloadAll();
-      tokenCheck.classList.add('hidden');
-      updateLanguage(document.documentElement.lang);
-    }, 1500);
+      const filtered = allOrdersData.filter(o => 
+        String(o.id).includes(query) || 
+        o.link.toLowerCase().includes(query) || 
+        (svcMap[o.serviceId] && svcMap[o.serviceId].name.toLowerCase().includes(query))
+      );
+      renderOrders(filtered, svcMap);
+    } catch (error) {
+      console.error('Error searching orders:', error);
+    }
+  });
+
+  // Refresh Button
+  document.getElementById('refreshBtn').onclick = async () => {
+    try {
+      await reloadAll();
+      show('✅ Data refreshed successfully');
+    } catch (error) {
+      show('❌ Failed to refresh data', 'error');
+    }
+  };
+
+  // --------- RELOAD ----------
+  async function reloadAll() { 
+    await Promise.all([loadStats(), loadServices(), loadOrders(), loadLogs()]); 
+  }
+
+  // --------- EXPORT CSV ----------
+  async function downloadCSV(endpoint, filename) {
+    try {
+      const r = await fetchWithAuth(endpoint);
+      if (!r || !r.ok) { 
+        show('❌ Failed to download file', 'error'); 
+        return; 
+      }
+      const text = await r.text();
+      const blob = new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      show('✅ File downloaded successfully');
+    } catch (error) {
+      show('❌ Failed to download file', 'error');
+    }
+  }
+  
+  document.getElementById('exportServices').onclick = () => {
+    downloadCSV('/api/export/services.csv', 'services.csv');
+  };
+  
+  document.getElementById('exportOrders').onclick = () => {
+    downloadCSV('/api/export/orders.csv', 'orders.csv');
+  };
+
+  // --------- SIDEBAR & NAVIGATION CONTROL ----------
+  document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const navItems = document.querySelectorAll('.nav-item');
+    const contentSections = document.querySelectorAll('.content-section');
+    
+    // Mobile menu toggle
+    mobileMenuBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('-translate-x-full');
+      overlay.classList.toggle('hidden');
+    });
+
+    // Close sidebar when clicking overlay
+    overlay.addEventListener('click', () => {
+      sidebar.classList.add('-translate-x-full');
+      overlay.classList.add('hidden');
+    });
+
+    // Navigation
+    navItems.forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        navItems.forEach(nav => nav.classList.remove('bg-gray-100', 'dark:bg-gray-700'));
+        contentSections.forEach(section => section.classList.add('hidden'));
+        
+        this.classList.add('bg-gray-100', 'dark:bg-gray-700');
+        
+        const targetSection = this.getAttribute('data-section');
+        const sectionToShow = document.getElementById(targetSection);
+        if (sectionToShow) {
+          sectionToShow.classList.remove('hidden');
+        }
+        
+        updatePageTitle(this.querySelector('span').textContent);
+        
+        // Close sidebar on mobile
+        if (window.innerWidth < 768) {
+          sidebar.classList.add('-translate-x-full');
+          overlay.classList.add('hidden');
+        }
+      });
+    });
+    
+    function updatePageTitle(title) {
+      const pageTitle = document.querySelector('.page-title');
+      if (pageTitle) {
+        pageTitle.textContent = title;
+      }
+    }
+  });
+
+  // Initialize
+  setTimeout(() => {
+    reloadAll();
+    tokenCheck.classList.add('hidden');
+  }, 1500);
   </script>
 </body>
 </html>
