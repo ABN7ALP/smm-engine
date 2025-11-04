@@ -19,6 +19,7 @@ const metascraper = require('metascraper')([
 const DB_SERVICES = path.join(__dirname, 'db.json');
 const DB_ORDERS = path.join(__dirname, 'orders.json');
 const DB_LOGS = path.join(__dirname, 'logs.json');
+const DB_USERS = path.join(__dirname, 'users.json'); // ⬅️ جديد
 const CONFIG = path.join(__dirname, 'config.json');
 
 // ---------- 2. Helper Functions ----------
@@ -48,16 +49,28 @@ function isValidUrl(urlStr) {
 let servicesDB = loadJson(DB_SERVICES, { services: [] });
 let ordersDB = loadJson(DB_ORDERS, { orders: [] });
 let logsDB = loadJson(DB_LOGS, { logs: [] });
+let usersDB = loadJson(DB_USERS, { users: [] }); // ⬅️ جديد
 let config = loadJson(CONFIG, { users: [{ username: "admin", password: "password" }], sessionTTLMin: 240 });
 
 // ---------- 4. Authentication & Session Management ----------
 const sessions = new Map();
+const userSessions = new Map(); // ⬅️ جديد لجلسات المستخدمين
+
 function createSession(username) {
   const token = crypto.randomBytes(24).toString('hex');
   const ttl = (config.sessionTTLMin || 240) * 60 * 1000;
   sessions.set(token, { username, expires: Date.now() + ttl });
   return token;
 }
+
+// ⬅️ جديد: إنشاء جلسة للمستخدمين
+function createUserSession(userId) {
+  const token = crypto.randomBytes(24).toString('hex');
+  const ttl = (config.sessionTTLMin || 240) * 60 * 1000;
+  userSessions.set(token, { userId, expires: Date.now() + ttl });
+  return token;
+}
+
 function checkAuth(req) {
   const token = req.headers['x-auth-token'] || null;
   if (!token) return null;
@@ -68,7 +81,22 @@ function checkAuth(req) {
   }
   return session.username;
 }
-setInterval(() => { sessions.forEach((s, t) => { if (Date.now() > s.expires) sessions.delete(t); }); }, 10 * 60 * 1000);
+
+// ⬅️ جديد: التحقق من مصادقة المستخدمين
+function checkUserAuth(req) {
+  const token = req.headers['x-user-token'] || null;
+  if (!token) return null;
+  const session = userSessions.get(token);
+  if (!session || Date.now() > session.expires) {
+    if (session) userSessions.delete(token);
+    return null;
+  }
+  return session.userId;
+}
+setInterval(() => { 
+  sessions.forEach((s, t) => { if (Date.now() > s.expires) sessions.delete(t); });
+  userSessions.forEach((s, t) => { if (Date.now() > s.expires) userSessions.delete(t); }); // ⬅️ جديد
+}, 10 * 60 * 1000);
 
 // ---------- 5. Logging & Caching ----------
 function logAction(user, action, meta = {}) {
@@ -104,16 +132,22 @@ const server = http.createServer(async (req, res ) => {
     }
 
     if (method === 'GET' && pathname.startsWith('/api/orders/public/')) {
-      const id = parseInt(pathname.split('/').pop(), 10);
-      const order = (ordersDB.orders || []).find(o => o.id === id);
-      if (order) {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(order));
-      } else {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Order not found' }));
-      }
-      return;
+  const id = parseInt(pathname.split('/').pop(), 10);
+  const order = (ordersDB.orders || []).find(o => o.id === id);
+  if (order) {
+    // ⬅️ جديد: إضافة اسم الخدمة للاستجابة
+    const service = (servicesDB.services || []).find(s => s.id === order.serviceId);
+    const orderWithService = {
+      ...order,
+      serviceName: service ? service.name : `خدمة رقم ${order.serviceId}`
+    };
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(orderWithService));
+  } else {
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Order not found' }));
+  }
+  return;
     }
 
     if (method === 'GET' && pathname === '/api/services') {
@@ -123,20 +157,30 @@ const server = http.createServer(async (req, res ) => {
     }
 
     if (method === 'POST' && pathname === '/api/orders') {
-      const body = await readBody(req);
-      const data = JSON.parse(body || '{}');
-      if (!data.serviceId || !data.link || !isValidUrl(data.link)) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Missing or invalid fields' }));
-        return;
-      }
-      const order = { id: Date.now(), ...data, status: 'pending', createdAt: nowISO() };
-      ordersDB.orders.unshift(order);
-      saveJson(DB_ORDERS, ordersDB);
-      logAction('public', 'order_create', { id: order.id });
-      res.writeHead(201, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(order));
-      return;
+  const body = await readBody(req);
+  const data = JSON.parse(body || '{}');
+  if (!data.serviceId || !data.link || !isValidUrl(data.link)) {
+    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Missing or invalid fields' }));
+    return;
+  }
+
+  // ⬅️ جديد: ربط الطلب بالمستخدم إذا كان مسجلاً
+  const userId = checkUserAuth(req);
+  const order = { 
+    id: Date.now(), 
+    ...data, 
+    status: 'pending', 
+    createdAt: nowISO(),
+    userId: userId || null // ربط الطلب بالمستخدم إذا كان مسجلاً
+  };
+
+  ordersDB.orders.unshift(order);
+  saveJson(DB_ORDERS, ordersDB);
+  logAction(userId ? `user:${userId}` : 'public', 'order_create', { id: order.id });
+  res.writeHead(201, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(order));
+  return;
     }
     
     if (method === 'POST' && pathname === '/api/preview') {
@@ -225,6 +269,94 @@ const server = http.createServer(async (req, res ) => {
       }
       return;
     }
+
+    // ⬅️ جديد: نقاط نهاية إدارة المستخدمين
+if (method === 'POST' && pathname === '/api/auth/register') {
+  const body = await readBody(req);
+  const { name, email, password, country, phone } = JSON.parse(body || '{}');
+
+  // التحقق من البيانات المطلوبة
+  if (!name || !email || !password) {
+    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'الاسم، البريد الإلكتروني وكلمة السر مطلوبة' }));
+    return;
+  }
+
+  // التحقق من عدم وجود مستخدم بنفس البريد
+  const existingUser = usersDB.users.find(u => u.email === email);
+  if (existingUser) {
+    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'البريد الإلكتروني مستخدم بالفعل' }));
+    return;
+  }
+
+  // إنشاء المستخدم الجديد
+  const newUser = {
+    id: Date.now(),
+    name,
+    email,
+    password, // في الواقع يجب تشفير كلمة السر - هذا مثال مبسط
+    country: country || '',
+    phone: phone || '',
+    profilePicture: '',
+    balance: 0,
+    createdAt: nowISO(),
+    lastLogin: null
+  };
+
+  usersDB.users.push(newUser);
+  saveJson(DB_USERS, usersDB);
+
+  // إنشاء جلسة للمستخدم
+  const token = createUserSession(newUser.id);
+
+  // إرجاع البيانات بدون كلمة السر
+  const { password: _, ...userWithoutPassword } = newUser;
+  res.writeHead(201, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ token, user: userWithoutPassword }));
+  return;
+}
+
+if (method === 'POST' && pathname === '/api/auth/user-login') {
+  const body = await readBody(req);
+  const { email, password } = JSON.parse(body || '{}');
+
+  const user = usersDB.users.find(u => u.email === email && u.password === password);
+  if (user) {
+    // تحديث آخر تسجيل دخول
+    user.lastLogin = nowISO();
+    saveJson(DB_USERS, usersDB);
+
+    const token = createUserSession(user.id);
+    const { password: _, ...userWithoutPassword } = user;
+    logAction(user.email, 'user_login');
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ token, user: userWithoutPassword }));
+  } else {
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'البريد الإلكتروني أو كلمة السر غير صحيحة' }));
+  }
+  return;
+}
+
+if (method === 'POST' && pathname === '/api/auth/forgot-password') {
+  const body = await readBody(req);
+  const { email } = JSON.parse(body || '{}');
+  
+  const user = usersDB.users.find(u => u.email === email);
+  if (user) {
+    // في الواقع، هنا نرسل بريدًا إلكترونيًا يحتوي على رابط إعادة التعيين
+    // لكن في هذا المثال، سنقوم بإرجاع رسالة نجاح
+    logAction(user.email, 'forgot_password_request');
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ message: 'إذا كان البريد مسجلاً، ستستلم رابط إعادة التعيين' }));
+  } else {
+    // لأسباب أمنية، لا نكشف إذا كان البريد مسجلاً أم لا
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ message: 'إذا كان البريد مسجلاً، ستستلم رابط إعادة التعيين' }));
+  }
+  return;
+}
 
     // --- B. PROTECTED ROUTES (Auth Required from this point on) ---
     const user = checkAuth(req);
@@ -363,6 +495,88 @@ const server = http.createServer(async (req, res ) => {
       } else { res.writeHead(404); res.end('Not Found'); }
       return;
     }
+
+    // --- C. USER PROTECTED ROUTES (User Auth Required) ---
+const userId = checkUserAuth(req);
+if (userId) {
+  const user = usersDB.users.find(u => u.id === userId);
+  if (!user) {
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/api/user/profile') {
+    const { password: _, ...userWithoutPassword } = user;
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(userWithoutPassword));
+    return;
+  }
+
+  if (method === 'PUT' && pathname === '/api/user/profile') {
+    const body = await readBody(req);
+    const data = JSON.parse(body || '{}');
+    
+    // تحديث البيانات المسموح بها
+    const allowedFields = ['name', 'country', 'phone', 'profilePicture'];
+    allowedFields.forEach(field => {
+      if (data[field] !== undefined) user[field] = data[field];
+    });
+    
+    saveJson(DB_USERS, usersDB);
+    const { password: _, ...userWithoutPassword } = user;
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(userWithoutPassword));
+    return;
+  }
+
+  if (method === 'POST' && pathname === '/api/user/balance') {
+    const body = await readBody(req);
+    const { amount } = JSON.parse(body || '{}');
+    
+    if (!amount || amount <= 0) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'المبلغ يجب أن يكون رقمًا موجبًا' }));
+      return;
+    }
+    
+    user.balance += parseFloat(amount);
+    saveJson(DB_USERS, usersDB);
+    logAction(user.email, 'balance_add', { amount });
+    
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ balance: user.balance }));
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/api/user/orders') {
+    const userOrders = (ordersDB.orders || []).filter(o => o.userId === userId);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(userOrders));
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/api/user/stats') {
+    const userOrders = (ordersDB.orders || []).filter(o => o.userId === userId);
+    const stats = {
+      totalOrders: userOrders.length,
+      completedOrders: userOrders.filter(o => o.status === 'completed').length,
+      pendingOrders: userOrders.filter(o => o.status === 'pending' || o.status === 'processing').length,
+      totalSpent: userOrders.reduce((sum, o) => sum + (o.price || 0), 0)
+    };
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(stats));
+    return;
+  }
+
+  if (method === 'POST' && pathname === '/api/auth/user-logout') {
+    userSessions.delete(req.headers['x-user-token']);
+    logAction(user.email, 'user_logout');
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true }));
+    return;
+  }
+}
 
     // --- C. NOT FOUND ---
     res.writeHead(404, { 'Content-Type': 'application/json' });
