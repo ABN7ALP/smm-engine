@@ -41,238 +41,202 @@
   </script>
 
   <style>
-  * {
-    box-sizing: border-box;
-  }
-
-  body {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    overflow-y: auto;
-    margin: 0;
-    padding: 0;
-  }
-
-  html, body {
-    height: 100%;
-    overflow-x: hidden; /* يمنع التمرير الأفقي */
-  }
-
-  /* =========================
-     Sidebar
-  ========================== */
-  .sidebar {
-    position: fixed;
-    top: 0;
-    width: 16rem;
-    height: 100vh;
-    z-index: 30;
-    transition: transform 0.3s ease-in-out;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    background-color: #ffffff; /* في الوضع الفاتح */
-  }
-
-  .dark .sidebar {
-    background-color: #1e293b; /* في الوضع الداكن */
-  }
-
-  /* موضع الشريط حسب الاتجاه */
-  [dir="ltr"] .sidebar {
-    left: 0;
-    right: auto;
-  }
-
-  [dir="rtl"] .sidebar {
-    right: 0;
-    left: auto;
-  }
-
-  /* الحالة الافتراضية المغلقة على الشاشات الصغيرة */
-  @media (max-width: 1024px) {
-    [dir="ltr"] .sidebar { transform: translateX(-100%); }
-    [dir="rtl"] .sidebar { transform: translateX(100%); }
-    .sidebar {
-      width: 100%;
+    
+       * {
+      box-sizing: border-box;
     }
-  }
 
-  /* الحالة المفتوحة */
-  .sidebar.open {
-    transform: translateX(0) !important;
-  }
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    
 
-  /* ألوان الروابط داخل القائمة */
-  .sidebar a {
-    background: transparent;
-  }
-
-  /* Footer داخل القائمة */
-.sidebar {
+    /* Sidebar - Always from Left */
+    .sidebar {
+  position: fixed;
+  top: 0;
+  width: 16rem;
+  height: 100vh;
+  z-index: 30;
+  transition: transform 0.3s ease-in-out;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
 
-.sidebar-footer {
-  margin-top: auto;
-  padding: 1rem;
-  border-top: 1px solid #e5e7eb;
-}
-.dark .sidebar-footer {
-  border-top-color: #374151;
+/* موضع الشريط حسب الاتجاه - تم توحيده ليعمل مع RTL/LTR */
+.sidebar {
+  /* سيتم التحكم في موقعه عبر فئات Tailwind CSS */
 }
 
-  .dark .sidebar-footer {
-    border-top-color: #374151;
-  }
 
-  /* =========================
-     Main Content
-  ========================== */
-  .main-content {
-    transition: margin 0.3s ease-in-out;
-    min-height: 100vh;
-    overflow: visible;
-  }
 
-  /* شاشات أكبر من 1024px */
-  @media (min-width: 1025px) {
-    [dir="ltr"] .main-content {
-      margin-left: 16rem;
-      margin-right: 0;
+    .sidebar {
+  background-color: #ffffff; /* لون أبيض في الوضع الفاتح */
+}
+
+.dark .sidebar {
+  background-color: #1e293b; /* نفس درجة الداكن السابقة */
+}
+    /* Main Content */
+    /* المحتوى الرئيسي — يراعي الاتجاه */
+.main-content {
+  transition: margin 0.3s ease-in-out;
+}
+
+/* تم إزالة قواعد الهوامش المتعارضة والمكررة. سيتم الاعتماد على فئات Tailwind CSS في HTML */
+
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .sidebar.hidden {
+        /* يجب أن يكون الإخفاء متناسباً مع الاتجاه */
+        transform: translateX(100%); /* افتراضياً لـ LTR */
+      }
     }
 
-    [dir="rtl"] .main-content {
-      margin-right: 16rem;
-      margin-left: 0;
-    }
-  }
-
-  /* على الشاشات الصغيرة يلغى الهامش */
-  @media (max-width: 1024px) {
-    .main-content {
-      margin: 0 !important;
-    }
-  }
-
-  /* =========================
-     Mobile Menu Button
-  ========================== */
-  #mobileMenuBtn {
-    position: fixed;
-    top: 1rem;
-    z-index: 40;
-    display: none; /* مخفي افتراضياً */
-  }
-
-  /* يظهر فقط على الشاشات الصغيرة */
-  @media (max-width: 1024px) {
+    /* Mobile Menu Button - Top Left */
     #mobileMenuBtn {
-      display: block;
-    }
-  }
+  position: fixed;
+  top: 1rem;
+  z-index: 40;
+  display: none; /* مخفي افتراضياً */
+}
 
-  [dir="ltr"] #mobileMenuBtn {
-    left: 1rem;
-    right: auto;
-  }
-
-  [dir="rtl"] #mobileMenuBtn {
-    right: 1rem;
-    left: auto;
-  }
-
-  /* =========================
-     Sidebar Overlay
-  ========================== */
-  #sidebarOverlay {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 20;
-    display: none;
-  }
-
-  #sidebarOverlay.block {
+/* يظهر فقط على الموبايل */
+@media (max-width: 1024px) {
+  #mobileMenuBtn {
     display: block;
   }
+}
 
-  /* =========================
-     Logs Box Scroll
-  ========================== */
-  .logs-box {
-    max-height: 500px;
-    overflow-y: auto;
-    scroll-behavior: smooth;
-  }
+/* تم توحيد موقع زر القائمة الجانبية ليعمل مع RTL/LTR */
+[dir="rtl"] #mobileMenuBtn { right: 1rem; left: auto; }
+[dir="ltr"] #mobileMenuBtn { left: 1rem; right: auto; }
 
-  .logs-box::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .logs-box::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-  }
-
-  .dark .logs-box::-webkit-scrollbar-track {
-    background: #374151;
-  }
-
-  .logs-box::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 10px;
-  }
-
-  .logs-box::-webkit-scrollbar-thumb:hover {
-    background: #555;
-  }
-
-  /* =========================
-     Animations
-  ========================== */
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
+    /* Sidebar Overlay */
+    #sidebarOverlay {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 20;
+      display: none;
     }
-    to {
-      opacity: 1;
-      transform: translateY(0);
+
+    #sidebarOverlay.block {
+      display: block;
     }
-  }
 
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
-  }
+    /* Logs Box with Fixed Height */
+    .logs-box {
+      max-height: 500px;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+    
+    .logs-box::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .logs-box::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    
+    .dark .logs-box::-webkit-scrollbar-track {
+      background: #374151;
+    }
+    
+    .logs-box::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 10px;
+    }
+    
+    .logs-box::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
 
-  /* =========================
-     Alerts & Misc
-  ========================== */
-  .alert-container {
-    position: fixed;
-    bottom: 1rem;
-    left: 1rem;
-    z-index: 9999;
-    max-width: 400px;
-  }
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    /* Alert Container - Bottom Right */
+    .alert-container {
+      position: fixed;
+      bottom: 1rem;
+      left: 1rem;
+      z-index: 9999;
+      max-width: 400px;
+    }
 
-  /* =========================
-     RTL Base
-  ========================== */
-  [dir="rtl"] {
-    direction: rtl;
-  }
+    /* Sidebar Footer - Sticky to Bottom */
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 1rem;
+      border-top: 1px solid #e5e7eb;
+    }
+/* تم توحيد قواعد RTL في مكان واحد */
+[dir="rtl"] {
+  direction: rtl;
+}
 
-  [dir="rtl"] #mobileMenuBtn {
-    left: auto;
-    right: 1rem;
-  }
+[dir="rtl"] .main-content {
+  margin-right: 16rem;
+  margin-left: 0;
+}
 
+/* تعديل إخفاء القائمة الجانبية ليتناسب مع RTL */
+[dir="rtl"] .sidebar.hidden {
+  transform: translateX(100%); /* الإخفاء إلى اليمين */
+}
+
+/* تعديل إخفاء القائمة الجانبية ليتناسب مع LTR */
+[dir="ltr"] .sidebar.hidden {
+  transform: translateX(-100%); /* الإخفاء إلى اليسار */
+}
+    .dark .sidebar-footer {
+      border-top-color: #374151;
+    }
+html, body {
+  height: 100%;
+  overflow-x: hidden; /* يمنع التمرير الأفقي */
+}
+
+body {
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+}
+
+/* منع تمرير إضافي داخل main-content */
+.main-content {
+  overflow: visible;
+}
+    /* Responsive Adjustments */
+    /* تم إزالة قاعدة الهامش المكررة. سيتم الاعتماد على فئات Tailwind CSS في HTML */  
   </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200" dir="ltr">
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200" dir="rtl">
 
   <!-- Token Check Loading Screen -->
   <div id="tokenCheck" class="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50 transition-colors duration-200">
@@ -531,6 +495,7 @@
         </div>
       </section>
 
+      
       <!-- Services Section -->
       <section id="services" class="content-section hidden">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
@@ -945,8 +910,7 @@
       english: "English"
     }
   };
-    
-  // Current Language
+      // Current Language
   let currentLang = localStorage.getItem('lang') || 'ar';
 
     // Set initial document direction from stored language
@@ -1394,9 +1358,8 @@ document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
     } finally {
       hideLoading('logs');
     }
-  }
-
-  // =======================================================
+               }
+      // =======================================================
   //  SERVICE FORM MANAGEMENT
   // =======================================================
   
@@ -1659,89 +1622,77 @@ document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
   };
 
   // =======================================================
-//  SIDEBAR & NAVIGATION CONTROL (مُحسّن)
-// =======================================================
-document.addEventListener('DOMContentLoaded', function() {
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('sidebarOverlay');
-  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-  const navItems = document.querySelectorAll('.nav-item');
-  const contentSections = document.querySelectorAll('.content-section');
-
-  // 🔹 فتح وإغلاق القائمة
-  function toggleSidebar() {
-    const isOpen = sidebar.classList.contains('open');
-    if (isOpen) {
-      sidebar.classList.remove('open');
-      overlay.classList.remove('block');
-      sidebar.style.transform = document.dir === 'rtl' ? 'translateX(100%)' : 'translateX(-100%)';
-    } else {
-      sidebar.classList.add('open');
-      overlay.classList.add('block');
-      sidebar.style.transform = 'translateX(0)';
-    }
-  }
-
-  // زر القائمة
-  mobileMenuBtn.addEventListener('click', toggleSidebar);
-
-  // الضغط على الخلفية يغلق القائمة
-  overlay.addEventListener('click', () => {
-    sidebar.classList.remove('open');
-    overlay.classList.remove('block');
-    sidebar.style.transform = document.dir === 'rtl' ? 'translateX(100%)' : 'translateX(-100%)';
-  });
-
-  // 🔹 ثبات القائمة على الكمبيوتر
-  function handleResize() {
-    if (window.innerWidth > 1024) {
-      sidebar.classList.add('open');
-      sidebar.style.transform = 'translateX(0)';
-      overlay.classList.remove('block');
-    } else {
-      sidebar.classList.remove('open');
-      sidebar.style.transform = document.dir === 'rtl'
-        ? 'translateX(100%)'
-        : 'translateX(-100%)';
-    }
-  }
-  window.addEventListener('resize', handleResize);
-  handleResize();
-
-  // 🔹 التنقل بين الأقسام
-  navItems.forEach(item => {
-    item.addEventListener('click', function(e) {
-      e.preventDefault();
-
-      navItems.forEach(nav => nav.classList.remove('bg-gray-100', 'dark:bg-gray-700'));
-      contentSections.forEach(section => section.classList.add('hidden'));
-
-      this.classList.add('bg-gray-100', 'dark:bg-gray-700');
-      const targetSection = this.getAttribute('data-section');
-      const sectionToShow = document.getElementById(targetSection);
-      if (sectionToShow) sectionToShow.classList.remove('hidden');
-
-      const sectionTitle = this.querySelector('span').textContent;
-      const pageTitle = document.querySelector('.page-title');
-      if (pageTitle) pageTitle.textContent = sectionTitle;
-
-      if (targetSection === 'services') loadServices();
-      else if (targetSection === 'orders') loadOrders();
-      else if (targetSection === 'logs') loadLogs();
-      else if (targetSection === 'settings') {
-        updateDarkModeToggle();
-        document.getElementById('languageSetting').value = currentLang;
-      }
-
-      if (window.innerWidth < 1024) toggleSidebar();
+  //  SIDEBAR & NAVIGATION CONTROL
+  // =======================================================
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const navItems = document.querySelectorAll('.nav-item');
+    const contentSections = document.querySelectorAll('.content-section');
+    
+    // Mobile menu toggle
+    mobileMenuBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('hidden');
+      overlay.classList.toggle('block');
     });
-  });
 
-  // تطبيق الترجمة والتخصيص عند التحميل
-  applyTranslations();
-  updateDarkModeToggle();
-  document.getElementById('languageSetting').value = currentLang;
-});
+    // Close sidebar when clicking overlay
+    overlay.addEventListener('click', () => {
+      sidebar.classList.add('hidden');
+      overlay.classList.remove('block');
+    });
+
+    // Navigation
+    navItems.forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        navItems.forEach(nav => nav.classList.remove('bg-gray-100', 'dark:bg-gray-700'));
+        contentSections.forEach(section => section.classList.add('hidden'));
+        
+        this.classList.add('bg-gray-100', 'dark:bg-gray-700');
+        
+        const targetSection = this.getAttribute('data-section');
+        const sectionToShow = document.getElementById(targetSection);
+        if (sectionToShow) {
+          sectionToShow.classList.remove('hidden');
+        }
+        
+        const sectionTitle = this.querySelector('span').textContent;
+        updatePageTitle(sectionTitle);
+        
+        if (targetSection === 'services') {
+          loadServices();
+        } else if (targetSection === 'orders') {
+          loadOrders();
+        } else if (targetSection === 'logs') {
+          loadLogs();
+        } else if (targetSection === 'settings') {
+          updateDarkModeToggle();
+          document.getElementById('languageSetting').value = currentLang;
+        }
+        
+        if (window.innerWidth < 1024) {
+          sidebar.classList.add('hidden');
+          overlay.classList.remove('block');
+        }
+      });
+    });
+    
+    function updatePageTitle(title) {
+      const pageTitle = document.querySelector('.page-title');
+      if (pageTitle) {
+        pageTitle.textContent = title;
+      }
+    }
+    
+    // Apply translations on load
+    applyTranslations();
+    updateDarkModeToggle();
+    document.getElementById('languageSetting').value = currentLang;
+  });
 
   // =======================================================
   //  INITIALIZE APPLICATION
