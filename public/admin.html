@@ -28,15 +28,40 @@
       transition: background-color 0.3s, color 0.3s;
     }
 
-    body.light-mode {
-      background-color: #f8f9fa;
-      color: #212529;
-    }
-
     body.dark-mode {
-      background-color: #1a1a1a;
-      color: #e0e0e0;
-    }
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+body.dark-mode .form-control::placeholder {
+  color: #888;
+}
+
+body.dark-mode .stat-card-title {
+  color: #b0b0b0;
+}
+
+body.dark-mode .table {
+  color: #e0e0e0;
+}
+
+body.dark-mode .card {
+  background: #1e1e1e;
+  border-color: #333;
+}
+
+/* تحسين الصناديق في الوضع الداكن */
+body.dark-mode .table thead th {
+  background-color: #2d2d2d;
+  border-bottom-color: #444;
+  color: #e0e0e0;
+}
+
+body.dark-mode .table tbody td {
+  border-color: #333;
+}
+
+    
 
     /* Sidebar */
     .sidebar {
@@ -462,6 +487,68 @@
     body.dark-mode .accordion-button:not(.collapsed) {
       background-color: rgba(102, 126, 234, 0.2);
     }
+    /* تحسين تنسيق الأزرار على الهاتف */
+@media (max-width: 768px) {
+  .btn-group-responsive {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .btn-group-responsive .btn {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+}
+
+/* مؤثر التحميل */
+.btn-loading {
+  position: relative;
+  color: transparent !important;
+}
+
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 50%;
+  left: 50%;
+  margin-left: -10px;
+  margin-top: -10px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+    /* تحسين أزرار الإجراءات */
+.btn-action-group {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.btn-action-group .btn {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  border-radius: 5px;
+}
+
+/* تحسين أزرار حالة الطلبات */
+.btn-status-group {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-status-group .btn {
+  padding: 6px 8px;
+  font-size: 0.75rem;
+  min-width: 35px;
+}
   </style>
 </head>
 <body class="light-mode">
@@ -487,6 +574,9 @@
         <i class="fas fa-history"></i> السجلات
       </a>
       <hr style="border-color: rgba(255, 255, 255, 0.2);">
+      <div class="nav-link theme-sidebar-toggle" style="cursor: pointer;">
+  <i class="fas fa-moon"></i> تبديل الوضع
+      </div>
       <a href="#" id="logoutBtn" class="nav-link" style="color: #ff6b6b;">
         <i class="fas fa-sign-out-alt"></i> تسجيل خروج
       </a>
@@ -535,20 +625,22 @@
           <div class="stat-card-value" id="avg-price">$0</div>
         </div>
       </div>
-
+      
       <div class="row">
-        <div class="col-md-12">
-          <button id="refreshBtn" class="btn btn-primary me-2">
-            <i class="fas fa-sync-alt"></i> تحديث البيانات
-          </button>
-          <button id="exportServices" class="btn btn-info me-2">
-            <i class="fas fa-download"></i> تحميل الخدمات
-          </button>
-          <button id="exportOrders" class="btn btn-info">
-            <i class="fas fa-download"></i> تحميل الطلبات
-          </button>
-        </div>
-      </div>
+  <div class="col-md-12">
+    <div class="btn-group-responsive d-flex flex-wrap gap-2">
+      <button id="refreshBtn" class="btn btn-primary flex-fill">
+        <i class="fas fa-sync-alt"></i> تحديث البيانات
+      </button>
+      <button id="exportServices" class="btn btn-info flex-fill">
+        <i class="fas fa-download"></i> تحميل الخدمات
+      </button>
+      <button id="exportOrders" class="btn btn-info flex-fill">
+        <i class="fas fa-download"></i> تحميل الطلبات
+      </button>
+    </div>
+  </div>
+      </div>      
     </section>
 
     <!-- Services Section -->
@@ -694,26 +786,36 @@
   
   <script>
     // ========== THEME TOGGLE ==========
-    const themeToggle = document.getElementById('themeToggle');
-    const body = document.body;
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    
-    body.classList.remove('light-mode', 'dark-mode');
-    body.classList.add(savedTheme + '-mode');
-    updateThemeIcon();
+const body = document.body;
+const savedTheme = localStorage.getItem('theme') || 'light';
 
-    themeToggle.addEventListener('click', () => {
-      const isDark = body.classList.contains('dark-mode');
-      body.classList.remove('light-mode', 'dark-mode');
-      body.classList.add(isDark ? 'light-mode' : 'dark-mode');
-      localStorage.setItem('theme', isDark ? 'light' : 'dark');
-      updateThemeIcon();
-    });
+body.classList.remove('light-mode', 'dark-mode');
+body.classList.add(savedTheme + '-mode');
 
-    function updateThemeIcon() {
-      const isDark = body.classList.contains('dark-mode');
-      themeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-    }
+// نقل دالة تبديل الوضع إلى الشريط الجانبي
+const themeSidebarToggle = document.querySelector('.theme-sidebar-toggle');
+
+themeSidebarToggle.addEventListener('click', () => {
+  const isDark = body.classList.contains('dark-mode');
+  body.classList.remove('light-mode', 'dark-mode');
+  body.classList.add(isDark ? 'light-mode' : 'dark-mode');
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+  updateThemeIcon();
+});
+
+// إزالة زر تبديل الوضع من الهيدر
+document.querySelector('.header-controls').innerHTML = '';
+
+// تحديث أيقونة الوضع في الشريط الجانبي
+function updateThemeIcon() {
+  const isDark = body.classList.contains('dark-mode');
+  const themeIcon = themeSidebarToggle.querySelector('i');
+  themeIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+  themeSidebarToggle.innerHTML = `${themeIcon.outerHTML} ${isDark ? 'الوضع الفاتح' : 'الوضع الداكن'}`;
+}
+
+// استدعاء الدالة لتهيئة الأيقونة عند التحميل
+updateThemeIcon();
 
     // ========== SIDEBAR NAVIGATION ==========
     const menuToggle = document.getElementById('menuToggle');
@@ -841,13 +943,16 @@
           <td>${s.type}</td>
           <td>${s.type === 'fixed' ? '$' + (s.price || '') : '$' + (s.rate || '') + ' /1k'}</td>
           <td>
-            <button onclick="editService(${s.id})" class="btn btn-sm btn-primary">
-              <i class="fas fa-edit"></i> تعديل
-            </button>
-            <button onclick="deleteService(${s.id})" class="btn btn-sm btn-danger">
-              <i class="fas fa-trash"></i> حذف
-            </button>
-          </td>
+            <td>
+  <div class="btn-action-group">
+    <button onclick="editService(${s.id})" class="btn btn-sm btn-primary">
+      <i class="fas fa-edit"></i>
+    </button>
+    <button onclick="deleteService(${s.id})" class="btn btn-sm btn-danger">
+      <i class="fas fa-trash"></i>
+    </button>
+  </div>
+  </td>
         `;
         tbody.appendChild(tr);
       });
@@ -887,16 +992,18 @@
           <td>$${o.price || ''}</td>
           <td>${statusMap[o.status] || o.status}</td>
           <td>
-            <button onclick="updateOrderStatus(${o.id},'processing')" class="btn btn-sm btn-warning" title="قيد التنفيذ">
-              <i class="fas fa-cog"></i>
-            </button>
-            <button onclick="updateOrderStatus(${o.id},'completed')" class="btn btn-sm btn-success" title="مكتمل">
-              <i class="fas fa-check"></i>
-            </button>
-            <button onclick="updateOrderStatus(${o.id},'rejected')" class="btn btn-sm btn-danger" title="مرفوض">
-              <i class="fas fa-times"></i>
-            </button>
-          </td>
+  <div class="btn-status-group">
+    <button onclick="updateOrderStatus(${o.id},'processing')" class="btn btn-sm btn-warning" title="قيد التنفيذ">
+      <i class="fas fa-cog"></i>
+    </button>
+    <button onclick="updateOrderStatus(${o.id},'completed')" class="btn btn-sm btn-success" title="مكتمل">
+      <i class="fas fa-check"></i>
+    </button>
+    <button onclick="updateOrderStatus(${o.id},'rejected')" class="btn btn-sm btn-danger" title="مرفوض">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+</td>
         `;
         tbody.appendChild(tr);
       });
@@ -1057,9 +1164,26 @@
     });
 
     document.getElementById('refreshBtn').onclick = async () => {
-      await reloadAll();
-      show('✅ تم تحديث البيانات');
-    };
+  const btn = document.getElementById('refreshBtn');
+  const originalHTML = btn.innerHTML;
+  
+  // إضافة مؤثر التحميل
+  btn.innerHTML = '<i class="fas fa-spinner"></i> جاري التحديث...';
+  btn.classList.add('btn-loading');
+  btn.disabled = true;
+  
+  try {
+    await reloadAll();
+    show('✅ تم تحديث البيانات');
+  } catch (error) {
+    show('❌ فشل في تحديث البيانات', 'error');
+  } finally {
+    // إعادة الحالة الأصلية
+    btn.innerHTML = originalHTML;
+    btn.classList.remove('btn-loading');
+    btn.disabled = false;
+  }
+};
 
     // ========== RELOAD ALL ==========
     async function reloadAll() {
