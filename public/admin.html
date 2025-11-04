@@ -86,9 +86,15 @@
   left: auto;
 }
 
+/* دعم تموضع المحتوى حسب الاتجاه */
 [dir="rtl"] .main-content {
   margin-right: 16rem;
   margin-left: 0;
+}
+
+[dir="ltr"] .main-content {
+  margin-left: 16rem;
+  margin-right: 0;
 }
 
 /* Adjust mobile menu button for RTL */
@@ -119,14 +125,23 @@
       }
     }
 
-    /* Mobile Menu Button - Top Left */
     #mobileMenuBtn {
-      position: fixed;
-      top: 1rem;
-      left: 1rem;
-      z-index: 40;
-      display: none;
-    }
+  position: fixed;
+  top: 1rem;
+  z-index: 40;
+  display: none;
+}
+
+/* الموقع حسب اللغة */
+[dir="ltr"] #mobileMenuBtn {
+  left: 1rem;
+  right: auto;
+}
+
+[dir="rtl"] #mobileMenuBtn {
+  right: 1rem;
+  left: auto;
+}
 
     @media (max-width: 768px) {
       #mobileMenuBtn {
