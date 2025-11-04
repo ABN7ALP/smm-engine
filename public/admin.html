@@ -109,11 +109,19 @@
   }
 
   /* Footer داخل القائمة */
-  .sidebar-footer {
-    margin-top: auto;
-    padding-top: 1rem;
-    border-top: 1px solid #e5e7eb;
-  }
+.sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+.dark .sidebar-footer {
+  border-top-color: #374151;
+}
 
   .dark .sidebar-footer {
     border-top-color: #374151;
@@ -1651,77 +1659,89 @@ document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
   };
 
   // =======================================================
-  //  SIDEBAR & NAVIGATION CONTROL
-  // =======================================================
-  
-  document.addEventListener('DOMContentLoaded', function() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const navItems = document.querySelectorAll('.nav-item');
-    const contentSections = document.querySelectorAll('.content-section');
-    
-    // Mobile menu toggle
-    mobileMenuBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('hidden');
-      overlay.classList.toggle('block');
-    });
+//  SIDEBAR & NAVIGATION CONTROL (مُحسّن)
+// =======================================================
+document.addEventListener('DOMContentLoaded', function() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const navItems = document.querySelectorAll('.nav-item');
+  const contentSections = document.querySelectorAll('.content-section');
 
-    // Close sidebar when clicking overlay
-    overlay.addEventListener('click', () => {
-      sidebar.classList.add('hidden');
+  // 🔹 فتح وإغلاق القائمة
+  function toggleSidebar() {
+    const isOpen = sidebar.classList.contains('open');
+    if (isOpen) {
+      sidebar.classList.remove('open');
       overlay.classList.remove('block');
-    });
-
-    // Navigation
-    navItems.forEach(item => {
-      item.addEventListener('click', function(e) {
-        e.preventDefault();
-        
-        navItems.forEach(nav => nav.classList.remove('bg-gray-100', 'dark:bg-gray-700'));
-        contentSections.forEach(section => section.classList.add('hidden'));
-        
-        this.classList.add('bg-gray-100', 'dark:bg-gray-700');
-        
-        const targetSection = this.getAttribute('data-section');
-        const sectionToShow = document.getElementById(targetSection);
-        if (sectionToShow) {
-          sectionToShow.classList.remove('hidden');
-        }
-        
-        const sectionTitle = this.querySelector('span').textContent;
-        updatePageTitle(sectionTitle);
-        
-        if (targetSection === 'services') {
-          loadServices();
-        } else if (targetSection === 'orders') {
-          loadOrders();
-        } else if (targetSection === 'logs') {
-          loadLogs();
-        } else if (targetSection === 'settings') {
-          updateDarkModeToggle();
-          document.getElementById('languageSetting').value = currentLang;
-        }
-        
-        if (window.innerWidth < 768) {
-          sidebar.classList.add('hidden');
-          overlay.classList.remove('block');
-        }
-      });
-    });
-    
-    function updatePageTitle(title) {
-      const pageTitle = document.querySelector('.page-title');
-      if (pageTitle) {
-        pageTitle.textContent = title;
-      }
+      sidebar.style.transform = document.dir === 'rtl' ? 'translateX(100%)' : 'translateX(-100%)';
+    } else {
+      sidebar.classList.add('open');
+      overlay.classList.add('block');
+      sidebar.style.transform = 'translateX(0)';
     }
-    
-    // Apply translations on load
-    applyTranslations();
-    updateDarkModeToggle();
-    document.getElementById('languageSetting').value = currentLang;
+  }
+
+  // زر القائمة
+  mobileMenuBtn.addEventListener('click', toggleSidebar);
+
+  // الضغط على الخلفية يغلق القائمة
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('block');
+    sidebar.style.transform = document.dir === 'rtl' ? 'translateX(100%)' : 'translateX(-100%)';
   });
+
+  // 🔹 ثبات القائمة على الكمبيوتر
+  function handleResize() {
+    if (window.innerWidth > 1024) {
+      sidebar.classList.add('open');
+      sidebar.style.transform = 'translateX(0)';
+      overlay.classList.remove('block');
+    } else {
+      sidebar.classList.remove('open');
+      sidebar.style.transform = document.dir === 'rtl'
+        ? 'translateX(100%)'
+        : 'translateX(-100%)';
+    }
+  }
+  window.addEventListener('resize', handleResize);
+  handleResize();
+
+  // 🔹 التنقل بين الأقسام
+  navItems.forEach(item => {
+    item.addEventListener('click', function(e) {
+      e.preventDefault();
+
+      navItems.forEach(nav => nav.classList.remove('bg-gray-100', 'dark:bg-gray-700'));
+      contentSections.forEach(section => section.classList.add('hidden'));
+
+      this.classList.add('bg-gray-100', 'dark:bg-gray-700');
+      const targetSection = this.getAttribute('data-section');
+      const sectionToShow = document.getElementById(targetSection);
+      if (sectionToShow) sectionToShow.classList.remove('hidden');
+
+      const sectionTitle = this.querySelector('span').textContent;
+      const pageTitle = document.querySelector('.page-title');
+      if (pageTitle) pageTitle.textContent = sectionTitle;
+
+      if (targetSection === 'services') loadServices();
+      else if (targetSection === 'orders') loadOrders();
+      else if (targetSection === 'logs') loadLogs();
+      else if (targetSection === 'settings') {
+        updateDarkModeToggle();
+        document.getElementById('languageSetting').value = currentLang;
+      }
+
+      if (window.innerWidth < 1024) toggleSidebar();
+    });
+  });
+
+  // تطبيق الترجمة والتخصيص عند التحميل
+  applyTranslations();
+  updateDarkModeToggle();
+  document.getElementById('languageSetting').value = currentLang;
+});
 
   // =======================================================
   //  INITIALIZE APPLICATION
