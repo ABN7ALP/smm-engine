@@ -554,6 +554,82 @@ body.dark-mode .table tbody td {
   background-color: rgba(255, 255, 255, 0.2);
   color: white;
 }
+    /* تنسيق زر تبديل الوضع في الشريط الجانبي */
+.theme-sidebar-toggle {
+  padding: 12px 15px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.8);
+  transition: all 0.2s;
+  text-decoration: none;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: right;
+}
+
+.theme-sidebar-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.theme-sidebar-toggle i {
+  font-size: 1.2rem;
+}
+    /* تحسين نصوص النماذج في الوضع الداكن */
+body.dark-mode .form-label {
+  color: #e0e0e0 !important;
+}
+
+body.dark-mode .form-control {
+  color: #e0e0e0 !important;
+  background-color: #2a2a2a !important;
+  border-color: #444 !important;
+}
+
+body.dark-mode .form-control:focus {
+  color: #e0e0e0 !important;
+  background-color: #333 !important;
+}
+
+body.dark-mode .form-select {
+  color: #e0e0e0 !important;
+  background-color: #2a2a2a !important;
+  border-color: #444 !important;
+}
+
+body.dark-mode .form-select:focus {
+  color: #e0e0e0 !important;
+  background-color: #333 !important;
+}
+
+/* تحسين النصوص في قسم إضافة خدمة */
+body.dark-mode .card-body {
+  color: #e0e0e0;
+}
+
+body.dark-mode input::placeholder {
+  color: #888 !important;
+}
+    /* تحسين إضافي للنماذج */
+body.dark-mode .card {
+  background: #1e1e1e;
+  border-color: #333;
+}
+
+body.dark-mode .card-body {
+  background: #1e1e1e;
+}
+
+body.dark-mode .input-group-text {
+  background-color: #333;
+  border-color: #444;
+  color: #e0e0e0;
+}
   </style>
 </head>
 <body class="light-mode">
@@ -580,10 +656,10 @@ body.dark-mode .table tbody td {
       </a>
       <!-- داخل الشريط الجانبي بعد عناصر التنقل -->
 <hr style="border-color: rgba(255, 255, 255, 0.2);">
-<div class="theme-sidebar-toggle">
+<button class="theme-sidebar-toggle">
   <i class="fas fa-moon"></i>
   <span>تبديل الوضع</span>
-</div>
+</button>
       <a href="#" id="logoutBtn" class="nav-link" style="color: #ff6b6b;">
         <i class="fas fa-sign-out-alt"></i> تسجيل خروج
       </a>
@@ -804,8 +880,8 @@ body.classList.add(savedTheme + '-mode');
 const themeSidebarToggle = document.querySelector('.theme-sidebar-toggle');
 
 themeSidebarToggle.addEventListener('click', (e) => {
-  e.preventDefault(); // منع أي سلوك افتراضي
-  e.stopPropagation(); // منع انتشار الحدث
+  e.preventDefault();
+  e.stopPropagation();
   
   const isDark = body.classList.contains('dark-mode');
   body.classList.remove('light-mode', 'dark-mode');
@@ -820,29 +896,39 @@ document.querySelector('.header-controls').innerHTML = '';
 // تحديث أيقونة الوضع في الشريط الجانبي
 function updateThemeIcon() {
   const isDark = body.classList.contains('dark-mode');
-  const themeIcon = themeSidebarToggle.querySelector('i');
-  const textElement = themeSidebarToggle.querySelector('span') || document.createElement('span');
+  const icon = themeSidebarToggle.querySelector('i');
+  const text = themeSidebarToggle.querySelector('span');
   
-  themeIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-  
-  if (!themeSidebarToggle.querySelector('span')) {
-    themeSidebarToggle.appendChild(textElement);
-  }
-  
-  textElement.textContent = isDark ? ' الوضع الفاتح' : ' الوضع الداكن';
+  icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+  text.textContent = isDark ? 'الوضع الفاتح' : 'الوضع الداكن';
 }
 
 // استدعاء الدالة لتهيئة الأيقونة عند التحميل
 updateThemeIcon();
-
+    
     // ========== SIDEBAR NAVIGATION ==========
-    const menuToggle = document.getElementById('menuToggle');
-    const sidebar = document.querySelector('.sidebar');
-    const navLinks = document.querySelectorAll('.nav-link');
+const menuToggle = document.getElementById('menuToggle');
+const sidebar = document.querySelector('.sidebar');
+const navLinks = document.querySelectorAll('.nav-link');
 
-    menuToggle.addEventListener('click', () => {
-      sidebar.classList.toggle('open');
-    });
+menuToggle.addEventListener('click', () => {
+  sidebar.classList.toggle('open');
+});
+
+// إغلاق القائمة الجانبية عند النقر خارجها
+document.addEventListener('click', (e) => {
+  const isClickInsideSidebar = sidebar.contains(e.target);
+  const isClickOnMenuToggle = menuToggle.contains(e.target);
+  
+  if (!isClickInsideSidebar && !isClickOnMenuToggle && sidebar.classList.contains('open')) {
+    sidebar.classList.remove('open');
+  }
+});
+
+// منع إغلاق القائمة عند النقر داخلها
+sidebar.addEventListener('click', (e) => {
+  e.stopPropagation();
+});
 
     navLinks.forEach(link => {
       link.addEventListener('click', (e) => {
