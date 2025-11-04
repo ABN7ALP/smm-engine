@@ -64,7 +64,7 @@
   flex-direction: column;
 }
 
-/* موضع الشريط حسب الاتجاه */
+/* موقعها حسب اللغة */
 [dir="ltr"] .sidebar {
   left: 0;
   right: auto;
@@ -73,6 +73,26 @@
 [dir="rtl"] .sidebar {
   right: 0;
   left: auto;
+}
+
+/* موبايل: مخفية بشكل افتراضي */
+@media (max-width: 1024px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  [dir="rtl"] .sidebar {
+    transform: translateX(100%);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+/* كمبيوتر: ظاهرة دائمًا */
+@media (min-width: 1025px) {
+  .sidebar {
+    transform: none !important;
+  }
 }
 
 /* عند الشاشات الصغيرة: يملأ العرض بالكامل */
