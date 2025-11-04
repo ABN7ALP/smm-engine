@@ -803,8 +803,11 @@ themeSidebarToggle.addEventListener('click', () => {
   updateThemeIcon();
 });
 
-// إزالة زر تبديل الوضع من الهيدر
-document.querySelector('.header-controls').innerHTML = '';
+// فقط أخفى زر تبديل الوضع في الهيدر بدون حذف أي شي
+const headerThemeToggle = document.getElementById('themeToggle');
+if (headerThemeToggle) {
+    headerThemeToggle.style.display = 'none';
+}
 
 // تحديث أيقونة الوضع في الشريط الجانبي
 function updateThemeIcon() {
