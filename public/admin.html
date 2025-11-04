@@ -107,9 +107,7 @@
   }
 }
 
-    .sidebar.hidden {
-      transform: translateX(-100%);
-    }
+    
 
     .sidebar {
   background-color: #ffffff; /* لون أبيض في الوضع الفاتح */
@@ -201,10 +199,7 @@
         margin-left: 0;
       }
 
-      .sidebar.hidden {
-        transform: translateX(-100%);
-      }
-    }
+    
 
     #mobileMenuBtn {
   position: fixed;
@@ -354,7 +349,8 @@ body {
   <div id="sidebarOverlay" class=""></div>
 
   <!-- Sidebar -->
-  <aside id="sidebar" class="sidebar hidden md:block">
+  - <aside id="sidebar" class="sidebar hidden md:block">
++ <aside id="sidebar" class="sidebar md:block">
     <div class="h-full px-3 py-4 flex flex-col">
       
       <!-- Header -->
