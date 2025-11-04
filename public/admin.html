@@ -549,6 +549,11 @@ body.dark-mode .table tbody td {
   font-size: 0.75rem;
   min-width: 35px;
 }
+    /* تنسيق زر تبديل الوضع في الشريط الجانبي */
+.theme-sidebar-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
   </style>
 </head>
 <body class="light-mode">
@@ -573,10 +578,12 @@ body.dark-mode .table tbody td {
       <a href="#logs" class="nav-link" data-section="logs">
         <i class="fas fa-history"></i> السجلات
       </a>
-      <hr style="border-color: rgba(255, 255, 255, 0.2);">
-      <div class="nav-link theme-sidebar-toggle" style="cursor: pointer;">
-  <i class="fas fa-moon"></i> تبديل الوضع
-      </div>
+      <!-- داخل الشريط الجانبي بعد عناصر التنقل -->
+<hr style="border-color: rgba(255, 255, 255, 0.2);">
+<div class="theme-sidebar-toggle">
+  <i class="fas fa-moon"></i>
+  <span>تبديل الوضع</span>
+</div>
       <a href="#" id="logoutBtn" class="nav-link" style="color: #ff6b6b;">
         <i class="fas fa-sign-out-alt"></i> تسجيل خروج
       </a>
@@ -785,6 +792,7 @@ body.dark-mode .table tbody td {
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   
   <script>
+
     // ========== THEME TOGGLE ==========
 const body = document.body;
 const savedTheme = localStorage.getItem('theme') || 'light';
@@ -795,7 +803,10 @@ body.classList.add(savedTheme + '-mode');
 // نقل دالة تبديل الوضع إلى الشريط الجانبي
 const themeSidebarToggle = document.querySelector('.theme-sidebar-toggle');
 
-themeSidebarToggle.addEventListener('click', () => {
+themeSidebarToggle.addEventListener('click', (e) => {
+  e.preventDefault(); // منع أي سلوك افتراضي
+  e.stopPropagation(); // منع انتشار الحدث
+  
   const isDark = body.classList.contains('dark-mode');
   body.classList.remove('light-mode', 'dark-mode');
   body.classList.add(isDark ? 'light-mode' : 'dark-mode');
@@ -803,18 +814,22 @@ themeSidebarToggle.addEventListener('click', () => {
   updateThemeIcon();
 });
 
-// فقط أخفى زر تبديل الوضع في الهيدر بدون حذف أي شي
-const headerThemeToggle = document.getElementById('themeToggle');
-if (headerThemeToggle) {
-    headerThemeToggle.style.display = 'none';
-}
+// إزالة زر تبديل الوضع من الهيدر
+document.querySelector('.header-controls').innerHTML = '';
 
 // تحديث أيقونة الوضع في الشريط الجانبي
 function updateThemeIcon() {
   const isDark = body.classList.contains('dark-mode');
   const themeIcon = themeSidebarToggle.querySelector('i');
+  const textElement = themeSidebarToggle.querySelector('span') || document.createElement('span');
+  
   themeIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-  themeSidebarToggle.innerHTML = `${themeIcon.outerHTML} ${isDark ? 'الوضع الفاتح' : 'الوضع الداكن'}`;
+  
+  if (!themeSidebarToggle.querySelector('span')) {
+    themeSidebarToggle.appendChild(textElement);
+  }
+  
+  textElement.textContent = isDark ? ' الوضع الفاتح' : ' الوضع الداكن';
 }
 
 // استدعاء الدالة لتهيئة الأيقونة عند التحميل
