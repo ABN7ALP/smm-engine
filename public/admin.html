@@ -86,9 +86,13 @@
       transform: translateX(-100%);
     }
 
-    .dark .sidebar {
-      background-color: #1f2937;
-    }
+    .sidebar {
+  background-color: #ffffff; /* لون أبيض في الوضع الفاتح */
+}
+
+.dark .sidebar {
+  background-color: #1e293b; /* نفس درجة الداكن السابقة */
+}
 
     /* RTL support */
 [dir="rtl"] {
@@ -123,6 +127,25 @@
     /* المحتوى الرئيسي — يراعي الاتجاه */
 .main-content {
   transition: margin 0.3s ease-in-out;
+}
+
+/* شاشات أكبر من 1024px */
+@media (min-width: 1025px) {
+  [dir="ltr"] .main-content {
+    margin-left: 16rem;
+    margin-right: 0;
+  }
+  [dir="rtl"] .main-content {
+    margin-right: 16rem;
+    margin-left: 0;
+  }
+}
+
+/* على الشاشات الصغيرة يلغى الهامش */
+@media (max-width: 1024px) {
+  .main-content {
+    margin: 0 !important;
+  }
 }
 
 /* عند الاتجاه الإنجليزي */
@@ -266,6 +289,21 @@
         margin-left: 16rem;
       }
     }
+    html, body {
+  height: 100%;
+  overflow-x: hidden; /* يمنع التمرير الأفقي */
+}
+
+body {
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+}
+
+/* منع تمرير إضافي داخل main-content */
+.main-content {
+  overflow: visible;
+}
   </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200" dir="ltr">
