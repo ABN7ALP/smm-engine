@@ -1,1604 +1,1081 @@
 <!DOCTYPE html>
-<html lang="ar" id="htmlElement">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>لوحة التحكم - SMM</title>
-
-  <!-- Tailwind CSS CDN with Dark Mode Support -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Flowbite CSS CDN -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
-
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>لوحة التحكم - الإدارة</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Font Awesome for Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-  <!-- Google Fonts (Cairo for Arabic) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-
-  <script>
-    // Configure Tailwind with Dark Mode Support
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            'sans': ['Cairo', 'sans-serif'],
-          },
-        }
-      }
-    }
-
-    // Auto-detect system dark mode preference
-    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  </script>
-
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Cairo Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
-    
-       * {
-      box-sizing: border-box;
+    :root {
+      --primary-color: #007bff;
+      --secondary-color: #6c757d;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --info-color: #17a2b8;
+    }
+
+    * {
+      font-family: 'Cairo', sans-serif;
     }
 
     body {
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+      transition: background-color 0.3s, color 0.3s;
     }
-    
-    
 
-    /* Sidebar - Always from Left */
+    body.light-mode {
+      background-color: #f8f9fa;
+      color: #212529;
+    }
+
+    body.dark-mode {
+      background-color: #1a1a1a;
+      color: #e0e0e0;
+    }
+
+    /* Sidebar */
     .sidebar {
-  position: fixed;
-  top: 0;
-  width: 16rem;
-  height: 100vh;
-  z-index: 30;
-  transition: transform 0.3s ease-in-out;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 250px;
+      height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s;
+    }
 
-/* موضع الشريط حسب الاتجاه - تم توحيده ليعمل مع RTL/LTR */
-.sidebar {
-  /* سيتم التحكم في موقعه عبر فئات Tailwind CSS */
-}
+    body.dark-mode .sidebar {
+      background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    }
 
+    .sidebar-header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    }
 
+    .sidebar-header h2 {
+      color: white;
+      font-size: 1.5rem;
+      margin: 0;
+    }
 
-    .sidebar {
-  background-color: #ffffff; /* لون أبيض في الوضع الفاتح */
-}
+    .nav-link {
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      padding: 12px 15px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s;
+    }
 
-.dark .sidebar {
-  background-color: #1e293b; /* نفس درجة الداكن السابقة */
-}
+    .nav-link:hover, .nav-link.active {
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    .nav-link i {
+      font-size: 1.2rem;
+    }
+
     /* Main Content */
-    /* المحتوى الرئيسي — يراعي الاتجاه */
-.main-content {
-  transition: margin 0.3s ease-in-out;
-}
+    .main-content {
+      margin-right: 250px;
+      padding: 20px;
+      transition: margin-right 0.3s;
+    }
 
-/* تم إزالة قواعد الهوامش المتعارضة والمكررة. سيتم الاعتماد على فئات Tailwind CSS في HTML */
+    /* Header */
+    .header {
+      background: white;
+      padding: 15px 20px;
+      border-bottom: 1px solid #dee2e6;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
 
-    @media (max-width: 768px) {
+    body.dark-mode .header {
+      background: #2a2a2a;
+      border-bottom-color: #444;
+    }
+
+    .header h1 {
+      font-size: 1.8rem;
+      margin: 0;
+      color: var(--primary-color);
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    /* Stats Cards */
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border-right: 5px solid var(--primary-color);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    body.dark-mode .stat-card {
+      background: #2a2a2a;
+      border-right-color: #667eea;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-card-title {
+      font-size: 0.9rem;
+      color: #6c757d;
+      margin-bottom: 10px;
+    }
+
+    body.dark-mode .stat-card-title {
+      color: #aaa;
+    }
+
+    .stat-card-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--primary-color);
+    }
+
+    /* Cards */
+    .card {
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    body.dark-mode .card {
+      background: #2a2a2a;
+      border-color: #444;
+    }
+
+    .card-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px 10px 0 0;
+      padding: 15px 20px;
+    }
+
+    body.dark-mode .card-header {
+      background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    }
+
+    /* Tables */
+    .table {
+      color: inherit;
+    }
+
+    .table thead th {
+      background-color: #f8f9fa;
+      border-bottom: 2px solid #dee2e6;
+      font-weight: 600;
+    }
+
+    body.dark-mode .table thead th {
+      background-color: #333;
+      border-bottom-color: #444;
+    }
+
+    .table tbody tr {
+      transition: background-color 0.2s;
+    }
+
+    .table tbody tr:hover {
+      background-color: rgba(102, 126, 234, 0.1);
+    }
+
+    body.dark-mode .table tbody tr:hover {
+      background-color: rgba(102, 126, 234, 0.2);
+    }
+
+    /* Forms */
+    .form-control, .form-select {
+      border-radius: 6px;
+      border: 1px solid #dee2e6;
+      transition: border-color 0.2s;
+    }
+
+    body.dark-mode .form-control, body.dark-mode .form-select {
+      background-color: #333;
+      color: #e0e0e0;
+      border-color: #444;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    /* Buttons */
+    .btn {
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+      background-color: #0056b3;
+      border-color: #0056b3;
+    }
+
+    /* Alerts */
+    .alert {
+      border-radius: 8px;
+      border: none;
+      animation: slideIn 0.3s ease-in-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* Search/Filter Area */
+    .filter-area {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .filter-area .form-control {
+      flex-grow: 1;
+      min-width: 200px;
+    }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.3rem;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .theme-toggle:hover {
+      transform: scale(1.1);
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
       .sidebar {
-        width: 100%;
+        width: 200px;
       }
 
       .main-content {
-        margin-left: 0;
+        margin-right: 200px;
       }
 
-      .sidebar.hidden {
-        /* يجب أن يكون الإخفاء متناسباً مع الاتجاه */
-        transform: translateX(100%); /* افتراضياً لـ LTR */
+      .stats-container {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       }
     }
 
-    /* Mobile Menu Button - Top Left */
-    #mobileMenuBtn {
-  position: fixed;
-  top: 1rem;
-  z-index: 40;
-  display: none; /* مخفي افتراضياً */
-}
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(100%);
+        width: 100%;
+        max-width: 250px;
+      }
 
-/* يظهر فقط على الموبايل */
-@media (max-width: 1024px) {
-  #mobileMenuBtn {
-    display: block;
-  }
-}
+      .sidebar.open {
+        transform: translateX(0);
+      }
 
-/* تم توحيد موقع زر القائمة الجانبية ليعمل مع RTL/LTR */
-[dir="rtl"] #mobileMenuBtn { right: 1rem; left: auto; }
-[dir="ltr"] #mobileMenuBtn { left: 1rem; right: auto; }
+      .main-content {
+        margin-right: 0;
+      }
 
-    /* Sidebar Overlay */
-    #sidebarOverlay {
-      position: fixed;
-      inset: 0;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: 20;
-      display: none;
+      .menu-toggle {
+        display: block !important;
+      }
+
+      .header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+      }
+
+      .header h1 {
+        font-size: 1.4rem;
+      }
+
+      .stats-container {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-area {
+        flex-direction: column;
+      }
+
+      .filter-area .form-control {
+        min-width: 100%;
+      }
     }
 
-    #sidebarOverlay.block {
-      display: block;
-    }
-
-    /* Logs Box with Fixed Height */
-    .logs-box {
-      max-height: 500px;
+    /* Logs Box */
+    #logsBox {
+      max-height: 300px;
       overflow-y: auto;
-      scroll-behavior: smooth;
-    }
-    
-    .logs-box::-webkit-scrollbar {
-      width: 8px;
-    }
-    
-    .logs-box::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 10px;
-    }
-    
-    .dark .logs-box::-webkit-scrollbar-track {
-      background: #374151;
-    }
-    
-    .logs-box::-webkit-scrollbar-thumb {
-      background: #888;
-      border-radius: 10px;
-    }
-    
-    .logs-box::-webkit-scrollbar-thumb:hover {
-      background: #555;
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 15px;
     }
 
-    /* Animations */
-    @keyframes fadeIn {
+    body.dark-mode #logsBox {
+      background-color: #333;
+      border-color: #444;
+    }
+
+    #logsBox > div {
+      padding: 8px 0;
+      border-bottom: 1px dotted #dee2e6;
+      font-size: 0.9rem;
+    }
+
+    body.dark-mode #logsBox > div {
+      border-bottom-color: #444;
+    }
+
+    #logsBox > div:last-child {
+      border-bottom: none;
+    }
+
+    /* Menu Toggle Button */
+    .menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--primary-color);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    /* Notification Container */
+    #notification-container {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .notification {
+      background: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      border-left: 5px solid var(--primary-color);
+      min-width: 250px;
+      max-width: 350px;
+      animation: slideInLeft 0.3s ease-in-out;
+    }
+
+    body.dark-mode .notification {
+      background: #2a2a2a;
+      color: #e0e0e0;
+    }
+
+    @keyframes slideInLeft {
       from {
+        transform: translateX(-100%);
         opacity: 0;
-        transform: translateY(-10px);
       }
       to {
+        transform: translateX(0);
         opacity: 1;
-        transform: translateY(0);
       }
     }
-    
-    .animate-fade-in {
-      animation: fadeIn 0.3s ease-out;
-    }
-    
-    /* Alert Container - Bottom Right */
-    .alert-container {
-      position: fixed;
-      bottom: 1rem;
-      left: 1rem;
-      z-index: 9999;
-      max-width: 400px;
+
+    .notification.success {
+      border-left-color: var(--success-color);
     }
 
-    /* Sidebar Footer - Sticky to Bottom */
-    .sidebar-footer {
-      margin-top: auto;
-      padding-top: 1rem;
-      border-top: 1px solid #e5e7eb;
+    .notification.error {
+      border-left-color: var(--danger-color);
     }
-/* تم توحيد قواعد RTL في مكان واحد */
-[dir="rtl"] {
-  direction: rtl;
-}
 
-[dir="rtl"] .main-content {
-  margin-right: 16rem;
-  margin-left: 0;
-}
-
-/* تعديل إخفاء القائمة الجانبية ليتناسب مع RTL */
-[dir="rtl"] .sidebar.hidden {
-  transform: translateX(100%); /* الإخفاء إلى اليمين */
-}
-
-/* تعديل إخفاء القائمة الجانبية ليتناسب مع LTR */
-[dir="ltr"] .sidebar.hidden {
-  transform: translateX(-100%); /* الإخفاء إلى اليسار */
-}
-    .dark .sidebar-footer {
-      border-top-color: #374151;
+    .notification.info {
+      border-left-color: var(--info-color);
     }
-html, body {
-  height: 100%;
-  overflow-x: hidden; /* يمنع التمرير الأفقي */
-}
 
-body {
-  overflow-y: auto;
-  margin: 0;
-  padding: 0;
-}
+    .accordion-button:not(.collapsed) {
+      background-color: rgba(102, 126, 234, 0.1);
+      color: var(--primary-color);
+    }
 
-/* منع تمرير إضافي داخل main-content */
-.main-content {
-  overflow: visible;
-}
-    /* Responsive Adjustments */
-    /* تم إزالة قاعدة الهامش المكررة. سيتم الاعتماد على فئات Tailwind CSS في HTML */  
+    body.dark-mode .accordion-button:not(.collapsed) {
+      background-color: rgba(102, 126, 234, 0.2);
+    }
   </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200" dir="rtl">
-
-  <!-- Token Check Loading Screen -->
-  <div id="tokenCheck" class="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50 transition-colors duration-200">
-    <div class="text-center">
-      <div class="inline-block">
-        <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
-      </div>
-      <p class="text-gray-600 dark:text-gray-400 mt-4" data-i18n="checking_session">جاري التحقق من الجلسة...</p>
-    </div>
-  </div>
-
-  <!-- Mobile Menu Toggle Button -->
-  <button id="mobileMenuBtn" 
-          class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200"
-          aria-label="فتح القائمة">
-    <i class="fas fa-bars fa-lg"></i>
-  </button>
-
-  <!-- Sidebar Overlay (Mobile) -->
-  <div id="sidebarOverlay" class=""></div>
-
+<body class="light-mode">
   <!-- Sidebar -->
-  <aside id="sidebar" class="sidebar hidden md:block">
-    <div class="h-full px-3 py-4 flex flex-col">
-      
-      <!-- Header -->
-      <a href="#" class="flex items-center p-2.5 mb-5 pb-4 border-b border-gray-200 dark:border-gray-700">
-        <div class="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-lg">
-          <i class="fas fa-chart-line"></i>
-        </div>
-        <span class="text-xl font-semibold whitespace-nowrap dark:text-white ml-3" data-i18n="dashboard">لوحة التحكم</span>
-      </a>
-
-      <!-- Navigation Links -->
-      <ul class="space-y-2 font-medium flex-1">
-        <li>
-          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400" data-i18n="main">الرئيسية</small>
-        </li>
-        <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item bg-gray-100 dark:bg-gray-700 transition-colors duration-150" data-section="dashboard" aria-label="الانتقال إلى لوحة التحكم">
-            <i class="fas fa-tachometer-alt text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i>
-            <span class="ml-3" data-i18n="dashboard">لوحة التحكم</span>
-          </a>
-        </li>
-
-        <li>
-          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4" data-i18n="content_management">إدارة المحتوى</small>
-        </li>
-        <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item transition-colors duration-150" data-section="orders" aria-label="الانتقال إلى الطلبات">
-            <i class="fas fa-shopping-cart text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i>
-            <span class="flex-1 ml-3 whitespace-nowrap" data-i18n="orders">الطلبات</span>
-            <span class="inline-flex items-center justify-center w-3 h-3 p-3 ml-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300" id="orders-badge">0</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item transition-colors duration-150" data-section="services" aria-label="الانتقال إلى الخدمات">
-            <i class="fas fa-cogs text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i>
-            <span class="flex-1 ml-3 whitespace-nowrap" data-i18n="services">الخدمات</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item transition-colors duration-150" data-section="add-service" aria-label="الانتقال إلى إضافة خدمة">
-            <i class="fas fa-plus-circle text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i>
-            <span class="flex-1 ml-3 whitespace-nowrap" data-i18n="add_service">إضافة خدمة</span>
-          </a>
-        </li>
-
-        <li>
-          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4" data-i18n="system">النظام</small>
-        </li>
-        <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item transition-colors duration-150" data-section="logs" aria-label="الانتقال إلى السجلات">
-            <i class="fas fa-history text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i>
-            <span class="flex-1 ml-3 whitespace-nowrap" data-i18n="logs">السجلات</span>
-          </a>
-        </li>
-
-        <li>
-          <small class="block px-2.5 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400 mt-4" data-i18n="settings">الإعدادات</small>
-        </li>
-        <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group nav-item transition-colors duration-150" data-section="settings" aria-label="الانتقال إلى الإعدادات">
-            <i class="fas fa-cog text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i>
-            <span class="flex-1 ml-3 whitespace-nowrap" data-i18n="app_settings">إعدادات التطبيق</span>
-          </a>
-        </li>
-      </ul>
-
-      <!-- Sidebar Footer -->
-      <div class="sidebar-footer">
-        <div class="flex items-center p-2 mb-3">
-          <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0">
-            <i class="fas fa-user text-sm"></i>
-          </div>
-          <div class="ml-3">
-            <p class="text-sm font-medium text-gray-900 dark:text-white" data-i18n="admin">المسؤول</p>
-            <p class="text-xs text-gray-500 dark:text-gray-400" data-i18n="system_manager">مدير النظام</p>
-          </div>
-        </div>
-        <button id="logoutBtn" 
-                class="w-full flex items-center justify-center p-2 text-white bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 rounded-lg transition-colors duration-200"
-                aria-label="تسجيل الخروج">
-          <i class="fas fa-sign-out-alt mr-2"></i>
-          <span data-i18n="logout">تسجيل الخروج</span>
-        </button>
-      </div>
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2><i class="fas fa-chart-line"></i> لوحتي</h2>
     </div>
-  </aside>
+    <nav>
+      <a href="#dashboard" class="nav-link active" data-section="dashboard">
+        <i class="fas fa-home"></i> لوحة الرئيسية
+      </a>
+      <a href="#services" class="nav-link" data-section="services">
+        <i class="fas fa-cogs"></i> إدارة الخدمات
+      </a>
+      <a href="#orders" class="nav-link" data-section="orders">
+        <i class="fas fa-shopping-cart"></i> إدارة الطلبات
+      </a>
+      <a href="#add-service" class="nav-link" data-section="add-service">
+        <i class="fas fa-plus-circle"></i> إضافة خدمة
+      </a>
+      <a href="#logs" class="nav-link" data-section="logs">
+        <i class="fas fa-history"></i> السجلات
+      </a>
+      <hr style="border-color: rgba(255, 255, 255, 0.2);">
+      <a href="#" id="logoutBtn" class="nav-link" style="color: #ff6b6b;">
+        <i class="fas fa-sign-out-alt"></i> تسجيل خروج
+      </a>
+    </nav>
+  </div>
 
   <!-- Main Content -->
   <div class="main-content">
     <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 shadow-sm p-4 mb-6 transition-colors duration-200">
-      <h1 class="page-title text-2xl font-bold text-gray-800 dark:text-white" data-i18n="dashboard">لوحة التحكم</h1>
-    </header>
+    <div class="header">
+      <div>
+        <button class="menu-toggle" id="menuToggle">
+          <i class="fas fa-bars"></i>
+        </button>
+        <h1><i class="fas fa-tachometer-alt"></i> لوحة التحكم</h1>
+      </div>
+      <div class="header-controls">
+        <button class="theme-toggle" id="themeToggle" title="تبديل الوضع">
+          <i class="fas fa-moon"></i>
+        </button>
+      </div>
+    </div>
 
-    <!-- Content Body -->
-    <div class="p-4 md:p-6 space-y-6">
+    <!-- Alert Box -->
+    <div id="alert-box"></div>
 
-      <!-- Dashboard Section -->
-      <section id="dashboard" class="content-section">
-        <!-- Overview -->
-        <div class="mb-6">
-          <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-chart-bar mr-2"></i><span data-i18n="overview">نظرة عامة</span>
-          </h2>
-          
-          <!-- Stats Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- Stat Card 1 -->
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md transition-colors duration-200">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="services">الخدمات</p>
-                  <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-services">0</p>
-                </div>
-                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                  <i class="fas fa-cogs text-blue-600 dark:text-blue-300 text-lg"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Stat Card 2 -->
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md transition-colors duration-200">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="total_orders">إجمالي الطلبات</p>
-                  <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-orders">0</p>
-                </div>
-                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-                  <i class="fas fa-shopping-cart text-green-600 dark:text-green-300 text-lg"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Stat Card 3 -->
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md transition-colors duration-200">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="pending_orders">الطلبات المعلقة</p>
-                  <p class="text-2xl font-bold text-gray-900 dark:text-white" id="pending-orders">0</p>
-                </div>
-                <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
-                  <i class="fas fa-hourglass-half text-yellow-600 dark:text-yellow-300 text-lg"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Stat Card 4 -->
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md transition-colors duration-200">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="avg_price">متوسط السعر</p>
-                  <p class="text-2xl font-bold text-gray-900 dark:text-white" id="avg-price">$0</p>
-                </div>
-                <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
-                  <i class="fas fa-dollar-sign text-indigo-600 dark:text-indigo-300 text-lg"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Control Tools -->
-        <div>
-          <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-tools mr-2"></i><span data-i18n="control_tools">أدوات التحكم</span>
-          </h2>
-          
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <button id="refreshBtn" 
-                    class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-                    aria-label="تحديث البيانات">
-              <i class="fas fa-sync-alt"></i> <span data-i18n="refresh_data">تحديث البيانات</span>
-            </button>
-            <button id="exportServices" 
-                    class="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-                    aria-label="تصدير الخدمات">
-              <i class="fas fa-download"></i> <span data-i18n="export_services">تصدير الخدمات (CSV)</span>
-            </button>
-            <button id="exportOrders" 
-                    class="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-                    aria-label="تصدير الطلبات">
-              <i class="fas fa-download"></i> <span data-i18n="export_orders">تصدير الطلبات (CSV)</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Orders Section -->
-      <section id="orders" class="content-section hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
-          <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-shopping-cart mr-2"></i><span data-i18n="manage_orders">إدارة الطلبات</span>
-          </h2>
-          
-          <!-- Search Box -->
-          <div class="mb-4">
-            <div class="relative">
-              <input id="searchOrders" 
-                     type="text" 
-                     placeholder="البحث برقم الطلب أو الرابط..." 
-                     data-i18n-placeholder="search_orders"
-                     class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
-                     aria-label="البحث في الطلبات">
-              <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-            </div>
-          </div>
-
-          <!-- Loading Indicator -->
-          <div id="ordersLoading" class="hidden text-center py-8">
-            <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-2"></i>
-            <p class="text-gray-600 dark:text-gray-400" data-i18n="loading">جاري التحميل...</p>
-          </div>
-
-          <!-- Table -->
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm text-right text-gray-500 dark:text-gray-400">
-              <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr>
-                  <th scope="col" class="px-6 py-3" data-i18n="id">المعرف</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="service">الخدمة</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="link">الرابط</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="qty">الكمية</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="price">السعر</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="status">الحالة</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="actions">الإجراءات</th>
-                </tr>
-              </thead>
-              <tbody id="orders-table">
-                <!-- Data will be filled by JavaScript -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
+    <!-- Dashboard Section -->
+    <section id="dashboard-section" class="section">
+      <h2 class="mb-4"><i class="fas fa-chart-bar"></i> ملخص الإحصائيات</h2>
       
-      <!-- Services Section -->
-      <section id="services" class="content-section hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
-          <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-cogs mr-2"></i><span data-i18n="manage_services">إدارة الخدمات</span>
-          </h2>
-          
-          <!-- Search Box -->
-          <div class="mb-4">
-            <div class="relative">
-              <input id="searchServices" 
-                     type="text" 
-                     placeholder="البحث باسم الخدمة أو الفئة..." 
-                     data-i18n-placeholder="search_services"
-                     class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
-                     aria-label="البحث في الخدمات">
-              <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-            </div>
-          </div>
+      <div class="stats-container">
+        <div class="stat-card">
+          <div class="stat-card-title"><i class="fas fa-cogs"></i> الخدمات</div>
+          <div class="stat-card-value" id="total-services">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-title"><i class="fas fa-shopping-cart"></i> إجمالي الطلبات</div>
+          <div class="stat-card-value" id="total-orders">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-title"><i class="fas fa-hourglass-half"></i> طلبات معلقة</div>
+          <div class="stat-card-value" id="pending-orders">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-title"><i class="fas fa-dollar-sign"></i> متوسط السعر</div>
+          <div class="stat-card-value" id="avg-price">$0</div>
+        </div>
+      </div>
 
-          <!-- Loading Indicator -->
-          <div id="servicesLoading" class="hidden text-center py-8">
-            <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-2"></i>
-            <p class="text-gray-600 dark:text-gray-400" data-i18n="loading">جاري التحميل...</p>
-          </div>
+      <div class="row">
+        <div class="col-md-12">
+          <button id="refreshBtn" class="btn btn-primary me-2">
+            <i class="fas fa-sync-alt"></i> تحديث البيانات
+          </button>
+          <button id="exportServices" class="btn btn-info me-2">
+            <i class="fas fa-download"></i> تحميل الخدمات
+          </button>
+          <button id="exportOrders" class="btn btn-info">
+            <i class="fas fa-download"></i> تحميل الطلبات
+          </button>
+        </div>
+      </div>
+    </section>
 
-          <!-- Table -->
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm text-right text-gray-500 dark:text-gray-400">
-              <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+    <!-- Services Section -->
+    <section id="services-section" class="section" style="display: none;">
+      <h2 class="mb-4"><i class="fas fa-cogs"></i> إدارة الخدمات</h2>
+      
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">قائمة الخدمات</h5>
+        </div>
+        <div class="card-body">
+          <div class="filter-area">
+            <input id="searchServices" type="text" class="form-control" placeholder="🔍 ابحث عن خدمة بالاسم أو الفئة...">
+          </div>
+          <div class="table-responsive">
+            <table id="services-table" class="table table-striped table-hover">
+              <thead>
                 <tr>
-                  <th scope="col" class="px-6 py-3" data-i18n="id">المعرف</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="name">الاسم</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="category">الفئة</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="type">النوع</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="price">السعر</th>
-                  <th scope="col" class="px-6 py-3" data-i18n="actions">الإجراءات</th>
+                  <th>ID</th>
+                  <th>الاسم</th>
+                  <th>الفئة</th>
+                  <th>النوع</th>
+                  <th>السعر</th>
+                  <th>الإجراءات</th>
                 </tr>
               </thead>
-              <tbody id="services-table">
-                <!-- Data will be filled by JavaScript -->
-              </tbody>
+              <tbody></tbody>
             </table>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- Add Service Section -->
-      <section id="add-service" class="content-section hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
-          <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-6">
-            <i class="fas fa-plus-circle mr-2"></i><span data-i18n="add_edit_service">إضافة / تعديل خدمة</span>
-          </h2>
-          
-          <form id="serviceForm" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <!-- Service Name -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="service_name">اسم الخدمة</label>
-                <input name="name" 
-                       type="text" 
-                       placeholder="أدخل اسم الخدمة" 
-                       data-i18n-placeholder="enter_service_name"
-                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200" 
-                       required
-                       aria-label="اسم الخدمة">
+    <!-- Orders Section -->
+    <section id="orders-section" class="section" style="display: none;">
+      <h2 class="mb-4"><i class="fas fa-shopping-cart"></i> إدارة الطلبات</h2>
+      
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">قائمة الطلبات</h5>
+        </div>
+        <div class="card-body">
+          <div class="filter-area">
+            <input id="searchOrders" type="text" class="form-control" placeholder="🔍 ابحث عن طلب بالرقم أو الرابط...">
+          </div>
+          <div class="table-responsive">
+            <table id="orders-table" class="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>الخدمة</th>
+                  <th>الرابط</th>
+                  <th>الكمية</th>
+                  <th>السعر</th>
+                  <th>الحالة</th>
+                  <th>الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Add Service Section -->
+    <section id="add-service-section" class="section" style="display: none;">
+      <h2 class="mb-4"><i class="fas fa-plus-circle"></i> إضافة / تعديل خدمة</h2>
+      
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">نموذج الخدمة</h5>
+        </div>
+        <div class="card-body">
+          <form id="serviceForm">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">اسم الخدمة</label>
+                <input name="name" class="form-control" placeholder="أدخل اسم الخدمة" required>
               </div>
-
-              <!-- Category -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="category">الفئة</label>
-                <input name="category" 
-                       type="text" 
-                       placeholder="مثال: instagram, twitter, إلخ." 
-                       data-i18n-placeholder="enter_category"
-                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200" 
-                       required
-                       aria-label="الفئة">
+              <div class="col-md-6">
+                <label class="form-label">الفئة</label>
+                <input name="category" class="form-control" placeholder="مثال: instagram" required>
               </div>
-
-              <!-- Service Type -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="service_type">نوع الخدمة</label>
-                <select name="type" 
-                        id="typeSelect" 
-                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
-                        aria-label="نوع الخدمة">
-                  <option value="quantity" data-i18n="quantity_service">خدمة بالكمية (لكل 1000)</option>
-                  <option value="fixed" data-i18n="fixed_price">سعر ثابت</option>
+              <div class="col-md-12">
+                <label class="form-label">نوع الخدمة</label>
+                <select name="type" id="typeSelect" class="form-select">
+                  <option value="quantity">كمية (لكل 1000)</option>
+                  <option value="fixed">سعر ثابت</option>
                 </select>
               </div>
-
-              <!-- Price -->
-              <div id="priceContainer">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="price_per_1000">السعر لكل 1000</label>
-                <input name="rate" 
-                       type="number" 
-                       step="0.01" 
-                       placeholder="السعر لكل 1000" 
-                       data-i18n-placeholder="price_per_1000"
-                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200" 
-                       required
-                       aria-label="السعر">
+              <div id="priceContainer" class="col-md-12">
+                <label class="form-label">السعر لكل 1000</label>
+                <input name="rate" type="number" step="0.01" class="form-control" placeholder="السعر لكل 1000" required>
               </div>
-            </div>
-
-            <!-- Quantity Limits -->
-            <div id="qtyContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="min_quantity">الحد الأدنى للكمية</label>
-                <input name="min" 
-                       type="number" 
-                       placeholder="الحد الأدنى للكمية" 
-                       data-i18n-placeholder="min_quantity"
-                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200" 
-                       required
-                       aria-label="الحد الأدنى للكمية">
+              <div id="qtyContainer" class="col-md-12">
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <label class="form-label">أدنى كمية</label>
+                    <input name="min" type="number" class="form-control" placeholder="أدنى كمية" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">أقصى كمية</label>
+                    <input name="max" type="number" class="form-control" placeholder="أقصى كمية" required>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="max_quantity">الحد الأقصى للكمية</label>
-                <input name="max" 
-                       type="number" 
-                       placeholder="الحد الأقصى للكمية" 
-                       data-i18n-placeholder="max_quantity"
-                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200" 
-                       required
-                       aria-label="الحد الأقصى للكمية">
+              <input type="hidden" name="id" id="serviceIdInput">
+              <div class="col-12">
+                <button type="submit" class="btn btn-success me-2">
+                  <i class="fas fa-save"></i> حفظ
+                </button>
+                <button type="button" id="clearFormBtn" class="btn btn-outline-secondary">
+                  <i class="fas fa-redo"></i> تفريغ النموذج
+                </button>
               </div>
-            </div>
-
-            <input type="hidden" name="id" id="serviceIdInput">
-
-            <!-- Buttons -->
-            <div class="flex gap-4 pt-4">
-              <button type="submit" 
-                      class="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-                      aria-label="حفظ الخدمة">
-                <i class="fas fa-save"></i> <span data-i18n="save_service">حفظ الخدمة</span>
-              </button>
-              <button type="button" 
-                      id="clearFormBtn" 
-                      class="flex-1 bg-gray-400 hover:bg-gray-500 dark:bg-gray-600 dark:hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-                      aria-label="إلغاء">
-                <i class="fas fa-times"></i> <span data-i18n="cancel">إلغاء</span>
-              </button>
             </div>
           </form>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- Logs Section -->
-      <section id="logs" class="content-section hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
-          <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold text-gray-800 dark:text-white">
-              <i class="fas fa-history mr-2"></i><span data-i18n="system_logs">سجلات النظام</span>
-            </h2>
-            <button onclick="loadLogs()" 
-                    class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center gap-2"
-                    aria-label="تحديث السجلات">
-              <i class="fas fa-sync-alt"></i> <span data-i18n="refresh">تحديث</span>
-            </button>
-          </div>
-
-          <!-- Loading Indicator -->
-          <div id="logsLoading" class="hidden text-center py-8">
-            <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-2"></i>
-            <p class="text-gray-600 dark:text-gray-400" data-i18n="loading">جاري التحميل...</p>
-          </div>
-
-          <!-- Logs Box with Fixed Height and Scroll -->
-          <div id="logsBox" class="logs-box space-y-3 border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900">
-            <!-- Logs will be filled by JavaScript -->
-          </div>
+    <!-- Logs Section -->
+    <section id="logs-section" class="section" style="display: none;">
+      <h2 class="mb-4"><i class="fas fa-history"></i> آخر التغييرات</h2>
+      
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">سجل العمليات</h5>
         </div>
-      </section>
-
-      <!-- Settings Section -->
-      <section id="settings" class="content-section hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
-          <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-6">
-            <i class="fas fa-cog mr-2"></i><span data-i18n="app_settings">إعدادات التطبيق</span>
-          </h2>
-          
-          <div class="space-y-6">
-            <!-- Dark Mode Setting -->
-            <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-              <div class="flex items-center gap-3">
-                <i class="fas fa-moon text-2xl text-gray-600 dark:text-gray-400"></i>
-                <div>
-                  <p class="font-medium text-gray-900 dark:text-white" data-i18n="dark_mode">الوضع الليلي</p>
-                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="dark_mode_desc">تبديل بين الوضع الفاتح والداكن</p>
-                </div>
-              </div>
-              <button id="darkModeToggleSetting" 
-                      class="relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-200 bg-gray-300 dark:bg-blue-600"
-                      role="switch"
-                      aria-checked="false"
-                      aria-label="تبديل الوضع الليلي">
-                <span class="inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-200 translate-x-1 dark:translate-x-7"></span>
-              </button>
-            </div>
-
-            <!-- Language Setting -->
-            <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-              <div class="flex items-center gap-3">
-                <i class="fas fa-language text-2xl text-gray-600 dark:text-gray-400"></i>
-                <div>
-                  <p class="font-medium text-gray-900 dark:text-white" data-i18n="language">اللغة</p>
-                  <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="language_desc">اختر لغة التطبيق المفضلة</p>
-                </div>
-              </div>
-              <select id="languageSetting" 
-                      class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
-                      aria-label="اختيار اللغة">
-                <option value="ar" data-i18n="arabic">العربية</option>
-                <option value="en" data-i18n="english">English</option>
-              </select>
-            </div>
-          </div>
+        <div class="card-body">
+          <div id="logsBox"></div>
         </div>
-      </section>
-
-    </div>
+      </div>
+    </section>
   </div>
 
   <!-- Notification Container -->
-  <div id="alert-box" class="alert-container"></div>
+  <div id="notification-container"></div>
 
-  <!-- Flowbite JS CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
-
-  <!-- Main JavaScript -->
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
   <script>
-  // =======================================================
-  //  TRANSLATION SYSTEM (نظام الترجمة المتقدم)
-  // =======================================================
-  
-  const translations = {
-    ar: {
-      dashboard: "لوحة التحكم",
-      main: "الرئيسية",
-      content_management: "إدارة المحتوى",
-      system: "النظام",
-      settings: "الإعدادات",
-      admin: "المسؤول",
-      system_manager: "مدير النظام",
-      logout: "تسجيل الخروج",
-      checking_session: "جاري التحقق من الجلسة...",
-      loading: "جاري التحميل...",
-      refresh: "تحديث",
-      orders: "الطلبات",
-      services: "الخدمات",
-      add_service: "إضافة خدمة",
-      logs: "السجلات",
-      app_settings: "إعدادات التطبيق",
-      overview: "نظرة عامة",
-      control_tools: "أدوات التحكم",
-      total_orders: "إجمالي الطلبات",
-      pending_orders: "الطلبات المعلقة",
-      avg_price: "متوسط السعر",
-      manage_orders: "إدارة الطلبات",
-      manage_services: "إدارة الخدمات",
-      add_edit_service: "إضافة / تعديل خدمة",
-      system_logs: "سجلات النظام",
-      refresh_data: "تحديث البيانات",
-      export_services: "تصدير الخدمات (CSV)",
-      export_orders: "تصدير الطلبات (CSV)",
-      save_service: "حفظ الخدمة",
-      cancel: "إلغاء",
-      edit: "تعديل",
-      delete: "حذف",
-      service_name: "اسم الخدمة",
-      category: "الفئة",
-      service_type: "نوع الخدمة",
-      quantity_service: "خدمة بالكمية (لكل 1000)",
-      fixed_price: "سعر ثابت",
-      price_per_1000: "السعر لكل 1000",
-      total_price: "السعر الإجمالي",
-      min_quantity: "الحد الأدنى للكمية",
-      max_quantity: "الحد الأقصى للكمية",
-      id: "المعرف",
-      name: "الاسم",
-      service: "الخدمة",
-      link: "الرابط",
-      qty: "الكمية",
-      price: "السعر",
-      status: "الحالة",
-      type: "النوع",
-      actions: "الإجراءات",
-      search_orders: "البحث برقم الطلب أو الرابط...",
-      search_services: "البحث باسم الخدمة أو الفئة...",
-      enter_service_name: "أدخل اسم الخدمة",
-      enter_category: "مثال: instagram, twitter, إلخ.",
-      pending: "⏳ معلق",
-      processing: "⚙️ قيد المعالجة",
-      completed: "✅ مكتمل",
-      rejected: "❌ مرفوض",
-      session_expired: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.",
-      logout_confirm: "هل أنت متأكد من تسجيل الخروج؟",
-      logged_out: "تم تسجيل الخروج بنجاح",
-      data_refreshed: "✅ تم تحديث البيانات بنجاح",
-      refresh_failed: "❌ فشل تحديث البيانات",
-      service_added: "✅ تمت إضافة الخدمة بنجاح",
-      service_updated: "✅ تم تحديث الخدمة بنجاح",
-      service_deleted: "✅ تم حذف الخدمة بنجاح",
-      service_add_failed: "❌ فشل في إضافة الخدمة",
-      service_update_failed: "❌ فشل في تحديث الخدمة",
-      service_delete_failed: "❌ فشل في حذف الخدمة",
-      delete_confirm: "⚠️ هل أنت متأكد من حذف هذه الخدمة؟ سيتم حذفها نهائياً.",
-      order_updated: "تم تحديث حالة الطلب بنجاح",
-      order_update_failed: "فشل في تحديث حالة الطلب",
-      update_status_confirm: "تأكيد تحديث حالة الطلب إلى",
-      download_success: "✅ تم تنزيل الملف بنجاح",
-      download_failed: "❌ فشل في تنزيل الملف",
-      no_logs: "لا توجد سجلات متاحة",
-      logs_load_failed: "فشل في تحميل السجلات",
-      fixed: "ثابت",
-      quantity: "بالكمية",
-      dark_mode: "الوضع الليلي",
-      dark_mode_desc: "تبديل بين الوضع الفاتح والداكن",
-      language: "اللغة",
-      language_desc: "اختر لغة التطبيق المفضلة",
-      arabic: "العربية",
-      english: "English"
-    },
-    en: {
-      dashboard: "Dashboard",
-      main: "Main",
-      content_management: "Content Management",
-      system: "System",
-      settings: "Settings",
-      admin: "Admin",
-      system_manager: "System Manager",
-      logout: "Logout",
-      checking_session: "Checking session...",
-      loading: "Loading...",
-      refresh: "Refresh",
-      orders: "Orders",
-      services: "Services",
-      add_service: "Add Service",
-      logs: "Logs",
-      app_settings: "App Settings",
-      overview: "Overview",
-      control_tools: "Control Tools",
-      total_orders: "Total Orders",
-      pending_orders: "Pending Orders",
-      avg_price: "Avg Price",
-      manage_orders: "Manage Orders",
-      manage_services: "Manage Services",
-      add_edit_service: "Add / Edit Service",
-      system_logs: "System Logs",
-      refresh_data: "Refresh Data",
-      export_services: "Export Services (CSV)",
-      export_orders: "Export Orders (CSV)",
-      save_service: "Save Service",
-      cancel: "Cancel",
-      edit: "Edit",
-      delete: "Delete",
-      service_name: "Service Name",
-      category: "Category",
-      service_type: "Service Type",
-      quantity_service: "Quantity Service (per 1000)",
-      fixed_price: "Fixed Price",
-      price_per_1000: "Price per 1000",
-      total_price: "Total Price",
-      min_quantity: "Min Quantity",
-      max_quantity: "Max Quantity",
-      id: "ID",
-      name: "Name",
-      service: "Service",
-      link: "Link",
-      qty: "Qty",
-      price: "Price",
-      status: "Status",
-      type: "Type",
-      actions: "Actions",
-      search_orders: "Search by order ID or link...",
-      search_services: "Search by service name or category...",
-      enter_service_name: "Enter service name",
-      enter_category: "e.g., instagram, twitter, etc.",
-      pending: "⏳ Pending",
-      processing: "⚙️ Processing",
-      completed: "✅ Completed",
-      rejected: "❌ Rejected",
-      session_expired: "Session expired. Please login again.",
-      logout_confirm: "Are you sure you want to logout?",
-      logged_out: "Logged out successfully",
-      data_refreshed: "✅ Data refreshed successfully",
-      refresh_failed: "❌ Failed to refresh data",
-      service_added: "✅ Service added successfully",
-      service_updated: "✅ Service updated successfully",
-      service_deleted: "✅ Service deleted successfully",
-      service_add_failed: "❌ Failed to add service",
-      service_update_failed: "❌ Failed to update service",
-      service_delete_failed: "❌ Failed to delete service",
-      delete_confirm: "⚠️ Are you sure you want to delete this service? It will be permanently deleted.",
-      order_updated: "Order status updated successfully",
-      order_update_failed: "Failed to update order status",
-      update_status_confirm: "Confirm update order status to",
-      download_success: "✅ File downloaded successfully",
-      download_failed: "❌ Failed to download file",
-      no_logs: "No logs available",
-      logs_load_failed: "Failed to load logs",
-      fixed: "Fixed",
-      quantity: "Quantity",
-      dark_mode: "Dark Mode",
-      dark_mode_desc: "Toggle between light and dark mode",
-      language: "Language",
-      language_desc: "Choose your preferred app language",
-      arabic: "العربية",
-      english: "English"
-    }
-  };
-      // Current Language
-  let currentLang = localStorage.getItem('lang') || 'ar';
+    // ========== THEME TOGGLE ==========
+    const themeToggle = document.getElementById('themeToggle');
+    const body = document.body;
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    
+    body.classList.remove('light-mode', 'dark-mode');
+    body.classList.add(savedTheme + '-mode');
+    updateThemeIcon();
 
-    // Set initial document direction from stored language
-document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
-  
-  // Translation Function
-  function t(key) {
-    return translations[currentLang][key] || key;
-  }
-  
-  // Apply Translations to DOM
-  function applyTranslations() {
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-      const key = el.getAttribute('data-i18n');
-      el.textContent = t(key);
+    themeToggle.addEventListener('click', () => {
+      const isDark = body.classList.contains('dark-mode');
+      body.classList.remove('light-mode', 'dark-mode');
+      body.classList.add(isDark ? 'light-mode' : 'dark-mode');
+      localStorage.setItem('theme', isDark ? 'light' : 'dark');
+      updateThemeIcon();
     });
-    
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-      const key = el.getAttribute('data-i18n-placeholder');
-      el.placeholder = t(key);
+
+    function updateThemeIcon() {
+      const isDark = body.classList.contains('dark-mode');
+      themeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+    }
+
+    // ========== SIDEBAR NAVIGATION ==========
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.querySelector('.sidebar');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
     });
-  }
 
-  // =======================================================
-  //  DARK MODE TOGGLE
-  // =======================================================
-  
-  function updateDarkModeToggle() {
-    const html = document.documentElement;
-    const isDark = html.classList.contains('dark');
-    const toggle = document.getElementById('darkModeToggleSetting');
-    
-    if (toggle) {
-      toggle.setAttribute('aria-checked', isDark);
-      if (isDark) {
-        toggle.classList.remove('bg-gray-300');
-        toggle.classList.add('bg-blue-600');
-      } else {
-        toggle.classList.remove('bg-blue-600');
-        toggle.classList.add('bg-gray-300');
-      }
-    }
-  }
-  
-  document.getElementById('darkModeToggleSetting')?.addEventListener('click', () => {
-    const html = document.documentElement;
-    const isDark = html.classList.contains('dark');
-    
-    if (isDark) {
-      html.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    } else {
-      html.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    }
-    
-    updateDarkModeToggle();
-  });
+    navLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        if (link.id !== 'logoutBtn') {
+          e.preventDefault();
+          const section = link.dataset.section;
+          
+          // Remove active class from all links
+          navLinks.forEach(l => l.classList.remove('active'));
+          link.classList.add('active');
 
-  // =======================================================
-  //  LANGUAGE SETTING
-  // =======================================================
-  
-  document.getElementById('languageSetting')?.addEventListener('change', (e) => {
-  currentLang = e.target.value;
-  localStorage.setItem('lang', currentLang);
-  // Update document direction according to language
-  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
-  applyTranslations();
-  // optional: update layout immediately
-  updateDarkModeToggle();
-  reloadAll();
-});
+          // Hide all sections
+          document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
 
-  // =======================================================
-  //  TOKEN CHECK & AUTHENTICATION
-  // =======================================================
-  
-  const token = localStorage.getItem('authToken');
-  const tokenCheck = document.getElementById('tokenCheck');
-  
-  if (!token) {
-    window.location.href = '/login.html';
-  } else {
-    setTimeout(() => {
-      tokenCheck.classList.add('hidden');
-    }, 1000);
-  }
+          
+          // Show selected section
+          if (section === 'dashboard') {
+            document.getElementById('dashboard-section').style.display = 'block';
+          } else if (section === 'services') {
+            document.getElementById('services-section').style.display = 'block';
+          } else if (section === 'orders') {
+            document.getElementById('orders-section').style.display = 'block';
+          } else if (section === 'add-service') {
+            document.getElementById('add-service-section').style.display = 'block';
+          } else if (section === 'logs') {
+            document.getElementById('logs-section').style.display = 'block';
+          }
 
-  const headers = { 'Content-Type': 'application/json', 'x-auth-token': token };
-  const alertBox = document.getElementById('alert-box');
+          // Close sidebar on mobile
+          if (window.innerWidth <= 768) {
+            sidebar.classList.remove('open');
+          }
+        }
+      });
+    });
 
-  // =======================================================
-  //  NOTIFICATION SYSTEM
-  // =======================================================
-  
-  function show(msg, type='success'){
-    const bgColor = type === 'success' ? 'bg-green-500 dark:bg-green-600' : 'bg-red-500 dark:bg-red-600';
-    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-    
-    const alertHTML = `
-      <div class="${bgColor} text-white p-4 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in mb-2">
-        <i class="fas ${icon}"></i>
-        <span>${msg}</span>
-      </div>
-    `;
-    
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = alertHTML;
-    alertBox.appendChild(tempDiv.firstElementChild);
-    
-    setTimeout(() => {
-      if (alertBox.firstElementChild) {
-        alertBox.firstElementChild.remove();
-      }
-    }, 5000);
-  }
+    // ========== AUTHENTICATION ==========
+    const token = localStorage.getItem('authToken');
+    if (!token) window.location.href = '/login.html';
 
-  // =======================================================
-  //  FETCH WITH AUTHENTICATION
-  // =======================================================
-  
-  async function fetchWithAuth(url, options={}) {
-    options.headers = {...headers, ...(options.headers||{})};
-    const r = await fetch(url, options);
-    if (r.status === 401) {
-      show(t('session_expired'), 'error');
-      localStorage.removeItem('authToken');
+    const headers = { 'Content-Type': 'application/json', 'x-auth-token': token };
+    const alertBox = document.getElementById('alert-box');
+    const notificationContainer = document.getElementById('notification-container');
+
+    // ========== NOTIFICATION SYSTEM ==========
+    function showNotification(msg, type = 'success') {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span>
+            ${type === 'success' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-circle"></i>'}
+            ${msg}
+          </span>
+          <button style="background: none; border: none; color: inherit; cursor: pointer; font-size: 1.2rem;" onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
+      `;
+      notificationContainer.appendChild(notification);
+      
       setTimeout(() => {
+        notification.remove();
+      }, 4000);
+    }
+
+    function show(msg, type = 'success') {
+      showNotification(msg, type);
+    }
+
+    async function fetchWithAuth(url, options = {}) {
+      options.headers = { ...headers, ...(options.headers || {}) };
+      const r = await fetch(url, options);
+      if (r.status === 401) {
+        alert("انتهت صلاحية الجلسة. يرجى تسجيل الدخول.");
+        localStorage.removeItem('authToken');
         window.location.href = '/login.html';
-      }, 2000);
-      return null;
+        return null;
+      }
+      return r;
     }
-    return r;
-  }
 
-  // =======================================================
-  //  LOGOUT FUNCTIONALITY
-  // =======================================================
-  
-  document.getElementById('logoutBtn').onclick = async ()=>{
-    if (!confirm(t('logout_confirm'))) return;
-    
-    try {
-      await fetchWithAuth('/api/auth/logout', { method:'POST' });
-    } catch (error) {
-      console.log('Error during logout:', error);
-    }
-    
-    localStorage.removeItem('authToken');
-    show(t('logged_out'), 'success');
-    setTimeout(() => {
+    document.getElementById('logoutBtn').onclick = async () => {
+      await fetchWithAuth('/api/auth/logout', { method: 'POST' });
+      localStorage.removeItem('authToken');
       window.location.href = '/login.html';
-    }, 1500);
-  };
+    };
 
-  // =======================================================
-  //  LOADING INDICATORS
-  // =======================================================
-  
-  function showLoading(section) {
-    const loadingEl = document.getElementById(`${section}Loading`);
-    if (loadingEl) loadingEl.classList.remove('hidden');
-  }
-  
-  function hideLoading(section) {
-    const loadingEl = document.getElementById(`${section}Loading`);
-    if (loadingEl) loadingEl.classList.add('hidden');
-  }
-
-  // --------- STATS ----------
-  async function loadStats(){
-    try {
+    // ========== STATS ==========
+    async function loadStats() {
       const r = await fetchWithAuth('/api/stats');
       if (!r) return;
       const s = await r.json();
-      document.getElementById('total-services').textContent = s.totalServices || 0;
-      document.getElementById('total-orders').textContent = s.totalOrders || 0;
-      document.getElementById('pending-orders').textContent = s.pendingOrders || 0;
-      document.getElementById('avg-price').textContent = '$' + (s.avgPrice || 0).toFixed(2);
-      
-      const ordersBadge = document.getElementById('orders-badge');
-      if (ordersBadge) {
-        ordersBadge.textContent = s.pendingOrders || 0;
-      }
-    } catch (error) {
-      console.error('Error loading stats:', error);
+      document.getElementById('total-services').textContent = s.totalServices;
+      document.getElementById('total-orders').textContent = s.totalOrders;
+      document.getElementById('pending-orders').textContent = s.pendingOrders;
+      document.getElementById('avg-price').textContent = '$' + s.avgPrice;
     }
-  }
 
-  // --------- SERVICES ----------
-  let allServicesData = [];
-  let servicesCache = null;
-  let servicesCacheTime = 0;
-  const CACHE_DURATION = 30000;
-
-  async function loadServices(forceReload = false){
-    if (!forceReload && servicesCache && (Date.now() - servicesCacheTime < CACHE_DURATION)) {
-      renderServices(servicesCache);
-      return;
-    }
-    
-    showLoading('services');
-    try {
+    // ========== SERVICES ==========
+    let allServicesData = [];
+    async function loadServices() {
       const r = await fetchWithAuth('/api/services');
       if (!r) return;
       allServicesData = await r.json();
-      servicesCache = allServicesData;
-      servicesCacheTime = Date.now();
       renderServices(allServicesData);
-    } catch (error) {
-      console.error('Error loading services:', error);
-    } finally {
-      hideLoading('services');
     }
-  }
 
-  function renderServices(list) {
-    const tbody = document.querySelector('#services-table');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '';
-    
-    if (!list || list.length === 0) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-            <i class="fas fa-inbox text-3xl mb-2"></i>
-            <p>${t('no_logs')}</p>
+    function renderServices(list) {
+      const tbody = document.querySelector('#services-table tbody');
+      tbody.innerHTML = '';
+      list.forEach(s => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${s.id}</td>
+          <td>${s.name}</td>
+          <td>${s.category}</td>
+          <td>${s.type}</td>
+          <td>${s.type === 'fixed' ? '$' + (s.price || '') : '$' + (s.rate || '') + ' /1k'}</td>
+          <td>
+            <button onclick="editService(${s.id})" class="btn btn-sm btn-primary">
+              <i class="fas fa-edit"></i> تعديل
+            </button>
+            <button onclick="deleteService(${s.id})" class="btn btn-sm btn-danger">
+              <i class="fas fa-trash"></i> حذف
+            </button>
           </td>
-        </tr>
-      `;
-      return;
+        `;
+        tbody.appendChild(tr);
+      });
     }
-    
-    list.forEach(s => {
-      const tr = document.createElement('tr');
-      tr.className = 'border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150';
-      
-      const typeText = s.type === 'fixed' ? t('fixed') : t('quantity');
-      const priceText = s.type === 'fixed' ? '$' + (s.price || '0') : '$' + (s.rate || '0') + ' /1k';
-      
-      tr.innerHTML = `
-        <td class="px-6 py-4 text-gray-900 dark:text-white">${s.id}</td>
-        <td class="px-6 py-4 text-gray-900 dark:text-white font-medium">${s.name}</td>
-        <td class="px-6 py-4 text-gray-700 dark:text-gray-300">${s.category}</td>
-        <td class="px-6 py-4 text-gray-700 dark:text-gray-300">${typeText}</td>
-        <td class="px-6 py-4 text-gray-700 dark:text-gray-300">${priceText}</td>
-        <td class="px-6 py-4">
-          <div class="flex gap-2">
-            <button onclick="editService(${s.id})" 
-                    class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white px-3 py-1 rounded text-sm transition-colors duration-150"
-                    aria-label="${t('edit')} ${s.name}">
-              <i class="fas fa-edit"></i>
-            </button>
-            <button onclick="deleteService(${s.id})" 
-                    class="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white px-3 py-1 rounded text-sm transition-colors duration-150"
-                    aria-label="${t('delete')} ${s.name}">
-              <i class="fas fa-trash"></i>
-            </button>
-          </div>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
 
-  // --------- ORDERS ----------
-  const statusMap = {
-    pending: { text: "pending", class: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
-    processing: { text: "processing", class: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
-    completed: { text: "completed", class: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
-    rejected: { text: "rejected", class: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" }
-  };
+    // ========== ORDERS ==========
+    const statusMap = {
+      pending: "⏳ قيد الانتظار",
+      processing: "⚙️ قيد التنفيذ",
+      completed: "✅ مكتمل",
+      rejected: "❌ مرفوض"
+    };
+    let allOrdersData = [];
 
-  let allOrdersData = [];
-  let ordersCache = null;
-  let ordersCacheTime = 0;
-
-  async function loadOrders(forceReload = false){
-    if (!forceReload && ordersCache && (Date.now() - ordersCacheTime < CACHE_DURATION)) {
-      const servicesRes = await fetchWithAuth('/api/services');
-      if (!servicesRes) return;
-      const services = await servicesRes.json();
-      const svcMap = {};
-      services.forEach(s => svcMap[s.id] = s);
-      renderOrders(ordersCache, svcMap);
-      return;
-    }
-    
-    showLoading('orders');
-    try {
+    async function loadOrders() {
       const r = await fetchWithAuth('/api/orders');
       if (!r) return;
       allOrdersData = await r.json();
-      ordersCache = allOrdersData;
-      ordersCacheTime = Date.now();
-      
       const servicesRes = await fetchWithAuth('/api/services');
       if (!servicesRes) return;
       const services = await servicesRes.json();
       const svcMap = {};
       services.forEach(s => svcMap[s.id] = s);
       renderOrders(allOrdersData, svcMap);
-    } catch (error) {
-      console.error('Error loading orders:', error);
-    } finally {
-      hideLoading('orders');
     }
-  }
 
-  function renderOrders(list, svcMap) {
-    const tbody = document.querySelector('#orders-table');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '';
-    
-    if (!list || list.length === 0) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="7" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-            <i class="fas fa-inbox text-3xl mb-2"></i>
-            <p>${t('no_logs')}</p>
-          </td>
-        </tr>
-      `;
-      return;
-    }
-    
-    list.forEach(o => {
-      const status = statusMap[o.status] || { text: o.status, class: '' };
-      const tr = document.createElement('tr');
-      tr.className = 'border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150';
-      
-      const serviceName = svcMap[o.serviceId] ? svcMap[o.serviceId].name : o.serviceId;
-      const statusText = t(status.text);
-      
-      tr.innerHTML = `
-        <td class="px-6 py-4 text-gray-900 dark:text-white">${o.id}</td>
-        <td class="px-6 py-4 text-gray-900 dark:text-white font-medium">${serviceName}</td>
-        <td class="px-6 py-4">
-          <a href="${o.link || '#'}" target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline truncate block max-w-xs">
-            ${o.link || 'N/A'}
-          </a>
-        </td>
-        <td class="px-6 py-4 text-gray-700 dark:text-gray-300">${o.quantity || ''}</td>
-        <td class="px-6 py-4 text-gray-700 dark:text-gray-300">$${(o.price || 0).toFixed(2)}</td>
-        <td class="px-6 py-4">
-          <span class="px-3 py-1 rounded-full text-xs font-medium ${status.class}">${statusText}</span>
-        </td>
-        <td class="px-6 py-4">
-          <div class="flex gap-2">
-            <button onclick="updateOrderStatus(${o.id},'processing')" 
-                    class="bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-800 text-white px-3 py-1 rounded text-sm transition-colors duration-150" 
-                    title="${t('processing')}"
-                    aria-label="${t('processing')}">
-              <i class="fas fa-hourglass-half"></i>
+    function renderOrders(list, svcMap) {
+      const tbody = document.querySelector('#orders-table tbody');
+      tbody.innerHTML = '';
+      list.forEach(o => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${o.id}</td>
+          <td>${svcMap[o.serviceId] ? svcMap[o.serviceId].name : o.serviceId}</td>
+          <td><a href="${o.link}" target="_blank" rel="noopener">${o.link.substring(0, 30)}...</a></td>
+          <td>${o.quantity || ''}</td>
+          <td>$${o.price || ''}</td>
+          <td>${statusMap[o.status] || o.status}</td>
+          <td>
+            <button onclick="updateOrderStatus(${o.id},'processing')" class="btn btn-sm btn-warning" title="قيد التنفيذ">
+              <i class="fas fa-cog"></i>
             </button>
-            <button onclick="updateOrderStatus(${o.id},'completed')" 
-                    class="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white px-3 py-1 rounded text-sm transition-colors duration-150" 
-                    title="${t('completed')}"
-                    aria-label="${t('completed')}">
+            <button onclick="updateOrderStatus(${o.id},'completed')" class="btn btn-sm btn-success" title="مكتمل">
               <i class="fas fa-check"></i>
             </button>
-            <button onclick="updateOrderStatus(${o.id},'rejected')" 
-                    class="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white px-3 py-1 rounded text-sm transition-colors duration-150" 
-                    title="${t('rejected')}"
-                    aria-label="${t('rejected')}">
+            <button onclick="updateOrderStatus(${o.id},'rejected')" class="btn btn-sm btn-danger" title="مرفوض">
               <i class="fas fa-times"></i>
             </button>
-          </div>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-    }
-    async function updateOrderStatus(id, status) {
-    const statusText = t(statusMap[status].text);
-    if (!confirm(`${t('update_status_confirm')} "${statusText}"?`)) return;
-    
-    try {
-      const res = await fetchWithAuth('/api/orders/' + id, { 
-        method: 'PUT', 
-        body: JSON.stringify({ status }) 
+          </td>
+        `;
+        tbody.appendChild(tr);
       });
-      if (res && res.ok) { 
-        show(t('order_updated')); 
-        ordersCache = null;
-        reloadAll(); 
-      } else {
-        show(t('order_update_failed'), 'error');
-      }
-    } catch (error) {
-      show(t('order_update_failed'), 'error');
     }
-  }
 
-  // --------- LOGS ----------
-  async function loadLogs(){
-    showLoading('logs');
-    try {
+    async function updateOrderStatus(id, status) {
+      if (!confirm(`تأكيد تحديث حالة الطلب إلى "${statusMap[status]}"؟`)) return;
+      const res = await fetchWithAuth('/api/orders/' + id, { method: 'PUT', body: JSON.stringify({ status }) });
+      if (res && res.ok) {
+        show('✅ تم تحديث حالة الطلب');
+        reloadAll();
+      } else {
+        show('❌ فشل التحديث', 'error');
+      }
+    }
+
+    // ========== LOGS ==========
+    async function loadLogs() {
       const r = await fetchWithAuth('/api/logs');
       if (!r) return;
       const logs = await r.json();
       const box = document.getElementById('logsBox');
-      if (!box) return;
-      
-      if (!logs || logs.length === 0) {
-        box.innerHTML = `
-          <div class="text-center text-gray-500 dark:text-gray-400 p-8">
-            <i class="fas fa-inbox text-3xl mb-2"></i>
-            <p>${t('no_logs')}</p>
-          </div>
+      box.innerHTML = logs.slice(0, 50).map(l => `
+        <div>
+          <small style="color: #6c757d;"><i class="fas fa-clock"></i> [${new Date(l.time).toLocaleString()}]</small>
+          <strong>${l.user}</strong> ${l.action}
+          <span style="color: #17a2b8;">${JSON.stringify(l.meta)}</span>
+        </div>
+      `).join('');
+    }
+
+    // ========== SERVICE FORM ==========
+    const form = document.getElementById('serviceForm');
+    const typeSelect = document.getElementById('typeSelect');
+
+    typeSelect.addEventListener('change', () => {
+      if (typeSelect.value === 'fixed') {
+        document.getElementById('priceContainer').innerHTML = `
+          <label class="form-label">السعر الإجمالي</label>
+          <input name="price" type="number" step="0.01" class="form-control" placeholder="السعر الإجمالي" required>
         `;
-        return;
-      }
-      
-      box.innerHTML = logs.slice(0, 50).map(l => {
-        const time = new Date(l.time).toLocaleString(currentLang === 'ar' ? 'ar-SA' : 'en-US');
-        const user = l.user || 'Unknown';
-        const action = l.action || 'No description';
-        
-        return `
-          <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 transition-colors duration-200">
-            <div class="flex justify-between items-start mb-2">
-              <span class="font-medium text-gray-900 dark:text-white">${user}</span>
-              <span class="text-xs text-gray-500 dark:text-gray-400">${time}</span>
-            </div>
-            <p class="text-gray-700 dark:text-gray-300">${action}</p>
-          </div>
+        document.getElementById('qtyContainer').style.display = 'none';
+        document.querySelector('[name=min]')?.removeAttribute('required');
+        document.querySelector('[name=max]')?.removeAttribute('required');
+      } else {
+        document.getElementById('priceContainer').innerHTML = `
+          <label class="form-label">السعر لكل 1000</label>
+          <input name="rate" type="number" step="0.01" class="form-control" placeholder="السعر لكل 1000" required>
         `;
-      }).join('');
-      
-    } catch (error) {
-      console.error('Error loading logs:', error);
-      const box = document.getElementById('logsBox');
-      if (box) {
-        box.innerHTML = `
-          <div class="text-center text-red-500 dark:text-red-400 p-4">
-            <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
-            <p>${t('logs_load_failed')}</p>
-          </div>
-        `;
+        document.getElementById('qtyContainer').style.display = 'grid';
+        document.querySelector('[name=min]')?.setAttribute('required', 'required');
+        document.querySelector('[name=max]')?.setAttribute('required', 'required');
       }
-    } finally {
-      hideLoading('logs');
-    }
-               }
-      // =======================================================
-  //  SERVICE FORM MANAGEMENT
-  // =======================================================
-  
-  const form = document.getElementById('serviceForm');
-  const typeSelect = document.getElementById('typeSelect');
-
-  function updateFormFields() {
-    const isFixed = typeSelect.value === 'fixed';
-    const priceContainer = document.getElementById('priceContainer');
-    const qtyContainer = document.getElementById('qtyContainer');
-    
-    if (isFixed) {
-      priceContainer.innerHTML = `
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="total_price">${t('total_price')}</label>
-        <input name="price" type="number" step="0.01" placeholder="${t('total_price')}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200" required aria-label="${t('total_price')}">
-      `;
-      qtyContainer.style.display = 'none';
-    } else {
-      priceContainer.innerHTML = `
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="price_per_1000">${t('price_per_1000')}</label>
-        <input name="rate" type="number" step="0.01" placeholder="${t('price_per_1000')}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200" required aria-label="${t('price_per_1000')}">
-      `;
-      qtyContainer.style.display = 'grid';
-    }
-  }
-
-  typeSelect.addEventListener('change', updateFormFields);
-
-  document.getElementById('clearFormBtn').addEventListener('click', () => {
-    form.reset();
-    document.getElementById('serviceIdInput').value = '';
-    updateFormFields();
-  });
-
-  form.addEventListener('submit', async e => {
-    e.preventDefault();
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
-    const id = data.id;
-
-    if (data.type === 'fixed') {
-      delete data.rate;
-      delete data.min;
-      delete data.max;
-    } else {
-      delete data.price;
-    }
-
-    const url = id ? `/api/services/${id}` : '/api/services';
-    const method = id ? 'PUT' : 'POST';
-    
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalHTML = submitBtn.innerHTML;
-    submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t('loading')}`;
-    submitBtn.disabled = true;
-    
-    try {
-      const res = await fetchWithAuth(url, { 
-        method, 
-        body: JSON.stringify(data) 
-      });
-      
-      if (res && res.ok) {
-        show(id ? t('service_updated') : t('service_added'));
-        form.reset();
-        document.getElementById('serviceIdInput').value = '';
-        updateFormFields();
-        servicesCache = null;
-        reloadAll();
-        
-        setTimeout(() => {
-          document.querySelector('[data-section="services"]').click();
-        }, 1000);
-      } else {
-        show(id ? t('service_update_failed') : t('service_add_failed'), 'error');
-      }
-    } catch (error) {
-      show(id ? t('service_update_failed') : t('service_add_failed'), 'error');
-    } finally {
-      submitBtn.innerHTML = originalHTML;
-      submitBtn.disabled = false;
-    }
-  });
-
-  // =======================================================
-  //  EDIT / DELETE SERVICE
-  // =======================================================
-  
-  window.editService = async function(id) {
-    const s = allServicesData.find(x => x.id === id);
-    if (!s) return;
-    
-    document.querySelector('[name="name"]').value = s.name || '';
-    document.querySelector('[name="category"]').value = s.category || '';
-    document.getElementById('serviceIdInput').value = s.id;
-    typeSelect.value = s.type;
-    updateFormFields();
-    
-    setTimeout(() => {
-      if (s.type === 'fixed') {
-        document.querySelector('[name="price"]').value = s.price || '';
-      } else {
-        document.querySelector('[name="rate"]').value = s.rate || '';
-        document.querySelector('[name="min"]').value = s.min || '';
-        document.querySelector('[name="max"]').value = s.max || '';
-      }
-    }, 100);
-    
-    document.querySelector('[data-section="add-service"]').click();
-  };
-
-  window.deleteService = async function(id) {
-    if (!confirm(t('delete_confirm'))) return;
-    
-    try {
-      const res = await fetchWithAuth('/api/services/' + id, { method: 'DELETE' });
-      if (res && res.ok) { 
-        show(t('service_deleted')); 
-        servicesCache = null;
-        reloadAll(); 
-      } else {
-        show(t('service_delete_failed'), 'error');
-      }
-    } catch (error) {
-      show(t('service_delete_failed'), 'error');
-    }
-  };
-
-  // =======================================================
-  //  SEARCH FUNCTIONALITY
-  // =======================================================
-  
-  document.getElementById('searchServices')?.addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase().trim();
-    
-    if (!query) {
-      renderServices(allServicesData);
-      return;
-    }
-    
-    const filtered = allServicesData.filter(s => {
-      const name = (s.name || '').toLowerCase();
-      const category = (s.category || '').toLowerCase();
-      const id = String(s.id || '');
-      
-      return name.includes(query) || 
-             category.includes(query) || 
-             id.includes(query);
     });
-    
-    renderServices(filtered);
-  });
 
-  document.getElementById('searchOrders')?.addEventListener('input', async (e) => {
-    const query = e.target.value.toLowerCase().trim();
-    
-    if (!query) {
+    document.getElementById('clearFormBtn').addEventListener('click', () => {
+      form.reset();
+      document.getElementById('serviceIdInput').value = '';
+      typeSelect.dispatchEvent(new Event('change'));
+    });
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form).entries());
+      const id = data.id;
+
+      if (data.type === 'fixed') {
+        delete data.rate;
+        delete data.min;
+        delete data.max;
+      } else {
+        delete data.price;
+      }
+
+      if (id) {
+        delete data.id;
+        const res = await fetchWithAuth('/api/services/' + id, { method: 'PUT', body: JSON.stringify(data) });
+        if (res && res.ok) {
+          show('✅ تم تعديل الخدمة');
+          form.reset();
+          document.getElementById('serviceIdInput').value = '';
+          reloadAll();
+        } else {
+          show('❌ فشل تعديل الخدمة', 'error');
+        }
+      } else {
+        const res = await fetchWithAuth('/api/services', { method: 'POST', body: JSON.stringify(data) });
+        if (res && res.ok) {
+          show('✅ تم إضافة الخدمة');
+          form.reset();
+          reloadAll();
+        } else {
+          show('❌ فشل إضافة الخدمة', 'error');
+        }
+      }
+    });
+
+    // ========== EDIT / DELETE SERVICE ==========
+    window.editService = async function (id) {
+      const s = allServicesData.find(x => x.id === id);
+      if (!s) return;
+      document.querySelector('[name=name]').value = s.name || '';
+      document.querySelector('[name=category]').value = s.category || '';
+      document.getElementById('serviceIdInput').value = s.id;
+      typeSelect.value = s.type;
+      typeSelect.dispatchEvent(new Event('change'));
+      if (s.type === 'fixed') {
+        document.querySelector('[name=price]').value = s.price || '';
+      } else {
+        document.querySelector('[name=rate]').value = s.rate || '';
+        document.querySelector('[name=min]').value = s.min || '';
+        document.querySelector('[name=max]').value = s.max || '';
+      }
+      
+      // Navigate to add-service section
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+      document.querySelector('[data-section="add-service"]').classList.add('active');
+      document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+      document.getElementById('add-service-section').style.display = 'block';
+      
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.deleteService = async function (id) {
+      if (!confirm('⚠️ تأكيد حذف الخدمة؟ سيتم حذفها نهائياً.')) return;
+      const res = await fetchWithAuth('/api/services/' + id, { method: 'DELETE' });
+      if (res && res.ok) {
+        show('✅ تم حذف الخدمة');
+        reloadAll();
+      } else {
+        show('❌ فشل حذف الخدمة', 'error');
+      }
+    };
+
+    // ========== SEARCH FUNCTIONALITY ==========
+    document.getElementById('searchServices').addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase();
+      const filtered = allServicesData.filter(s =>
+        s.name.toLowerCase().includes(query) ||
+        s.category.toLowerCase().includes(query)
+      );
+      renderServices(filtered);
+    });
+
+    document.getElementById('searchOrders').addEventListener('input', async (e) => {
+      const query = e.target.value.toLowerCase();
       const servicesRes = await fetchWithAuth('/api/services');
       if (!servicesRes) return;
       const services = await servicesRes.json();
       const svcMap = {};
       services.forEach(s => svcMap[s.id] = s);
-      renderOrders(allOrdersData, svcMap);
-      return;
-    }
-    
-    try {
-      const servicesRes = await fetchWithAuth('/api/services');
-      if (!servicesRes) return;
-      const services = await servicesRes.json();
-      const svcMap = {};
-      services.forEach(s => svcMap[s.id] = s);
-      
-      const filtered = allOrdersData.filter(o => {
-        const id = String(o.id || '');
-        const link = (o.link || '').toLowerCase();
-        const serviceName = svcMap[o.serviceId] ? (svcMap[o.serviceId].name || '').toLowerCase() : '';
-        
-        return id.includes(query) || 
-               link.includes(query) || 
-               serviceName.includes(query);
-      });
-      
+      const filtered = allOrdersData.filter(o =>
+        String(o.id).includes(query) ||
+        o.link.toLowerCase().includes(query) ||
+        (svcMap[o.serviceId] && svcMap[o.serviceId].name.toLowerCase().includes(query))
+      );
       renderOrders(filtered, svcMap);
-    } catch (error) {
-      console.error('Error searching orders:', error);
-    }
-  });
+    });
 
-  // =======================================================
-  //  REFRESH BUTTON
-  // =======================================================
-  
-  document.getElementById('refreshBtn').onclick = async () => {
-    const btn = document.getElementById('refreshBtn');
-    const originalHTML = btn.innerHTML;
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t('loading')}`;
-    btn.disabled = true;
-    
-    try {
-      servicesCache = null;
-      ordersCache = null;
-      
+    document.getElementById('refreshBtn').onclick = async () => {
       await reloadAll();
-      show(t('data_refreshed'));
-    } catch (error) {
-      show(t('refresh_failed'), 'error');
-    } finally {
-      btn.innerHTML = originalHTML;
-      btn.disabled = false;
+      show('✅ تم تحديث البيانات');
+    };
+
+    // ========== RELOAD ALL ==========
+    async function reloadAll() {
+      await Promise.all([loadStats(), loadServices(), loadOrders(), loadLogs()]);
     }
-  };
 
-  // =======================================================
-  //  RELOAD ALL DATA
-  // =======================================================
-  
-  async function reloadAll() { 
-    await Promise.all([
-      loadStats(), 
-      loadServices(true),
-      loadOrders(true),
-      loadLogs()
-    ]); 
-  }
-
-  // =======================================================
-  //  EXPORT CSV
-  // =======================================================
-  
-  async function downloadCSV(endpoint, filename) {
-    try {
+    // ========== EXPORT CSV ==========
+    async function downloadCSV(endpoint, filename) {
       const r = await fetchWithAuth(endpoint);
-      if (!r || !r.ok) { 
-        show(t('download_failed'), 'error'); 
-        return; 
+      if (!r || !r.ok) {
+        show('❌ فشل تحميل الملف', 'error');
+        return;
       }
       const text = await r.text();
       const blob = new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8;" });
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -1607,101 +1084,17 @@ document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-      show(t('download_success'));
-    } catch (error) {
-      show(t('download_failed'), 'error');
     }
-  }
-  
-  document.getElementById('exportServices').onclick = () => {
-    downloadCSV('/api/export/services.csv', 'services.csv');
-  };
-  
-  document.getElementById('exportOrders').onclick = () => {
-    downloadCSV('/api/export/orders.csv', 'orders.csv');
-  };
 
-  // =======================================================
-  //  SIDEBAR & NAVIGATION CONTROL
-  // =======================================================
-  
-  document.addEventListener('DOMContentLoaded', function() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const navItems = document.querySelectorAll('.nav-item');
-    const contentSections = document.querySelectorAll('.content-section');
-    
-    // Mobile menu toggle
-    mobileMenuBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('hidden');
-      overlay.classList.toggle('block');
-    });
+    document.getElementById('exportServices').onclick = () => {
+      downloadCSV('/api/export/services.csv', 'الخدمات.csv');
+    };
+    document.getElementById('exportOrders').onclick = () => {
+      downloadCSV('/api/export/orders.csv', 'الطلبات.csv');
+    };
 
-    // Close sidebar when clicking overlay
-    overlay.addEventListener('click', () => {
-      sidebar.classList.add('hidden');
-      overlay.classList.remove('block');
-    });
-
-    // Navigation
-    navItems.forEach(item => {
-      item.addEventListener('click', function(e) {
-        e.preventDefault();
-        
-        navItems.forEach(nav => nav.classList.remove('bg-gray-100', 'dark:bg-gray-700'));
-        contentSections.forEach(section => section.classList.add('hidden'));
-        
-        this.classList.add('bg-gray-100', 'dark:bg-gray-700');
-        
-        const targetSection = this.getAttribute('data-section');
-        const sectionToShow = document.getElementById(targetSection);
-        if (sectionToShow) {
-          sectionToShow.classList.remove('hidden');
-        }
-        
-        const sectionTitle = this.querySelector('span').textContent;
-        updatePageTitle(sectionTitle);
-        
-        if (targetSection === 'services') {
-          loadServices();
-        } else if (targetSection === 'orders') {
-          loadOrders();
-        } else if (targetSection === 'logs') {
-          loadLogs();
-        } else if (targetSection === 'settings') {
-          updateDarkModeToggle();
-          document.getElementById('languageSetting').value = currentLang;
-        }
-        
-        if (window.innerWidth < 1024) {
-          sidebar.classList.add('hidden');
-          overlay.classList.remove('block');
-        }
-      });
-    });
-    
-    function updatePageTitle(title) {
-      const pageTitle = document.querySelector('.page-title');
-      if (pageTitle) {
-        pageTitle.textContent = title;
-      }
-    }
-    
-    // Apply translations on load
-    applyTranslations();
-    updateDarkModeToggle();
-    document.getElementById('languageSetting').value = currentLang;
-  });
-
-  // =======================================================
-  //  INITIALIZE APPLICATION
-  // =======================================================
-  
-  setTimeout(() => {
+    // ========== INITIAL LOAD ==========
     reloadAll();
-    tokenCheck.classList.add('hidden');
-  }, 1500);
   </script>
 </body>
 </html>
