@@ -2,454 +2,473 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>تسجيل الدخول - لوحة التحكم</title>
 
-  <!-- Tailwind CSS CDN with Dark Mode Support -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-  <!-- Google Fonts (Cairo for Arabic) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-
-  <script>
-    // Configure Tailwind with Dark Mode Support
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            'sans': ['Cairo', 'sans-serif'],
-          },
-        }
-      }
-    }
-
-    // Auto-detect system dark mode preference
-    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  </script>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Cairo Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
 
   <style>
-    body {
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+    * {
+      font-family: 'Cairo', sans-serif;
     }
-    
-    @keyframes fadeIn {
+
+    body {
+      margin: 0;
+      padding: 0;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.light-mode {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #212529;
+    }
+
+    body.dark-mode {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      color: #e0e0e0;
+    }
+
+    .login-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .login-container {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      padding: 40px;
+      width: 100%;
+      max-width: 450px;
+      animation: slideUp 0.5s ease-in-out;
+    }
+
+    body.dark-mode .login-container {
+      background: #2a2a2a;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    @keyframes slideUp {
       from {
+        transform: translateY(30px);
         opacity: 0;
-        transform: translateY(10px);
       }
       to {
-        opacity: 1;
         transform: translateY(0);
+        opacity: 1;
       }
     }
-    
-    .fade-in {
-      animation: fadeIn 0.6s ease-out;
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 40px;
     }
-    
-    /* Fixed Alert Box - Top Center */
-    .alert-container {
-      position: fixed;
-      top: 5rem;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9999;
-      max-width: 500px;
-      width: 90%;
+
+    .login-header .logo {
+      font-size: 3rem;
+      margin-bottom: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    
+
+    .login-header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin: 0;
+      color: #212529;
+    }
+
+    body.dark-mode .login-header h1 {
+      color: #e0e0e0;
+    }
+
+    .login-header p {
+      color: #6c757d;
+      margin-top: 8px;
+      font-size: 0.95rem;
+    }
+
+    body.dark-mode .login-header p {
+      color: #aaa;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #212529;
+      font-size: 0.95rem;
+    }
+
+    body.dark-mode .form-label {
+      color: #e0e0e0;
+    }
+
+    .form-control {
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 12px 15px;
+      font-size: 1rem;
+      transition: all 0.3s;
+      background-color: #f8f9fa;
+      color: #212529;
+    }
+
+    body.dark-mode .form-control {
+      background-color: #333;
+      color: #e0e0e0;
+      border-color: #444;
+    }
+
+    .form-control:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+      background-color: white;
+    }
+
+    body.dark-mode .form-control:focus {
+      background-color: #3a3a3a;
+    }
+
+    .form-control::placeholder {
+      color: #aaa;
+    }
+
+    .input-group-text {
+      background-color: transparent;
+      border: 2px solid #e0e0e0;
+      border-right: none;
+      color: #667eea;
+    }
+
+    body.dark-mode .input-group-text {
+      border-color: #444;
+      background-color: #333;
+    }
+
+    .input-group .form-control {
+      border-left: none;
+    }
+
+    .btn-login {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      color: white;
+      padding: 12px 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      width: 100%;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+      color: white;
+    }
+
+    .btn-login:active {
+      transform: translateY(0);
+    }
+
+    .alert {
+      border: none;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      animation: slideIn 0.3s ease-in-out;
+    }
+
     @keyframes slideIn {
       from {
+        transform: translateX(-20px);
         opacity: 0;
-        transform: translateX(-50%) translateY(-20px);
       }
       to {
+        transform: translateX(0);
         opacity: 1;
-        transform: translateX(-50%) translateY(0);
       }
     }
-    
-    .animate-slide-in {
-      animation: slideIn 0.3s ease-out;
+
+    .alert-danger {
+      background-color: #f8d7da;
+      color: #721c24;
+      border-left: 5px solid #dc3545;
     }
 
-    /* Fixed Buttons Container */
-    .fixed-buttons-container {
+    body.dark-mode .alert-danger {
+      background-color: #58151c;
+      color: #f5c6cb;
+      border-left-color: #dc3545;
+    }
+
+    .alert-success {
+      background-color: #d4edda;
+      color: #155724;
+      border-left: 5px solid #28a745;
+    }
+
+    body.dark-mode .alert-success {
+      background-color: #155724;
+      color: #c3e6cb;
+      border-left-color: #28a745;
+    }
+
+    .login-footer {
+      text-align: center;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    body.dark-mode .login-footer {
+      border-top-color: #444;
+    }
+
+    .login-footer p {
+      color: #6c757d;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    body.dark-mode .login-footer p {
+      color: #aaa;
+    }
+
+    .theme-toggle-login {
       position: fixed;
-      top: 1rem;
-      right: 1rem;
-      z-index: 40;
+      top: 20px;
+      left: 20px;
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
       display: flex;
-      gap: 0.75rem;
-      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 1.3rem;
+      color: #667eea;
     }
 
-    [dir="ltr"] .fixed-buttons-container {
-      right: auto;
-      left: 1rem;
+    body.dark-mode .theme-toggle-login {
+      background: #2a2a2a;
+      border-color: #444;
+      color: #ffc107;
     }
 
-    /* Responsive button sizing */
-    @media (max-width: 768px) {
-      .fixed-buttons-container {
-        top: 0.5rem;
-        right: 0.5rem;
-      }
-
-      [dir="ltr"] .fixed-buttons-container {
-        left: 0.5rem;
-      }
-
-      .fixed-buttons-container button {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.875rem;
-      }
-
-      .fixed-buttons-container i {
-        font-size: 1rem;
-      }
+    .theme-toggle-login:hover {
+      transform: scale(1.1);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     }
 
-    @media (min-width: 1024px) {
-      .fixed-buttons-container {
-        top: 1.5rem;
-        right: 1.5rem;
+    .loading {
+      display: none;
+    }
+
+    .btn-login:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .login-container {
+        padding: 30px 20px;
       }
 
-      [dir="ltr"] .fixed-buttons-container {
-        left: 1.5rem;
+      .login-header h1 {
+        font-size: 1.5rem;
       }
 
-      .fixed-buttons-container button {
-        padding: 0.75rem 1rem;
-        font-size: 1rem;
+      .login-header .logo {
+        font-size: 2.5rem;
       }
     }
   </style>
 </head>
-<body class="bg-gradient-to-br from-blue-600 via-blue-500 to-blue-700 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 min-h-screen flex items-center justify-center p-4 transition-colors duration-300">
-
-  <!-- Fixed Buttons Container -->
-  <div class="fixed-buttons-container">
-    <!-- Dark Mode Toggle Button -->
-    <button id="darkModeToggle" 
-            class="p-3 text-white dark:text-gray-300 hover:bg-white/20 dark:hover:bg-gray-800/50 rounded-lg transition-all duration-200 backdrop-blur-sm shadow-lg"
-            aria-label="تبديل الوضع الليلي"
-            title="تبديل الوضع الليلي">
-      <i class="fas fa-moon dark:hidden text-lg"></i>
-      <i class="fas fa-sun hidden dark:inline text-lg"></i>
-    </button>
-
-    <!-- Language Toggle Button -->
-    <button id="langToggle" 
-            class="p-3 text-white dark:text-gray-300 hover:bg-white/20 dark:hover:bg-gray-800/50 rounded-lg transition-all duration-200 backdrop-blur-sm shadow-lg flex items-center gap-2 text-sm font-medium"
-            aria-label="تبديل اللغة"
-            title="تبديل اللغة">
-      <i class="fas fa-language text-lg"></i>
-      <span id="currentLang" class="hidden sm:inline">العربية</span>
-    </button>
-  </div>
-
-  <!-- Background Pattern -->
-  <div class="absolute inset-0 opacity-10">
-    <div class="absolute top-0 left-0 w-96 h-96 bg-white rounded-full mix-blend-multiply filter blur-3xl"></div>
-    <div class="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full mix-blend-multiply filter blur-3xl"></div>
-  </div>
-
-  <!-- Login Container -->
-  <div class="relative z-10 w-full max-w-md">
-    <!-- Header -->
-    <div class="text-center mb-8 fade-in">
-      <div class="inline-flex items-center justify-center w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-lg mb-4 transition-colors duration-300">
-        <i class="fas fa-chart-line text-3xl text-blue-600 dark:text-blue-400"></i>
-      </div>
-      <h1 class="text-4xl font-bold text-white dark:text-gray-100 mb-2" data-i18n="login">تسجيل الدخول</h1>
-      <p class="text-blue-100 dark:text-gray-400 text-lg" data-i18n="smm_dashboard">لوحة تحكم SMM</p>
-    </div>
-
-    <!-- Login Card -->
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 fade-in transition-colors duration-300" style="animation-delay: 0.1s;">
-      <form id="loginForm" class="space-y-6">
-        <!-- Username Field -->
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            <i class="fas fa-user me-2 text-blue-600 dark:text-blue-400"></i><span data-i18n="username">اسم المستخدم</span>
-          </label>
-          <input 
-            name="username" 
-            type="text"
-            placeholder="أدخل اسم المستخدم"
-            data-i18n-placeholder="enter_username"
-            class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-all duration-200 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" 
-            required
-            autocomplete="username"
-            aria-label="اسم المستخدم"
-          >
+<body class="light-mode">
+  <div class="login-wrapper">
+    <div class="login-container">
+      <div class="login-header">
+        <div class="logo">
+          <i class="fas fa-lock"></i>
         </div>
+        <h1>لوحة التحكم</h1>
+        <p>تسجيل الدخول إلى حسابك</p>
+      </div>
 
-        <!-- Password Field -->
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            <i class="fas fa-lock me-2 text-blue-600 dark:text-blue-400"></i><span data-i18n="password">كلمة المرور</span>
+      <div id="alert-box"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label" for="username">
+            <i class="fas fa-user"></i> اسم المستخدم
           </label>
-          <div class="relative">
+          <div class="input-group">
+            <span class="input-group-text">
+              <i class="fas fa-user"></i>
+            </span>
             <input 
-              id="passwordInput"
-              name="password" 
-              type="password"
-              placeholder="أدخل كلمة المرور"
-              data-i18n-placeholder="enter_password"
-              class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-all duration-200 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" 
+              id="username"
+              name="username" 
+              type="text"
+              class="form-control" 
+              placeholder="أدخل اسم المستخدم" 
               required
-              autocomplete="current-password"
-              aria-label="كلمة المرور"
+              autocomplete="username"
             >
-            <button 
-              type="button"
-              id="togglePassword"
-              class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200"
-              aria-label="إظهار/إخفاء كلمة المرور">
-              <i class="fas fa-eye" id="eyeIcon"></i>
-            </button>
           </div>
         </div>
 
-        <!-- Login Button -->
-        <button 
-          type="submit"
-          id="submitBtn"
-          class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 dark:from-blue-700 dark:to-blue-800 dark:hover:from-blue-800 dark:hover:to-blue-900 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-lg disabled:opacity-75 disabled:cursor-not-allowed"
-          aria-label="تسجيل الدخول"
-        >
-          <i class="fas fa-sign-in-alt"></i> <span data-i18n="login">تسجيل الدخول</span>
+        <div class="form-group">
+          <label class="form-label" for="password">
+            <i class="fas fa-lock"></i> كلمة السر
+          </label>
+          <div class="input-group">
+            <span class="input-group-text">
+              <i class="fas fa-lock"></i>
+            </span>
+            <input 
+              id="password"
+              name="password" 
+              type="password"
+              class="form-control" 
+              placeholder="أدخل كلمة السر" 
+              required
+              autocomplete="current-password"
+            >
+          </div>
+        </div>
+
+        <button type="submit" class="btn-login">
+          <span class="loading">
+            <i class="fas fa-spinner fa-spin"></i>
+          </span>
+          <span class="btn-text">
+            <i class="fas fa-sign-in-alt"></i> دخول
+          </span>
         </button>
       </form>
 
-      <!-- Footer Text -->
-      <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 text-center transition-colors duration-200">
-        <p class="text-gray-600 dark:text-gray-400 text-sm" data-i18n="smm_system">
-          نظام إدارة وسائل التواصل الاجتماعي
-        </p>
+      <div class="login-footer">
+        <p>© 2024 لوحة التحكم. جميع الحقوق محفوظة.</p>
       </div>
-    </div>
-
-    <!-- Additional Info -->
-    <div class="mt-8 text-center text-blue-100 dark:text-gray-500 text-sm fade-in transition-colors duration-200" style="animation-delay: 0.2s;">
-      <p data-i18n="copyright">© 2025 جميع الحقوق محفوظة</p>
     </div>
   </div>
 
-  <!-- Alert Container - Fixed at Top Center -->
-  <div id="alert-box" class="alert-container"></div>
+  <!-- Theme Toggle Button -->
+  <button class="theme-toggle-login" id="themeToggleLogin" title="تبديل الوضع">
+    <i class="fas fa-moon"></i>
+  </button>
 
-  <!-- JavaScript -->
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
-    // =======================================================
-    //  TRANSLATION SYSTEM
-    // =======================================================
-    
-    const translations = {
-      ar: {
-        login: "تسجيل الدخول",
-        smm_dashboard: "لوحة تحكم SMM",
-        username: "اسم المستخدم",
-        password: "كلمة المرور",
-        enter_username: "أدخل اسم المستخدم",
-        enter_password: "أدخل كلمة المرور",
-        smm_system: "نظام إدارة وسائل التواصل الاجتماعي",
-        copyright: "© 2025 جميع الحقوق محفوظة",
-        login_success: "تم تسجيل الدخول بنجاح!",
-        login_failed: "فشل تسجيل الدخول",
-        connection_error: "تعذر الاتصال بالخادم",
-        logging_in: "جاري تسجيل الدخول..."
-      },
-      en: {
-        login: "Login",
-        smm_dashboard: "SMM Dashboard",
-        username: "Username",
-        password: "Password",
-        enter_username: "Enter your username",
-        enter_password: "Enter your password",
-        smm_system: "Social Media Management System",
-        copyright: "© 2025 All Rights Reserved",
-        login_success: "Login successful!",
-        login_failed: "Login failed",
-        connection_error: "Unable to connect to server",
-        logging_in: "Logging in..."
-      }
-    };
+    // ========== THEME TOGGLE ==========
+    const themeToggleLogin = document.getElementById('themeToggleLogin');
+    const body = document.body;
+    const savedTheme = localStorage.getItem('theme') || 'light';
 
-    // Current Language
-    let currentLang = localStorage.getItem('lang') || 'ar';
-    
-    // Translation Function
-    function t(key) {
-      return translations[currentLang][key] || key;
+    body.classList.remove('light-mode', 'dark-mode');
+    body.classList.add(savedTheme + '-mode');
+    updateThemeIcon();
+
+    themeToggleLogin.addEventListener('click', () => {
+      const isDark = body.classList.contains('dark-mode');
+      body.classList.remove('light-mode', 'dark-mode');
+      body.classList.add(isDark ? 'light-mode' : 'dark-mode');
+      localStorage.setItem('theme', isDark ? 'light' : 'dark');
+      updateThemeIcon();
+    });
+
+    function updateThemeIcon() {
+      const isDark = body.classList.contains('dark-mode');
+      themeToggleLogin.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
     }
-    
-    // Apply Translations to DOM
-    function applyTranslations() {
-      // Translate elements with data-i18n attribute
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        el.textContent = t(key);
-      });
-      
-      // Translate placeholders
-      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        const key = el.getAttribute('data-i18n-placeholder');
-        el.placeholder = t(key);
-      });
-      
-      // Update HTML lang and dir
-      document.documentElement.lang = currentLang;
-      document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
-      
-      // Update language button text
-      const langSpan = document.getElementById('currentLang');
-      if (langSpan) {
-        langSpan.textContent = currentLang === 'ar' ? 'العربية' : 'English';
-      }
-      
-      // Update title
-      document.title = t('login') + ' - ' + t('smm_dashboard');
-    }
-    
-    // Language Toggle
-    document.getElementById('langToggle').addEventListener('click', () => {
-      currentLang = currentLang === 'ar' ? 'en' : 'ar';
-      localStorage.setItem('lang', currentLang);
-      applyTranslations();
-    });
 
-    // =======================================================
-    //  DARK MODE TOGGLE
-    // =======================================================
-    
-    document.getElementById('darkModeToggle').addEventListener('click', () => {
-      const html = document.documentElement;
-      const isDark = html.classList.contains('dark');
-      
-      if (isDark) {
-        html.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-      } else {
-        html.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-      }
-    });
-
-    // =======================================================
-    //  PASSWORD VISIBILITY TOGGLE
-    // =======================================================
-    
-    document.getElementById('togglePassword').addEventListener('click', () => {
-      const passwordInput = document.getElementById('passwordInput');
-      const eyeIcon = document.getElementById('eyeIcon');
-      
-      if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        eyeIcon.classList.remove('fa-eye');
-        eyeIcon.classList.add('fa-eye-slash');
-      } else {
-        passwordInput.type = 'password';
-        eyeIcon.classList.remove('fa-eye-slash');
-        eyeIcon.classList.add('fa-eye');
-      }
-    });
-
-    // =======================================================
-    //  NOTIFICATION SYSTEM
-    // =======================================================
-    
+    // ========== LOGIN FORM ==========
     const form = document.getElementById('loginForm');
     const alertBox = document.getElementById('alert-box');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const loadingSpan = submitBtn.querySelector('.loading');
+    const btnText = submitBtn.querySelector('.btn-text');
 
     function show(msg, type = 'error') {
-      const bgColor = type === 'success' ? 'bg-green-500 dark:bg-green-600' : 'bg-red-500 dark:bg-red-600';
+      const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
       const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-      
-      const alertHTML = `
-        <div class="${bgColor} text-white p-4 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in mb-2 transition-colors duration-200">
-          <i class="fas ${icon}"></i>
-          <span>${msg}</span>
+      alertBox.innerHTML = `
+        <div class="alert ${alertClass}" role="alert">
+          <i class="fas ${icon}"></i> ${msg}
         </div>
       `;
-      
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = alertHTML;
-      const alertElement = tempDiv.firstElementChild;
-      alertBox.appendChild(alertElement);
-      
       setTimeout(() => {
-        if (alertElement && alertElement.parentNode) {
-          alertElement.remove();
-        }
+        alertBox.innerHTML = '';
       }, 4000);
     }
 
-    // =======================================================
-    //  LOGIN FORM SUBMISSION
-    // =======================================================
-    
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      
+      // Disable button and show loading
+      submitBtn.disabled = true;
+      loadingSpan.style.display = 'inline';
+      btnText.style.display = 'none';
+
       const fd = new FormData(form);
       const data = Object.fromEntries(fd.entries());
-      
-      // Show loading state
-      const submitBtn = document.getElementById('submitBtn');
-      const originalHTML = submitBtn.innerHTML;
-      submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t('logging_in')}`;
-      submitBtn.disabled = true;
-      
+
       try {
         const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        
+
         if (!res.ok) {
-          const err = await res.json().catch(() => ({ error: t('login_failed') }));
-          show(err.error || t('login_failed'));
+          const err = await res.json().catch(() => ({ error: 'خطأ في تسجيل الدخول' }));
+          show(err.error || 'خطأ في تسجيل الدخول', 'error');
+          submitBtn.disabled = false;
+          loadingSpan.style.display = 'none';
+          btnText.style.display = 'inline';
           return;
         }
-        
+
         const j = await res.json();
         localStorage.setItem('authToken', j.token);
-        show(t('login_success'), 'success');
+        show('✅ تم تسجيل الدخول بنجاح', 'success');
         
         setTimeout(() => {
           window.location.href = '/admin.html';
         }, 1000);
-        
       } catch (err) {
-        show(t('connection_error'));
-      } finally {
-        submitBtn.innerHTML = originalHTML;
+        show('تعذر الاتصال بالخادم', 'error');
         submitBtn.disabled = false;
+        loadingSpan.style.display = 'none';
+        btnText.style.display = 'inline';
       }
     });
 
-    // =======================================================
-    //  INITIALIZE
-    // =======================================================
-    
-    // Apply translations on load
-    applyTranslations();
+    // Focus on first input
+    document.getElementById('username').focus();
   </script>
 </body>
-                </html>
-  
+</html>
