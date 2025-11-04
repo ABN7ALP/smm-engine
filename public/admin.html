@@ -1786,6 +1786,24 @@ document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
     document.getElementById('languageSetting').value = currentLang;
   });
 
+  // === فتح وإغلاق القائمة الجانبية على الموبايل ===
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+
+  if (mobileMenuBtn && sidebar) {
+    mobileMenuBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('block');
+    });
+  }
+
+  // عند الضغط على خلفية الـ overlay يغلق القائمة
+  overlay?.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('block');
+  });
+
   // =======================================================
   //  INITIALIZE APPLICATION
   // =======================================================
