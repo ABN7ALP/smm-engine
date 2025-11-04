@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="ltr">
+<html lang="ar" id="htmlElement">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -50,9 +50,7 @@
       -moz-osx-font-smoothing: grayscale;
     }
     
-    html {
-      direction: ltr !important;
-    }
+    
 
     /* Sidebar - Always from Left */
     .sidebar {
@@ -78,7 +76,30 @@
       background-color: #1f2937;
     }
 
+    /* RTL support */
+[dir="rtl"] {
+  direction: rtl;
+}
+
+[dir="rtl"] .sidebar {
+  right: 0;
+  left: auto;
+}
+
+[dir="rtl"] .main-content {
+  margin-right: 16rem;
+  margin-left: 0;
+}
+
+/* Adjust mobile menu button for RTL */
+[dir="rtl"] #mobileMenuBtn {
+  left: auto;
+  right: 1rem;
+}
+
+/* Sidebar overlay position stays full-screen; no change needed */
     /* Main Content */
+    
     .main-content {
       margin-left: 16rem;
       transition: margin-left 0.3s ease-in-out;
@@ -875,6 +896,9 @@
     
   // Current Language
   let currentLang = localStorage.getItem('lang') || 'ar';
+
+    // Set initial document direction from stored language
+document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
   
   // Translation Function
   function t(key) {
@@ -935,11 +959,15 @@
   // =======================================================
   
   document.getElementById('languageSetting')?.addEventListener('change', (e) => {
-    currentLang = e.target.value;
-    localStorage.setItem('lang', currentLang);
-    applyTranslations();
-    reloadAll();
-  });
+  currentLang = e.target.value;
+  localStorage.setItem('lang', currentLang);
+  // Update document direction according to language
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  applyTranslations();
+  // optional: update layout immediately
+  updateDarkModeToggle();
+  reloadAll();
+});
 
   // =======================================================
   //  TOKEN CHECK & AUTHENTICATION
