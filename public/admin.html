@@ -41,7 +41,8 @@
   </script>
 
   <style>
-    * {
+    
+       * {
       box-sizing: border-box;
     }
 
@@ -50,13 +51,9 @@
       -moz-osx-font-smoothing: grayscale;
     }
     
-    .sidebar {
-  z-index: 50; /* أعلى من المحتوى */
-}
-.main-content {
-  z-index: 1;
-}
+    
 
+    /* Sidebar - Always from Left */
     .sidebar {
   position: fixed;
   top: 0;
@@ -69,7 +66,7 @@
   flex-direction: column;
 }
 
-/* موقعها حسب اللغة */
+/* موضع الشريط حسب الاتجاه */
 [dir="ltr"] .sidebar {
   left: 0;
   right: auto;
@@ -80,34 +77,12 @@
   left: auto;
 }
 
-/* موبايل: مخفية بشكل افتراضي */
-@media (max-width: 1024px) {
-  .sidebar {
-    transform: translateX(-100%);
-  }
-  [dir="rtl"] .sidebar {
-    transform: translateX(100%);
-  }
-  .sidebar.open {
-    transform: translateX(0);
-  }
-}
-
-/* كمبيوتر: ظاهرة دائمًا */
-@media (min-width: 1025px) {
-  .sidebar {
-    transform: none !important;
-  }
-}
-
 /* عند الشاشات الصغيرة: يملأ العرض بالكامل */
 @media (max-width: 768px) {
   .sidebar {
     width: 100%;
   }
 }
-
-    
 
     .sidebar {
   background-color: #ffffff; /* لون أبيض في الوضع الفاتح */
@@ -116,37 +91,7 @@
 .dark .sidebar {
   background-color: #1e293b; /* نفس درجة الداكن السابقة */
 }
-
-    /* RTL support */
-[dir="rtl"] {
-  direction: rtl;
-}
-
-[dir="rtl"] .sidebar {
-  right: 0;
-  left: auto;
-}
-
-/* دعم تموضع المحتوى حسب الاتجاه */
-[dir="rtl"] .main-content {
-  margin-right: 16rem;
-  margin-left: 0;
-}
-
-[dir="ltr"] .main-content {
-  margin-left: 16rem;
-  margin-right: 0;
-}
-
-/* Adjust mobile menu button for RTL */
-[dir="rtl"] #mobileMenuBtn {
-  left: auto;
-  right: 1rem;
-}
-
-/* Sidebar overlay position stays full-screen; no change needed */
     /* Main Content */
-    
     /* المحتوى الرئيسي — يراعي الاتجاه */
 .main-content {
   transition: margin 0.3s ease-in-out;
@@ -199,31 +144,28 @@
         margin-left: 0;
       }
 
-    
+      .sidebar.hidden {
+        transform: translateX(-100%);
+      }
+    }
 
+    /* Mobile Menu Button - Top Left */
     #mobileMenuBtn {
   position: fixed;
   top: 1rem;
   z-index: 40;
-  display: none;
+  display: none; /* مخفي افتراضياً */
 }
 
-/* الموقع حسب اللغة */
-[dir="ltr"] #mobileMenuBtn {
-  left: 1rem;
-  right: auto;
+/* يظهر فقط على الموبايل */
+@media (max-width: 1024px) {
+  #mobileMenuBtn {
+    display: block;
+  }
 }
 
-[dir="rtl"] #mobileMenuBtn {
-  right: 1rem;
-  left: auto;
-}
-
-    @media (max-width: 768px) {
-      #mobileMenuBtn {
-        display: block;
-      }
-    }
+[dir="ltr"] #mobileMenuBtn { left: 1rem; right: auto; }
+[dir="rtl"] #mobileMenuBtn { right: 1rem; left: auto; }
 
     /* Sidebar Overlay */
     #sidebarOverlay {
@@ -298,18 +240,32 @@
       padding-top: 1rem;
       border-top: 1px solid #e5e7eb;
     }
+/* RTL support */
+[dir="rtl"] {
+  direction: rtl;
+}
 
+[dir="rtl"] .sidebar {
+  right: 0;
+  left: auto;
+}
+
+[dir="rtl"] .main-content {
+  margin-right: 16rem;
+  margin-left: 0;
+}
+
+/* Adjust mobile menu button for RTL */
+[dir="rtl"] #mobileMenuBtn {
+  left: auto;
+  right: 1rem;
+}
+
+/* Sidebar overlay position stays full-screen; no change needed */
     .dark .sidebar-footer {
       border-top-color: #374151;
     }
-
-    /* Responsive Adjustments */
-    @media (min-width: 1024px) {
-      .main-content {
-        margin-left: 16rem;
-      }
-    }
-    html, body {
+html, body {
   height: 100%;
   overflow-x: hidden; /* يمنع التمرير الأفقي */
 }
@@ -324,6 +280,12 @@ body {
 .main-content {
   overflow: visible;
 }
+    /* Responsive Adjustments */
+    @media (min-width: 1024px) {
+      .main-content {
+        margin-left: 16rem;
+      }
+    }  
   </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200" dir="ltr">
@@ -1784,24 +1746,6 @@ document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
     applyTranslations();
     updateDarkModeToggle();
     document.getElementById('languageSetting').value = currentLang;
-  });
-
-  // === فتح وإغلاق القائمة الجانبية على الموبايل ===
-  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('sidebarOverlay');
-
-  if (mobileMenuBtn && sidebar) {
-    mobileMenuBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('open');
-      overlay.classList.toggle('block');
-    });
-  }
-
-  // عند الضغط على خلفية الـ overlay يغلق القائمة
-  overlay?.addEventListener('click', () => {
-    sidebar.classList.remove('open');
-    overlay.classList.remove('block');
   });
 
   // =======================================================
