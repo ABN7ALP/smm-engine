@@ -16,6 +16,24 @@
 <body>
   <div class="container-page">
 
+<!-- شريط التنعل العلوي -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="#">
+      <i class="fas fa-rocket me-2"></i>SMM Engine
+    </a>
+    
+    <div class="d-flex align-items-center">
+      <!-- زر تسجيل الدخول/المستخدم -->
+      <div id="authSection">
+        <button class="btn btn-outline-light" id="loginBtn">
+          <i class="fas fa-user me-1"></i>تسجيل الدخول
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+    
     <!-- الخطوة 1: اختيار الفئة -->
     <div id="step1" class="step">
         <div class="text-center mb-3">
@@ -76,6 +94,199 @@
                     </div>
                 </div>
                 <div id="orderStatusBox"></div>
+
+
+
+              <!-- نافذة تسجيل الدخول/إنشاء حساب -->
+<div class="modal fade" id="authModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="authModalTitle">تسجيل الدخول</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <!-- نموذج تسجيل الدخول -->
+        <form id="loginForm" class="auth-form">
+          <div class="mb-3">
+            <label class="form-label">البريد الإلكتروني</label>
+            <input type="email" class="form-control" id="loginEmail" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">كلمة السر</label>
+            <input type="password" class="form-control" id="loginPassword" required>
+          </div>
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="rememberMe">
+            <label class="form-check-label" for="rememberMe">تذكرني</label>
+          </div>
+          <button type="submit" class="btn btn-primary w-100 mb-2">
+            <i class="fas fa-sign-in-alt me-1"></i>تسجيل الدخول
+          </button>
+          <div class="text-center">
+            <a href="#" class="text-decoration-none" id="showForgotPassword">نسيت كلمة السر؟</a>
+          </div>
+        </form>
+
+        <!-- نموذج إنشاء حساب -->
+        <form id="registerForm" class="auth-form" style="display: none;">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">الاسم الكامل</label>
+              <input type="text" class="form-control" id="registerName" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">البلد</label>
+              <select class="form-select" id="registerCountry" required>
+                <option value="">اختر البلد</option>
+                <option value="سوريا">سوريا</option>
+                <option value="مصر">مصر</option>
+                <option value="السعودية">السعودية</option>
+                <option value="العراق">العراق</option>
+                <option value="الولايات المتحدة">الولايات المتحدة</option>
+                <!-- يمكن إضافة المزيد -->
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">البريد الإلكتروني</label>
+            <input type="email" class="form-control" id="registerEmail" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">رقم الهاتف</label>
+            <input type="tel" class="form-control" id="registerPhone">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">كلمة السر</label>
+            <input type="password" class="form-control" id="registerPassword" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">تأكيد كلمة السر</label>
+            <input type="password" class="form-control" id="registerConfirmPassword" required>
+          </div>
+          <button type="submit" class="btn btn-success w-100">
+            <i class="fas fa-user-plus me-1"></i>إنشاء حساب
+          </button>
+        </form>
+
+        <!-- نسيان كلمة السر -->
+        <form id="forgotPasswordForm" class="auth-form" style="display: none;">
+          <div class="mb-3">
+            <label class="form-label">البريد الإلكتروني</label>
+            <input type="email" class="form-control" id="forgotEmail" required>
+          </div>
+          <button type="submit" class="btn btn-warning w-100 mb-2">
+            <i class="fas fa-key me-1"></i>إرسال رابط إعادة التعيين
+          </button>
+          <div class="text-center">
+            <a href="#" class="text-decoration-none" id="backToLoginFromForgot">العودة لتسجيل الدخول</a>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <div id="authSwitch">
+          <span id="authSwitchText">ليس لديك حساب؟</span>
+          <a href="#" class="text-decoration-none ms-1" id="authSwitchLink">إنشاء حساب</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- لوحة المستخدم الشخصية -->
+<div class="modal fade" id="userPanelModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">لوحتي الشخصية</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <!-- معلومات المستخدم -->
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-body text-center">
+                <img src="https://via.placeholder.com/100" class="rounded-circle mb-3" alt="صورة الملف" id="userProfilePic">
+                <h5 id="userName">اسم المستخدم</h5>
+                <p class="text-muted" id="userEmail">user@example.com</p>
+                <div class="d-grid gap-2">
+                  <button class="btn btn-outline-primary btn-sm" id="editProfileBtn">
+                    <i class="fas fa-edit me-1"></i>تعديل الملف
+                  </button>
+                  <button class="btn btn-outline-secondary btn-sm" id="changePasswordBtn">
+                    <i class="fas fa-lock me-1"></i>تغيير كلمة السر
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- الرصيد -->
+            <div class="card mt-3">
+              <div class="card-body text-center">
+                <h6 class="card-title">رصيدك الحالي</h6>
+                <div class="display-6 text-success fw-bold" id="userBalance">$0.00</div>
+                <button class="btn btn-success btn-sm mt-2" id="addBalanceBtn">
+                  <i class="fas fa-plus me-1"></i>إضافة رصيد
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- الطلبات والإحصائيات -->
+          <div class="col-md-8">
+            <div class="card">
+              <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs">
+                  <li class="nav-item">
+                    <a class="nav-link active" href="#userOrders" data-bs-toggle="tab">طلباتي</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="#userStats" data-bs-toggle="tab">إحصائياتي</a>
+                  </li>
+                </ul>
+              </div>
+              <div class="card-body">
+                <div class="tab-content">
+                  <!-- تبويب الطلبات -->
+                  <div class="tab-pane fade show active" id="userOrders">
+                    <div id="userOrdersList">
+                      <!-- سيتم ملؤها بالطلبات -->
+                    </div>
+                  </div>
+                  
+                  <!-- تبويب الإحصائيات -->
+                  <div class="tab-pane fade" id="userStats">
+                    <div class="row text-center">
+                      <div class="col-4">
+                        <div class="border rounded p-3">
+                          <div class="h4 text-primary" id="totalOrdersCount">0</div>
+                          <small>إجمالي الطلبات</small>
+                        </div>
+                      </div>
+                      <div class="col-4">
+                        <div class="border rounded p-3">
+                          <div class="h4 text-success" id="completedOrdersCount">0</div>
+                          <small>مكتملة</small>
+                        </div>
+                      </div>
+                      <div class="col-4">
+                        <div class="border rounded p-3">
+                          <div class="h4 text-warning" id="pendingOrdersCount">0</div>
+                          <small>قيد التنفيذ</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
                   <!-- Track Order Card -->
                   <div class="card shadow-sm">
@@ -778,6 +989,373 @@ async function initialize() {
   }
 }
 
+
+// ==================== نظام إدارة المستخدمين ====================
+
+let currentUser = null;
+let userToken = null;
+
+// عناصر الواجهة
+const authSection = document.getElementById('authSection');
+const loginBtn = document.getElementById('loginBtn');
+const authModal = new bootstrap.Modal(document.getElementById('authModal'));
+const userPanelModal = new bootstrap.Modal(document.getElementById('userPanelModal'));
+
+// التحقق من حالة تسجيل الدخول عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+  checkAuthStatus();
+});
+
+// التحقق من حالة المصادقة
+function checkAuthStatus() {
+  const token = localStorage.getItem('userToken');
+  const userData = localStorage.getItem('userData');
+  
+  if (token && userData) {
+    userToken = token;
+    currentUser = JSON.parse(userData);
+    updateAuthUI();
+  }
+}
+
+// تحديث واجهة المصادقة
+function updateAuthUI() {
+  if (currentUser) {
+    authSection.innerHTML = `
+      <div class="dropdown">
+        <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+          <i class="fas fa-user me-1"></i>${currentUser.name}
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="#" id="userPanelBtn"><i class="fas fa-tachometer-alt me-2"></i>لوحتي</a></li>
+          <li><a class="dropdown-item" href="#" id="addBalanceMenuBtn"><i class="fas fa-wallet me-2"></i>إضافة رصيد</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item text-danger" href="#" id="logoutBtn"><i class="fas fa-sign-out-alt me-2"></i>تسجيل خروج</a></li>
+        </ul>
+      </div>
+    `;
+    
+    // إضافة event listeners للعناصر الجديدة
+    document.getElementById('userPanelBtn').addEventListener('click', showUserPanel);
+    document.getElementById('addBalanceMenuBtn').addEventListener('click', showAddBalance);
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+  } else {
+    authSection.innerHTML = `
+      <button class="btn btn-outline-light" id="loginBtn">
+        <i class="fas fa-user me-1"></i>تسجيل الدخول
+      </button>
+    `;
+    document.getElementById('loginBtn').addEventListener('click', showAuthModal);
+  }
+}
+
+// عرض نافذة المصادقة
+function showAuthModal() {
+  authModal.show();
+}
+
+// عرض لوحة المستخدم
+function showUserPanel() {
+  loadUserData();
+  userPanelModal.show();
+}
+
+// تسجيل الدخول
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok) {
+      userToken = data.token;
+      currentUser = data.user;
+      
+      localStorage.setItem('userToken', userToken);
+      localStorage.setItem('userData', JSON.stringify(currentUser));
+      
+      updateAuthUI();
+      authModal.hide();
+      showNotification('تم تسجيل الدخول بنجاح', 'success');
+    } else {
+      showNotification(data.error || 'فشل تسجيل الدخول', 'error');
+    }
+  } catch (error) {
+    showNotification('خطأ في الاتصال بالخادم', 'error');
+  }
+});
+
+// تسجيل مستخدم جديد
+document.getElementById('registerForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const userData = {
+    name: document.getElementById('registerName').value,
+    email: document.getElementById('registerEmail').value,
+    password: document.getElementById('registerPassword').value,
+    country: document.getElementById('registerCountry').value,
+    phone: document.getElementById('registerPhone').value
+  };
+  
+  // التحقق من تطابق كلمة السر
+  if (userData.password !== document.getElementById('registerConfirmPassword').value) {
+    showNotification('كلمات السر غير متطابقة', 'error');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(userData)
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok) {
+      showNotification('تم إنشاء الحساب بنجاح', 'success');
+      switchAuthForm('login');
+    } else {
+      showNotification(data.error || 'فشل إنشاء الحساب', 'error');
+    }
+  } catch (error) {
+    showNotification('خطأ في الاتصال بالخادم', 'error');
+  }
+});
+
+// تبديل بين نماذج المصادقة
+document.getElementById('authSwitchLink').addEventListener('click', function(e) {
+  e.preventDefault();
+  const currentForm = document.querySelector('.auth-form:not([style*="display: none"])').id;
+  
+  if (currentForm === 'loginForm') {
+    switchAuthForm('register');
+  } else {
+    switchAuthForm('login');
+  }
+});
+
+// تبديل النماذج
+function switchAuthForm(formType) {
+  document.getElementById('loginForm').style.display = formType === 'login' ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = formType === 'register' ? 'block' : 'none';
+  document.getElementById('forgotPasswordForm').style.display = 'none';
+  
+  if (formType === 'login') {
+    document.getElementById('authModalTitle').textContent = 'تسجيل الدخول';
+    document.getElementById('authSwitchText').textContent = 'ليس لديك حساب؟';
+    document.getElementById('authSwitchLink').textContent = 'إنشاء حساب';
+  } else {
+    document.getElementById('authModalTitle').textContent = 'إنشاء حساب';
+    document.getElementById('authSwitchText').textContent = 'لديك حساب بالفعل؟';
+    document.getElementById('authSwitchLink').textContent = 'تسجيل الدخول';
+  }
+}
+
+// نسيان كلمة السر
+document.getElementById('showForgotPassword').addEventListener('click', function(e) {
+  e.preventDefault();
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('forgotPasswordForm').style.display = 'block';
+  document.getElementById('authModalTitle').textContent = 'استعادة كلمة السر';
+});
+
+document.getElementById('backToLoginFromForgot').addEventListener('click', function(e) {
+  e.preventDefault();
+  switchAuthForm('login');
+});
+
+document.getElementById('forgotPasswordForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const email = document.getElementById('forgotEmail').value;
+  
+  try {
+    const response = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email })
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok) {
+      showNotification('تم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني', 'success');
+      switchAuthForm('login');
+    } else {
+      showNotification(data.error || 'فشل إرسال رابط الاستعادة', 'error');
+    }
+  } catch (error) {
+    showNotification('خطأ في الاتصال بالخادم', 'error');
+  }
+});
+
+// تحميل بيانات المستخدم
+async function loadUserData() {
+  if (!currentUser) return;
+  
+  try {
+    const response = await fetch('/api/user/profile', {
+      headers: {
+        'Authorization': `Bearer ${userToken}`
+      }
+    });
+    
+    if (response.ok) {
+      const userData = await response.json();
+      
+      // تحديث واجهة المستخدم
+      document.getElementById('userName').textContent = userData.name;
+      document.getElementById('userEmail').textContent = userData.email;
+      document.getElementById('userBalance').textContent = `$${userData.balance.toFixed(2)}`;
+      if (userData.profilePicture) {
+        document.getElementById('userProfilePic').src = userData.profilePicture;
+      }
+      
+      // تحميل الطلبات
+      loadUserOrders();
+      loadUserStats();
+    }
+  } catch (error) {
+    console.error('Error loading user data:', error);
+  }
+}
+
+// تحميل طلبات المستخدم
+async function loadUserOrders() {
+  try {
+    const response = await fetch('/api/user/orders', {
+      headers: {
+        'Authorization': `Bearer ${userToken}`
+      }
+    });
+    
+    if (response.ok) {
+      const orders = await response.json();
+      const ordersList = document.getElementById('userOrdersList');
+      
+      if (orders.length === 0) {
+        ordersList.innerHTML = '<p class="text-muted text-center">لا توجد طلبات حتى الآن</p>';
+      } else {
+        ordersList.innerHTML = orders.map(order => `
+          <div class="card mb-2">
+            <div class="card-body p-3">
+              <div class="row align-items-center">
+                <div class="col-md-3">
+                  <strong>#${order.id}</strong>
+                </div>
+                <div class="col-md-3">
+                  <small class="text-muted">${order.serviceName}</small>
+                </div>
+                <div class="col-md-2">
+                  <span class="badge ${getStatusBadgeClass(order.status)}">${getStatusText(order.status)}</span>
+                </div>
+                <div class="col-md-2">
+                  <strong>$${order.price.toFixed(2)}</strong>
+                </div>
+                <div class="col-md-2">
+                  <small class="text-muted">${new Date(order.createdAt).toLocaleDateString('ar-EG')}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+  } catch (error) {
+    console.error('Error loading user orders:', error);
+  }
+}
+
+// تحميل إحصائيات المستخدم
+async function loadUserStats() {
+  try {
+    const response = await fetch('/api/user/stats', {
+      headers: {
+        'Authorization': `Bearer ${userToken}`
+      }
+    });
+    
+    if (response.ok) {
+      const stats = await response.json();
+      document.getElementById('totalOrdersCount').textContent = stats.totalOrders;
+      document.getElementById('completedOrdersCount').textContent = stats.completedOrders;
+      document.getElementById('pendingOrdersCount').textContent = stats.pendingOrders;
+    }
+  } catch (error) {
+    console.error('Error loading user stats:', error);
+  }
+}
+
+// دوال مساعدة
+function getStatusBadgeClass(status) {
+  const classes = {
+    'pending': 'bg-warning',
+    'processing': 'bg-info',
+    'completed': 'bg-success',
+    'rejected': 'bg-danger'
+  };
+  return classes[status] || 'bg-secondary';
+}
+
+function getStatusText(status) {
+  const texts = {
+    'pending': 'قيد الانتظار',
+    'processing': 'قيد التنفيذ',
+    'completed': 'مكتمل',
+    'rejected': 'مرفوض'
+  };
+  return texts[status] || status;
+}
+
+function showNotification(message, type = 'info') {
+  // يمكنك استخدام نظام الإشعارات الموجود مسبقاً
+  alert(message); // مؤقت - استبدل بنظام الإشعارات الحقيقي
+}
+
+// تسجيل الخروج
+function logout() {
+  localStorage.removeItem('userToken');
+  localStorage.removeItem('userData');
+  userToken = null;
+  currentUser = null;
+  updateAuthUI();
+  showNotification('تم تسجيل الخروج بنجاح', 'success');
+}
+
+// إضافة رصيد (سيتم تنفيذها لاحقاً)
+function showAddBalance() {
+  showNotification('سيتم تفعيل هذه الميزة قريباً', 'info');
+}
+
+// تحديث دالة تأكيد الطلب لتستخدم المستخدم المسجل
+const originalConfirmOrder = confirmOrderBtn.onclick;
+confirmOrderBtn.onclick = async function() {
+  if (!currentUser) {
+    showNotification('يجب تسجيل الدخول أولاً', 'warning');
+    showAuthModal();
+    return;
+  }
+  
+  // استدعاء الدالة الأصلية مع إضافة token
+  // سنعدل هذا لاحقاً
+  originalConfirmOrder();
+};
+  
 // بدء تشغيل السكريبت عند تحميل الصفحة
 initialize();
         
