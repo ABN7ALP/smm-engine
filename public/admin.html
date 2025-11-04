@@ -41,251 +41,227 @@
   </script>
 
   <style>
-    
-       * {
-      box-sizing: border-box;
-    }
+  * {
+    box-sizing: border-box;
+  }
 
-    body {
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    
-    
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0;
+  }
 
-    /* Sidebar - Always from Left */
-    .sidebar {
-  position: fixed;
-  top: 0;
-  width: 16rem;
-  height: 100vh;
-  z-index: 30;
-  transition: transform 0.3s ease-in-out;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
+  html, body {
+    height: 100%;
+    overflow-x: hidden; /* يمنع التمرير الأفقي */
+  }
 
-/* موضع الشريط حسب الاتجاه */
-[dir="ltr"] .sidebar {
-  left: 0;
-  right: auto;
-}
-
-[dir="rtl"] .sidebar {
-  right: 0;
-  left: auto;
-}
-
-/* عند الشاشات الصغيرة: يملأ العرض بالكامل */
-@media (max-width: 768px) {
+  /* =========================
+     Sidebar
+  ========================== */
   .sidebar {
-    width: 100%;
+    position: fixed;
+    top: 0;
+    width: 16rem;
+    height: 100vh;
+    z-index: 30;
+    transition: transform 0.3s ease-in-out;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff; /* في الوضع الفاتح */
   }
-}
 
+  .dark .sidebar {
+    background-color: #1e293b; /* في الوضع الداكن */
+  }
+
+  /* موضع الشريط حسب الاتجاه */
+  [dir="ltr"] .sidebar {
+    left: 0;
+    right: auto;
+  }
+
+  [dir="rtl"] .sidebar {
+    right: 0;
+    left: auto;
+  }
+
+  /* الحالة الافتراضية المغلقة على الشاشات الصغيرة */
+  @media (max-width: 1024px) {
+    [dir="ltr"] .sidebar { transform: translateX(-100%); }
+    [dir="rtl"] .sidebar { transform: translateX(100%); }
     .sidebar {
-  background-color: #ffffff; /* لون أبيض في الوضع الفاتح */
-}
-
-.dark .sidebar {
-  background-color: #1e293b; /* نفس درجة الداكن السابقة */
-}
-    /* Main Content */
-    /* المحتوى الرئيسي — يراعي الاتجاه */
-.main-content {
-  transition: margin 0.3s ease-in-out;
-}
-
-/* شاشات أكبر من 1024px */
-@media (min-width: 1025px) {
-  [dir="ltr"] .main-content {
-    margin-left: 16rem;
-    margin-right: 0;
+      width: 100%;
+    }
   }
-  [dir="rtl"] .main-content {
-    margin-right: 16rem;
-    margin-left: 0;
-  }
-}
 
-/* على الشاشات الصغيرة يلغى الهامش */
-@media (max-width: 1024px) {
+  /* الحالة المفتوحة */
+  .sidebar.open {
+    transform: translateX(0) !important;
+  }
+
+  /* ألوان الروابط داخل القائمة */
+  .sidebar a {
+    background: transparent;
+  }
+
+  /* Footer داخل القائمة */
+  .sidebar-footer {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .dark .sidebar-footer {
+    border-top-color: #374151;
+  }
+
+  /* =========================
+     Main Content
+  ========================== */
   .main-content {
-    margin: 0 !important;
+    transition: margin 0.3s ease-in-out;
+    min-height: 100vh;
+    overflow: visible;
   }
-}
 
-/* عند الاتجاه الإنجليزي */
-[dir="ltr"] .main-content {
-  margin-left: 16rem;
-  margin-right: 0;
-}
-
-/* عند الاتجاه العربي */
-[dir="rtl"] .main-content {
-  margin-right: 16rem;
-  margin-left: 0;
-}
-
-/* على الشاشات الصغيرة: إلغاء الهامش */
-@media (max-width: 768px) {
-  .main-content {
-    margin: 0 !important;
-  }
-}
-
-    @media (max-width: 768px) {
-      .sidebar {
-        width: 100%;
-      }
-
-      .main-content {
-        margin-left: 0;
-      }
-
-      .sidebar.hidden {
-        transform: translateX(-100%);
-      }
+  /* شاشات أكبر من 1024px */
+  @media (min-width: 1025px) {
+    [dir="ltr"] .main-content {
+      margin-left: 16rem;
+      margin-right: 0;
     }
 
-    /* Mobile Menu Button - Top Left */
-    #mobileMenuBtn {
-  position: fixed;
-  top: 1rem;
-  z-index: 40;
-  display: none; /* مخفي افتراضياً */
-}
+    [dir="rtl"] .main-content {
+      margin-right: 16rem;
+      margin-left: 0;
+    }
+  }
 
-/* يظهر فقط على الموبايل */
-@media (max-width: 1024px) {
+  /* على الشاشات الصغيرة يلغى الهامش */
+  @media (max-width: 1024px) {
+    .main-content {
+      margin: 0 !important;
+    }
+  }
+
+  /* =========================
+     Mobile Menu Button
+  ========================== */
   #mobileMenuBtn {
-    display: block;
+    position: fixed;
+    top: 1rem;
+    z-index: 40;
+    display: none; /* مخفي افتراضياً */
   }
-}
 
-[dir="ltr"] #mobileMenuBtn { left: 1rem; right: auto; }
-[dir="rtl"] #mobileMenuBtn { right: 1rem; left: auto; }
-
-    /* Sidebar Overlay */
-    #sidebarOverlay {
-      position: fixed;
-      inset: 0;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: 20;
-      display: none;
-    }
-
-    #sidebarOverlay.block {
+  /* يظهر فقط على الشاشات الصغيرة */
+  @media (max-width: 1024px) {
+    #mobileMenuBtn {
       display: block;
     }
+  }
 
-    /* Logs Box with Fixed Height */
-    .logs-box {
-      max-height: 500px;
-      overflow-y: auto;
-      scroll-behavior: smooth;
-    }
-    
-    .logs-box::-webkit-scrollbar {
-      width: 8px;
-    }
-    
-    .logs-box::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 10px;
-    }
-    
-    .dark .logs-box::-webkit-scrollbar-track {
-      background: #374151;
-    }
-    
-    .logs-box::-webkit-scrollbar-thumb {
-      background: #888;
-      border-radius: 10px;
-    }
-    
-    .logs-box::-webkit-scrollbar-thumb:hover {
-      background: #555;
-    }
+  [dir="ltr"] #mobileMenuBtn {
+    left: 1rem;
+    right: auto;
+  }
 
-    /* Animations */
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+  [dir="rtl"] #mobileMenuBtn {
+    right: 1rem;
+    left: auto;
+  }
+
+  /* =========================
+     Sidebar Overlay
+  ========================== */
+  #sidebarOverlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 20;
+    display: none;
+  }
+
+  #sidebarOverlay.block {
+    display: block;
+  }
+
+  /* =========================
+     Logs Box Scroll
+  ========================== */
+  .logs-box {
+    max-height: 500px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+  }
+
+  .logs-box::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .logs-box::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+
+  .dark .logs-box::-webkit-scrollbar-track {
+    background: #374151;
+  }
+
+  .logs-box::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+  }
+
+  .logs-box::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
+  /* =========================
+     Animations
+  ========================== */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
     }
-    
-    .animate-fade-in {
-      animation: fadeIn 0.3s ease-out;
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
-    
-    /* Alert Container - Bottom Right */
-    .alert-container {
-      position: fixed;
-      bottom: 1rem;
-      left: 1rem;
-      z-index: 9999;
-      max-width: 400px;
-    }
+  }
 
-    /* Sidebar Footer - Sticky to Bottom */
-    .sidebar-footer {
-      margin-top: auto;
-      padding-top: 1rem;
-      border-top: 1px solid #e5e7eb;
-    }
-/* RTL support */
-[dir="rtl"] {
-  direction: rtl;
-}
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
 
-[dir="rtl"] .sidebar {
-  right: 0;
-  left: auto;
-}
+  /* =========================
+     Alerts & Misc
+  ========================== */
+  .alert-container {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    z-index: 9999;
+    max-width: 400px;
+  }
 
-[dir="rtl"] .main-content {
-  margin-right: 16rem;
-  margin-left: 0;
-}
+  /* =========================
+     RTL Base
+  ========================== */
+  [dir="rtl"] {
+    direction: rtl;
+  }
 
-/* Adjust mobile menu button for RTL */
-[dir="rtl"] #mobileMenuBtn {
-  left: auto;
-  right: 1rem;
-}
+  [dir="rtl"] #mobileMenuBtn {
+    left: auto;
+    right: 1rem;
+  }
 
-/* Sidebar overlay position stays full-screen; no change needed */
-    .dark .sidebar-footer {
-      border-top-color: #374151;
-    }
-html, body {
-  height: 100%;
-  overflow-x: hidden; /* يمنع التمرير الأفقي */
-}
-
-body {
-  overflow-y: auto;
-  margin: 0;
-  padding: 0;
-}
-
-/* منع تمرير إضافي داخل main-content */
-.main-content {
-  overflow: visible;
-}
-    /* Responsive Adjustments */
-    @media (min-width: 1024px) {
-      .main-content {
-        margin-left: 16rem;
-      }
-    }  
   </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200" dir="ltr">
