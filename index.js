@@ -1,5 +1,5 @@
 // =================================================================
-//  SMM Engine - Final Backend Server (v5 - Complete User System)
+//  SMM Engine - Final Backend Server (v6 - Complete User System with Auto File Creation)
 // =================================================================
 
 const http = require('http');
@@ -19,26 +19,42 @@ const metascraper = require('metascraper')([
 const DB_SERVICES = path.join(__dirname, 'db.json');
 const DB_ORDERS = path.join(__dirname, 'orders.json');
 const DB_LOGS = path.join(__dirname, 'logs.json');
-const DB_USERS = path.join(__dirname, 'users.json'); // ملف حفظ جميع المستخدمين
+const DB_USERS = path.join(__dirname, 'users.json');
 const CONFIG = path.join(__dirname, 'config.json');
 
 // ---------- 2. Helper Functions ----------
 function loadJson(filePath, defaultValue) {
   try {
-    if (fs.existsSync(filePath)) {
-      const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-      console.log(`✅ تم تحميل ${filePath}: ${Object.keys(data)[0]} count: ${data[Object.keys(data)[0]].length}`);
-      return data;
+    // التحقق من وجود الملف أولاً
+    if (!fs.existsSync(filePath)) {
+      console.log(`📁 الملف غير موجود، سيتم إنشاء: ${filePath}`);
+      // إنشاء الملف بالقيمة الافتراضية
+      saveJson(filePath, defaultValue);
+      return defaultValue;
     }
+    
+    // إذا الملف موجود، حمله
+    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    console.log(`✅ تم تحميل ${filePath}`);
+    return data;
   } catch (error) {
     console.error(`❌ خطأ في تحميل ${filePath}:`, error.message);
+    // في حالة خطأ، أنشئ الملف بالقيمة الافتراضية
+    saveJson(filePath, defaultValue);
+    return defaultValue;
   }
-  console.log(`📁 إنشاء ملف جديد: ${filePath}`);
-  return defaultValue;
 }
 
 function saveJson(filePath, data) {
   try {
+    // التأكد من وجود المجلد أولاً
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      console.log(`📁 تم إنشاء المجلد: ${dir}`);
+    }
+    
+    // حفظ البيانات
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
     console.log(`💾 تم حفظ البيانات في: ${filePath}`);
     return true;
@@ -66,17 +82,26 @@ function isValidUrl(urlStr) {
 }
 
 // ---------- 3. Load Data ----------
+console.log('🚀 بدء تحميل قواعد البيانات...');
+
 let servicesDB = loadJson(DB_SERVICES, { services: [] });
 let ordersDB = loadJson(DB_ORDERS, { orders: [] });
 let logsDB = loadJson(DB_LOGS, { logs: [] });
-let usersDB = loadJson(DB_USERS, { users: [] }); // جميع المستخدمين في ملف واحد
+let usersDB = loadJson(DB_USERS, { users: [] });
 let config = loadJson(CONFIG, { 
   users: [{ username: "admin", password: "password" }], 
   sessionTTLMin: 240 
 });
 
+// التحقق النهائي من وجود الملفات
+console.log('🔍 التحقق النهائي من الملفات:');
+[DB_SERVICES, DB_ORDERS, DB_LOGS, DB_USERS, CONFIG].forEach(file => {
+  const exists = fs.existsSync(file);
+  console.log(`   ${exists ? '✅' : '❌'} ${path.basename(file)} ${exists ? 'موجود' : 'مفقود'}`);
+});
+
 // تسجيل حالة قواعد البيانات
-console.log('📊 حالة قواعد البيانات بعد التحميل:');
+console.log('📊 حالة قواعد البيانات:');
 console.log(`   - الخدمات: ${servicesDB.services.length}`);
 console.log(`   - الطلبات: ${ordersDB.orders.length}`);
 console.log(`   - المستخدمون: ${usersDB.users.length}`);
@@ -186,6 +211,29 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // نقاط نهاية التصحيح
+    if (method === 'GET' && pathname === '/api/debug/files') {
+      const files = [
+        { name: 'Services', path: DB_SERVICES },
+        { name: 'Orders', path: DB_ORDERS },
+        { name: 'Logs', path: DB_LOGS },
+        { name: 'Users', path: DB_USERS },
+        { name: 'Config', path: CONFIG }
+      ];
+      
+      const result = files.map(file => ({
+        name: file.name,
+        path: file.path,
+        exists: fs.existsSync(file.path),
+        size: fs.existsSync(file.path) ? fs.statSync(file.path).size : 0,
+        lastModified: fs.existsSync(file.path) ? fs.statSync(file.path).mtime : null
+      }));
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+      return;
+    }
+
     if (method === 'GET' && pathname === '/api/debug/users') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
@@ -196,9 +244,16 @@ const server = http.createServer(async (req, res) => {
           name: u.name,
           country: u.country,
           balance: u.balance,
-          createdAt: u.createdAt 
+          createdAt: u.createdAt,
+          lastLogin: u.lastLogin
         }))
       }));
+      return;
+    }
+
+    if (method === 'GET' && pathname === '/api/debug/users-file') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(usersDB));
       return;
     }
 
@@ -352,7 +407,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // ⬇️⬇️⬇️ نقاط نهاية إدارة المستخدمين ⬇️⬇️⬇️
+    // ========== نقاط نهاية إدارة المستخدمين ==========
 
     if (method === 'POST' && pathname === '/api/auth/register') {
       const body = await readBody(req);
@@ -372,12 +427,18 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // التأكد من أن usersDB موجود
+      if (!usersDB || !usersDB.users) {
+        console.log('⚠️ usersDB غير مهيء، إعادة التهيئة...');
+        usersDB = { users: [] };
+      }
+
       // إنشاء المستخدم الجديد
       const newUser = {
         id: Date.now(),
         name,
         email: email.toLowerCase(),
-        password: password, // في الإصدار النهائي يجب تشفير كلمة السر
+        password: password,
         country: country || '',
         phone: phone || '',
         profilePicture: '',
@@ -390,10 +451,20 @@ const server = http.createServer(async (req, res) => {
       usersDB.users.push(newUser);
       
       // حفظ البيانات في الملف
-      if (!saveJson(DB_USERS, usersDB)) {
+      const saveResult = saveJson(DB_USERS, usersDB);
+      if (!saveResult) {
+        console.log('❌ فشل حفظ بيانات المستخدم في الملف');
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'فشل في حفظ بيانات المستخدم' }));
         return;
+      }
+
+      // التحقق من أن الملف تم إنشاؤه فعلياً
+      if (fs.existsSync(DB_USERS)) {
+        const stats = fs.statSync(DB_USERS);
+        console.log(`✅ تم إنشاء/تحديث الملف: ${DB_USERS} (${stats.size} bytes)`);
+      } else {
+        console.log(`❌ الملف لم ينشأ: ${DB_USERS}`);
       }
 
       console.log(`✅ تم إنشاء مستخدم جديد: ${newUser.email} (ID: ${newUser.id})`);
@@ -420,19 +491,23 @@ const server = http.createServer(async (req, res) => {
       const { email, password } = JSON.parse(body || '{}');
 
       console.log(`🔐 محاولة تسجيل دخول: ${email}`);
-      console.log(`📋 المستخدمون المسجلون: ${usersDB.users.map(u => u.email).join(', ')}`);
+      console.log(`📋 المستخدمون المسجلون:`, usersDB.users.map(u => u.email));
 
+      // البحث عن المستخدم (case-insensitive)
       const user = usersDB.users.find(u => 
         u.email.toLowerCase() === email.toLowerCase() && 
         u.password === password
       );
       
       if (user) {
+        console.log(`✅ تم العثور على المستخدم: ${user.email}`);
+        
         // تحديث آخر تسجيل دخول
         user.lastLogin = nowISO();
         
         // حفظ التحديث في الملف
         if (!saveJson(DB_USERS, usersDB)) {
+          console.log(`❌ فشل في حفظ تحديث آخر تسجيل دخول`);
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'خطأ في تحديث بيانات المستخدم' }));
           return;
@@ -441,7 +516,7 @@ const server = http.createServer(async (req, res) => {
         const token = createUserSession(user.id);
         const { password: _, ...userWithoutPassword } = user;
         
-        console.log(`✅ تم تسجيل دخول: ${user.email} (ID: ${user.id})`);
+        console.log(`✅ تم تسجيل دخول ناجح: ${user.email} (ID: ${user.id})`);
         logAction(user.email, 'user_login');
         
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -451,7 +526,13 @@ const server = http.createServer(async (req, res) => {
           message: 'تم تسجيل الدخول بنجاح'
         }));
       } else {
-        console.log(`❌ فشل تسجيل الدخول: ${email} - بيانات غير صحيحة`);
+        console.log(`❌ فشل تسجيل الدخول: ${email}`);
+        console.log(`🔍 السبب:`, 
+          usersDB.users.find(u => u.email.toLowerCase() === email.toLowerCase()) 
+            ? 'كلمة السر غير صحيحة' 
+            : 'المستخدم غير موجود'
+        );
+        
         res.writeHead(401, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'البريد الإلكتروني أو كلمة السر غير صحيحة' }));
       }
@@ -475,7 +556,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-// --- B. ADMIN PROTECTED ROUTES (Auth Required) ---
+   // --- B. ADMIN PROTECTED ROUTES (Auth Required) ---
     const adminUser = checkAuth(req);
     if (!adminUser) {
       res.writeHead(401, { 'Content-Type': 'application/json' });
@@ -766,7 +847,16 @@ const server = http.createServer(async (req, res) => {
 // ---------- 7. Start Server ----------
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📁 ملف المستخدمين: ${DB_USERS}`);
-  console.log(`💾 سيتم حفظ جميع بيانات المستخدمين في ملف واحد`);
+  console.log('\n✨ ========================================');
+  console.log('🚀 SMM Engine Server Started Successfully!');
+  console.log(`📍 http://localhost:${PORT}`);
+  console.log('📁 ملفات البيانات:');
+  console.log(`   - المستخدمون: ${DB_USERS}`);
+  console.log(`   - الخدمات: ${DB_SERVICES}`);
+  console.log(`   - الطلبات: ${DB_ORDERS}`);
+  console.log(`   - السجلات: ${DB_LOGS}`);
+  console.log('🔗 نقاط التصحيح:');
+  console.log(`   - فحص الملفات: http://localhost:${PORT}/api/debug/files`);
+  console.log(`   - فحص المستخدمين: http://localhost:${PORT}/api/debug/users`);
+  console.log('✨ ========================================\n');
 });
