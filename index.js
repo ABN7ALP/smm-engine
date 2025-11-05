@@ -271,7 +271,9 @@ const server = http.createServer(async (req, res ) => {
     }
 
     // ⬅️ جديد: نقاط نهاية إدارة المستخدمين
-if (method === 'POST' && pathname === '/api/auth/register') {
+
+
+   if (method === 'POST' && pathname === '/api/auth/register') {
   const body = await readBody(req);
   const { name, email, password, country, phone } = JSON.parse(body || '{}');
 
@@ -295,7 +297,7 @@ if (method === 'POST' && pathname === '/api/auth/register') {
     id: Date.now(),
     name,
     email,
-    password, // في الواقع يجب تشفير كلمة السر - هذا مثال مبسط
+    password: password, // في الإصدار النهائي يجب تشفير كلمة السر
     country: country || '',
     phone: phone || '',
     profilePicture: '',
@@ -304,35 +306,70 @@ if (method === 'POST' && pathname === '/api/auth/register') {
     lastLogin: null
   };
 
+  // إضافة المستخدم إلى قاعدة البيانات
   usersDB.users.push(newUser);
-  saveJson(DB_USERS, usersDB);
+  
+  // حفظ البيانات في الملف
+  try {
+    saveJson(DB_USERS, usersDB);
+    console.log(`✅ تم حفظ مستخدم جديد: ${email} في ${DB_USERS}`);
+  } catch (error) {
+    console.error('❌ خطأ في حفظ بيانات المستخدم:', error);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'فشل في حفظ بيانات المستخدم' }));
+    return;
+  }
 
   // إنشاء جلسة للمستخدم
   const token = createUserSession(newUser.id);
 
   // إرجاع البيانات بدون كلمة السر
   const { password: _, ...userWithoutPassword } = newUser;
+  
+  logAction(email, 'user_register', { userId: newUser.id });
+  
   res.writeHead(201, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ token, user: userWithoutPassword }));
+  res.end(JSON.stringify({ 
+    token, 
+    user: userWithoutPassword,
+    message: 'تم إنشاء الحساب بنجاح'
+  }));
   return;
-}
-
+   }
+    
 if (method === 'POST' && pathname === '/api/auth/user-login') {
   const body = await readBody(req);
   const { email, password } = JSON.parse(body || '{}');
+
+  console.log(`🔐 محاولة تسجيل دخول: ${email}`);
+  console.log(`👥 المستخدمون المسجلون: ${usersDB.users.map(u => u.email).join(', ')}`);
 
   const user = usersDB.users.find(u => u.email === email && u.password === password);
   if (user) {
     // تحديث آخر تسجيل دخول
     user.lastLogin = nowISO();
-    saveJson(DB_USERS, usersDB);
+    
+    // حفظ التحديث في الملف
+    try {
+      saveJson(DB_USERS, usersDB);
+      console.log(`✅ تم تحديث آخر تسجيل دخول للمستخدم: ${email}`);
+    } catch (error) {
+      console.error('❌ خطأ في تحديث بيانات المستخدم:', error);
+    }
 
     const token = createUserSession(user.id);
     const { password: _, ...userWithoutPassword } = user;
+    
     logAction(user.email, 'user_login');
+    
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ token, user: userWithoutPassword }));
+    res.end(JSON.stringify({ 
+      token, 
+      user: userWithoutPassword,
+      message: 'تم تسجيل الدخول بنجاح'
+    }));
   } else {
+    console.log(`❌ فشل تسجيل الدخول: ${email} - بيانات غير صحيحة`);
     res.writeHead(401, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'البريد الإلكتروني أو كلمة السر غير صحيحة' }));
   }
