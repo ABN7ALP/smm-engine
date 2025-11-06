@@ -263,7 +263,8 @@ const server = http.createServer(async (req, res ) => {
   } catch (err) {
     res.writeHead(500, { 'Content-Type': 'application/json' }); 
     res.end(JSON.stringify({ error: 'Failed to fetch preview' }));
-  } // ✅ هذا القوس هو اللي ناقص
+  }
+  return;
     }
     
     // =============================================================
@@ -574,19 +575,21 @@ const server = http.createServer(async (req, res ) => {
     }
 
     if (pathname.startsWith('/api/admin/users/') && method === 'DELETE') {
-      const userId = pathname.split('/').pop();
-      const initialLength = usersDB.users.length;
-      usersDB.users = usersDB.users.filter(u => u.id !== userId);
+  const userId = pathname.split('/').pop();
+  const initialLength = usersDB.users.length;
+  usersDB.users = usersDB.users.filter(u => u.id !== userId);
 
-      if (usersDB.users.length < initialLength) {
-        saveJson(DB_USERS, usersDB);
-        logAction(user.username, 'admin_user_delete', { targetId: userId });
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: true }));
-      } else {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
-
+  if (usersDB.users.length < initialLength) {
+    saveJson(DB_USERS, usersDB);
+    logAction(user.username, 'admin_user_delete', { targetId: userId });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true }));
+  } else {
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+  }
+  return;
+    }
 
     if (pathname.startsWith('/api/services')) {
       if (method === 'POST') {
