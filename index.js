@@ -2,7 +2,7 @@
 //  SMM Engine - Final Backend Server (v4 - Correct Route Order)
 // =================================================================
 
-const http = require('http' );
+const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -43,7 +43,7 @@ function nowISO() { return new Date().toISOString(); }
 function isValidUrl(urlStr) {
   try {
     const u = new URL(urlStr);
-    return ['http:', 'https:'].includes(u.protocol );
+    return ['http:', 'https:'].includes(u.protocol);
   } catch { return false; }
 }
 
@@ -109,9 +109,9 @@ const previewCache = new Map();
 const PREVIEW_TTL = 10 * 60 * 1000;
 
 // ---------- 6. Main Server Logic ----------
-const server = http.createServer(async (req, res ) => {
+const server = http.createServer(async (req, res) => {
   try {
-    const url = new URL(req.url, `http://${req.headers.host}` );
+    const url = new URL(req.url, `http://${req.headers.host}`);
     const pathname = url.pathname;
     const method = req.method;
 
@@ -162,7 +162,7 @@ const server = http.createServer(async (req, res ) => {
 
     if (method === 'POST' && pathname === '/api/orders') {
       const auth = checkAuth(req);
-      if (!auth.user) {
+      if (!auth) {
         res.writeHead(401, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'يجب تسجيل الدخول لإنشاء طلب.' }));
         return;
@@ -196,26 +196,26 @@ const server = http.createServer(async (req, res ) => {
         return;
       }
 
-      if (auth.user.balance < cost) {
+      if (auth.balance < cost) {
         res.writeHead(402, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'الرصيد غير كافٍ لإتمام الطلب.', required: cost, current: auth.user.balance }));
+        res.end(JSON.stringify({ error: 'الرصيد غير كافٍ لإتمام الطلب.', required: cost, current: auth.balance }));
         return;
       }
       
-      if (auth.user.balanceStatus === 'frozen') {
+      if (auth.balanceStatus === 'frozen') {
         res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: `تم تجميد رصيدك بسبب: ${auth.user.freezeReason || 'مشكلة في الحساب'}. لا يمكن استخدام الرصيد حالياً.` }));
+        res.end(JSON.stringify({ error: `تم تجميد رصيدك بسبب: ${auth.freezeReason || 'مشكلة في الحساب'}. لا يمكن استخدام الرصيد حالياً.` }));
         return;
       }
 
       // خصم الرصيد
-      auth.user.balance -= cost;
+      auth.balance -= cost;
       saveJson(DB_USERS, usersDB);
 
       const order = { 
         id: Date.now(), 
-        userId: auth.user.id,
-        username: auth.user.username,
+        userId: auth.id,
+        username: auth.username,
         serviceId,
         serviceName: service.name,
         link, 
@@ -226,47 +226,47 @@ const server = http.createServer(async (req, res ) => {
       };
       ordersDB.orders.unshift(order);
       saveJson(DB_ORDERS, ordersDB);
-      logAction(auth.user.username, 'order_create', { id: order.id, cost: order.cost });
+      logAction(auth.username, 'order_create', { id: order.id, cost: order.cost });
 
       res.writeHead(201, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(order));
       return;
     }
-
-    if (method === 'POST' && pathname === '/api/preview') {
-  const body = await readBody(req);
-  const { url: link } = JSON.parse(body || '{}');
-  if (!link || !isValidUrl(link)) {
-    res.writeHead(400, { 'Content-Type': 'application/json' }); 
-    res.end(JSON.stringify({ error: 'Invalid URL' })); 
-    return;
-  }
-  const cached = previewCache.get(link);
-  if (cached && (Date.now() - cached.time < PREVIEW_TTL)) {
-    res.writeHead(200, { 'Content-Type': 'application/json' }); 
-    res.end(JSON.stringify(cached.data)); 
-    return;
-  }
-  try {
-    const response = await fetch(link, { timeout: 8000 });
-    const html = await response.text();
-    const meta = await metascraper({ html, url: link });
-    const result = { 
-      url: meta.url || link, 
-      title: meta.title || '', 
-      description: meta.description || '', 
-      image: meta.image || '' 
-    };
-    previewCache.set(link, { time: Date.now(), data: result });
-    res.writeHead(200, { 'Content-Type': 'application/json' }); 
-    res.end(JSON.stringify(result));
-  } catch (err) {
-    res.writeHead(500, { 'Content-Type': 'application/json' }); 
-    res.end(JSON.stringify({ error: 'Failed to fetch preview' }));
-  }
-  return;
-    }
     
+    if (method === 'POST' && pathname === '/api/preview') {
+      const body = await readBody(req);
+      const { url: link } = JSON.parse(body || '{}');
+      if (!link || !isValidUrl(link)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' }); 
+        res.end(JSON.stringify({ error: 'Invalid URL' })); 
+        return;
+      }
+      const cached = previewCache.get(link);
+      if (cached && (Date.now() - cached.time < PREVIEW_TTL)) {
+        res.writeHead(200, { 'Content-Type': 'application/json' }); 
+        res.end(JSON.stringify(cached.data)); 
+        return;
+      }
+      try {
+        const response = await fetch(link, { timeout: 8000 });
+        const html = await response.text();
+        const meta = await metascraper({ html, url: link });
+        const result = { 
+          url: meta.url || link, 
+          title: meta.title || '', 
+          description: meta.description || '', 
+          image: meta.image || '' 
+        };
+        previewCache.set(link, { time: Date.now(), data: result });
+        res.writeHead(200, { 'Content-Type': 'application/json' }); 
+        res.end(JSON.stringify(result));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' }); 
+        res.end(JSON.stringify({ error: 'Failed to fetch preview' }));
+      }
+      return;
+    }
+
     // =============================================================
     //  SMART LINK ANALYZER ENDPOINT - (MOVED TO PUBLIC SECTION)
     // =============================================================
@@ -281,39 +281,38 @@ const server = http.createServer(async (req, res ) => {
       }
 
       exec(`node analyzer.js "${linkToAnalyze}"`, (error, stdout, stderr) => {
-              // نطبع كل المخرجات دائماً لتشخيص الأخطاء
-              console.log(`[ANALYZER STDOUT]: ${stdout}`);
-              console.error(`[ANALYZER STDERR]: ${stderr}`);
+        // نطبع كل المخرجات دائماً لتشخيص الأخطاء
+        console.log(`[ANALYZER STDOUT]: ${stdout}`);
+        console.error(`[ANALYZER STDERR]: ${stderr}`);
 
-              if (error) {
-                  console.error(`[ANALYZER EXEC ERROR]: ${error.message}`);
-                  res.writeHead(500, { 'Content-Type': 'application/json' });
-                  res.end(JSON.stringify({ 
-                      error: 'Failed to execute analyzer script.', 
-                      details: stderr || error.message 
-                  }));
-                  return;
-              }
-
-              try {
-                  if (!stdout) {
-                      throw new Error("Analyzer returned empty output.");
-                  }
-                  const analysisResult = JSON.parse(stdout);
-                  res.writeHead(200, { 'Content-Type': 'application/json' });
-                  res.end(JSON.stringify(analysisResult));
-              } catch (e) {
-                  console.error(`[ANALYZER PARSING ERROR]: ${e.message}`);
-                  res.writeHead(500, { 'Content-Type': 'application/json' });
-                  res.end(JSON.stringify({ 
-                      error: 'Failed to parse analyzer output.', 
-                      details: stdout 
-                  }));
-              }
-          });
+        if (error) {
+          console.error(`[ANALYZER EXEC ERROR]: ${error.message}`);
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            error: 'Failed to execute analyzer script.', 
+            details: stderr || error.message 
+          }));
           return;
-      }
+        }
 
+        try {
+          if (!stdout) {
+            throw new Error("Analyzer returned empty output.");
+          }
+          const analysisResult = JSON.parse(stdout);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(analysisResult));
+        } catch (e) {
+          console.error(`[ANALYZER PARSING ERROR]: ${e.message}`);
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            error: 'Failed to parse analyzer output.', 
+            details: stdout 
+          }));
+        }
+      });
+      return;
+    }
 
     if (method === 'POST' && pathname === '/api/auth/login') {
       const body = await readBody(req);
@@ -410,6 +409,7 @@ const server = http.createServer(async (req, res ) => {
       res.end(JSON.stringify(userOrders));
       return;
     }
+
     if (pathname === '/api/user/profile' && method === 'GET') {
       // إرجاع بيانات المستخدم الحالي
       const userOrders = ordersDB.orders.filter(o => o.userId === user.id);
@@ -536,7 +536,7 @@ const server = http.createServer(async (req, res ) => {
         targetUser.balance = parseFloat(data.balance.toFixed(2));
         changes.balance = targetUser.balance;
         if (targetUser.balance > oldBalance) {
-           // إضافة سجل إيداع
+          // إضافة سجل إيداع
           logAction('Admin', 'balance_deposit', { userId: targetUser.id, amount: targetUser.balance - oldBalance, newBalance: targetUser.balance });
         }
       }
@@ -575,80 +575,83 @@ const server = http.createServer(async (req, res ) => {
     }
 
     if (pathname.startsWith('/api/admin/users/') && method === 'DELETE') {
-  const userId = pathname.split('/').pop();
-  const initialLength = usersDB.users.length;
-  usersDB.users = usersDB.users.filter(u => u.id !== userId);
+      const userId = pathname.split('/').pop();
+      const initialLength = usersDB.users.length;
+      usersDB.users = usersDB.users.filter(u => u.id !== userId);
 
-  if (usersDB.users.length < initialLength) {
-    saveJson(DB_USERS, usersDB);
-    logAction(user.username, 'admin_user_delete', { targetId: userId });
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ ok: true }));
-  } else {
-    res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
-  }
-  return;
+      if (usersDB.users.length < initialLength) {
+        saveJson(DB_USERS, usersDB);
+        logAction(user.username, 'admin_user_delete', { targetId: userId });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } else {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+      }
+      return;
     }
 
-    if (pathname.startsWith('/api/services')) {
-      if (method === 'POST') {
-        const body = await readBody(req);
-        const data = JSON.parse(body || '{}');
-        const maxId = servicesDB.services.reduce((max, s) => s.id > max ? s.id : max, 0);
-        const newService = {
-          id: maxId + 1,
-          name: data.name,
-          category: data.category,
-          type: data.type,
+    if (pathname.startsWith('/api/services') && method === 'POST') {
+      const body = await readBody(req);
+      const data = JSON.parse(body || '{}');
+      const maxId = servicesDB.services.reduce((max, s) => s.id > max ? s.id : max, 0);
+      const newService = {
+        id: maxId + 1,
+        name: data.name,
+        category: data.category,
+        type: data.type,
+        rate: data.rate ? parseFloat(data.rate) : undefined,
+        price: data.price ? parseFloat(data.price) : undefined,
+        min: data.min ? parseInt(data.min, 10) : undefined,
+        max: data.max ? parseInt(data.max, 10) : undefined,
+      };
+      servicesDB.services.push(newService);
+      saveJson(DB_SERVICES, servicesDB);
+      logAction(user.username, 'service_create', { id: newService.id, name: newService.name });
+      res.writeHead(201, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(newService));
+      return;
+    }
+
+    if (pathname.startsWith('/api/services/') && method === 'PUT') {
+      const id = parseInt(pathname.split('/').pop(), 10);
+      const body = await readBody(req);
+      const data = JSON.parse(body || '{}');
+      const idx = servicesDB.services.findIndex(s => s.id === id);
+      if (idx > -1) {
+        const updatedData = {
+          ...data,
           rate: data.rate ? parseFloat(data.rate) : undefined,
           price: data.price ? parseFloat(data.price) : undefined,
           min: data.min ? parseInt(data.min, 10) : undefined,
           max: data.max ? parseInt(data.max, 10) : undefined,
         };
-        servicesDB.services.push(newService);
+        servicesDB.services[idx] = { ...servicesDB.services[idx], ...updatedData };
         saveJson(DB_SERVICES, servicesDB);
-        logAction(user, 'service_create', { id: newService.id, name: newService.name });
-        res.writeHead(201, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(newService));
-        return;
+        logAction(user.username, 'service_update', { id, changes: data });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(servicesDB.services[idx]));
+      } else { 
+        res.writeHead(404, { 'Content-Type': 'application/json' }); 
+        res.end(JSON.stringify({ error: 'Not Found' })); 
       }
+      return;
+    }
 
+    if (pathname.startsWith('/api/services/') && method === 'DELETE') {
       const id = parseInt(pathname.split('/').pop(), 10);
-      if (method === 'PUT') {
-        const body = await readBody(req);
-        const data = JSON.parse(body || '{}');
-        const idx = servicesDB.services.findIndex(s => s.id === id);
-        if (idx > -1) {
-          const updatedData = {
-            ...data,
-            rate: data.rate ? parseFloat(data.rate) : undefined,
-            price: data.price ? parseFloat(data.price) : undefined,
-            min: data.min ? parseInt(data.min, 10) : undefined,
-            max: data.max ? parseInt(data.max, 10) : undefined,
-          };
-          servicesDB.services[idx] = { ...servicesDB.services[idx], ...updatedData };
-          saveJson(DB_SERVICES, servicesDB);
-          logAction(user, 'service_update', { id, changes: data });
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(servicesDB.services[idx]));
-        } else { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Not Found' })); }
-        return;
+      const initialLength = servicesDB.services.length;
+      servicesDB.services = servicesDB.services.filter(s => s.id !== id);
+      if (servicesDB.services.length < initialLength) {
+        saveJson(DB_SERVICES, servicesDB);
+        logAction(user.username, 'service_delete', { id });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } else {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Service not found' }));
       }
-
-      if (method === 'DELETE') {
-        const initialLength = servicesDB.services.length;
-        servicesDB.services = servicesDB.services.filter(s => s.id !== id);
-        if (servicesDB.services.length < initialLength) {
-          saveJson(DB_SERVICES, servicesDB);
-          logAction(user, 'service_delete', { id });
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ ok: true }));
-        } else {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Service not found' }));
-
-      }
+      return;
     }
 
     if (pathname === '/api/orders' && method === 'GET') {
@@ -695,7 +698,10 @@ const server = http.createServer(async (req, res ) => {
         logAction(user.username, 'order_update', { id, changes: data });
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(ordersDB.orders[idx]));
-      } else { res.writeHead(404); res.end(); }
+      } else { 
+        res.writeHead(404); 
+        res.end(); 
+      }
       return;
     }
 
@@ -735,14 +741,16 @@ const server = http.createServer(async (req, res ) => {
         const rows = data.map(o => `${o.id},${o.serviceId},"${o.link || ''}",${o.quantity || ''},${o.price || ''},${o.status},${o.createdAt || ''},${o.updatedAt || ''}`).join('\n');
         res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="orders.csv"' });
         res.end('\uFEFF' + header + rows);
-      } else { res.writeHead(404); res.end('Not Found'); }
+      } else { 
+        res.writeHead(404); 
+        res.end('Not Found'); 
+      }
       return;
     }
 
     // --- C. NOT FOUND ---
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'API Endpoint Not Found' }));
-
   } catch (err) {
     console.error('Server Error:', err);
     if (!res.headersSent) {
@@ -752,7 +760,7 @@ const server = http.createServer(async (req, res ) => {
       res.end();
     }
   }
-}); // <-- إغلاق createServer هنا بشكل صحيح
+});
 
 // ---------- 7. Start Server ----------
 const PORT = process.env.PORT || 3000;
