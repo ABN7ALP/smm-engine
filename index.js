@@ -234,28 +234,42 @@ const server = http.createServer(async (req, res ) => {
     }
     
     if (method === 'POST' && pathname === '/api/preview') {
-      const body = await readBody(req);
-      const { url: link } = JSON.parse(body || '{}');
-      if (!link || !isValidUrl(link)) {
-        res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Invalid URL' })); return;
-      }
-      const cached = previewCache.get(link);
-      if (cached && (Date.now() - cached.time < PREVIEW_TTL)) {
-        res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(cached.data)); return;
-      }
-      try {
-        const response = await fetch(link, { timeout: 8000 });
-        const html = await response.text();
-        const meta = await metascraper({ html, url: link });
-        const result = { url: meta.url || link, title: meta.title || '', description: meta.description || '', image: meta.image || '' };
-        previewCache.set(link, { time: Date.now(), data: result });
-        res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(result));
-      } catch (err) {
-        res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Failed to fetch preview' }));
-        return;
+  const body = await readBody(req);
+  const { url: link } = JSON.parse(body || '{}');
 
+  if (!link || !isValidUrl(link)) {
+    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Invalid URL' }));
+    return;
+  }
+
+  const cached = previewCache.get(link);
+  if (cached && (Date.now() - cached.time < PREVIEW_TTL)) {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(cached.data));
+    return;
+  }
+
+  try {
+    const response = await fetch(link, { timeout: 8000 });
+    const html = await response.text();
+    const meta = await metascraper({ html, url: link });
+    const result = {
+      url: meta.url || link,
+      title: meta.title || '',
+      description: meta.description || '',
+      image: meta.image || ''
+    };
+    previewCache.set(link, { time: Date.now(), data: result });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(result));
+  } catch (err) {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Failed to fetch preview' }));
+  }
+
+  return; // ✅ هذا السطر مهم لإنهاء المسار
     }
-
     // =============================================================
     //  SMART LINK ANALYZER ENDPOINT - (MOVED TO PUBLIC SECTION)
     // =============================================================
