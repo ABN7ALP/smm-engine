@@ -232,44 +232,40 @@ const server = http.createServer(async (req, res ) => {
       res.end(JSON.stringify(order));
       return;
     }
-    
+
     if (method === 'POST' && pathname === '/api/preview') {
   const body = await readBody(req);
   const { url: link } = JSON.parse(body || '{}');
-
   if (!link || !isValidUrl(link)) {
-    res.writeHead(400, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Invalid URL' }));
+    res.writeHead(400, { 'Content-Type': 'application/json' }); 
+    res.end(JSON.stringify({ error: 'Invalid URL' })); 
     return;
   }
-
   const cached = previewCache.get(link);
   if (cached && (Date.now() - cached.time < PREVIEW_TTL)) {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(cached.data));
+    res.writeHead(200, { 'Content-Type': 'application/json' }); 
+    res.end(JSON.stringify(cached.data)); 
     return;
   }
-
   try {
     const response = await fetch(link, { timeout: 8000 });
     const html = await response.text();
     const meta = await metascraper({ html, url: link });
-    const result = {
-      url: meta.url || link,
-      title: meta.title || '',
-      description: meta.description || '',
-      image: meta.image || ''
+    const result = { 
+      url: meta.url || link, 
+      title: meta.title || '', 
+      description: meta.description || '', 
+      image: meta.image || '' 
     };
     previewCache.set(link, { time: Date.now(), data: result });
-    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.writeHead(200, { 'Content-Type': 'application/json' }); 
     res.end(JSON.stringify(result));
   } catch (err) {
-    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.writeHead(500, { 'Content-Type': 'application/json' }); 
     res.end(JSON.stringify({ error: 'Failed to fetch preview' }));
-  }
-
-  return; // ✅ هذا السطر مهم لإنهاء المسار
+  } // ✅ هذا القوس هو اللي ناقص
     }
+    
     // =============================================================
     //  SMART LINK ANALYZER ENDPOINT - (MOVED TO PUBLIC SECTION)
     // =============================================================
@@ -743,6 +739,7 @@ const server = http.createServer(async (req, res ) => {
     // --- C. NOT FOUND ---
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'API Endpoint Not Found' }));
+
   } catch (err) {
     console.error('Server Error:', err);
     if (!res.headersSent) {
@@ -752,8 +749,8 @@ const server = http.createServer(async (req, res ) => {
       res.end();
     }
   }
-});
+}); // <-- إغلاق createServer هنا بشكل صحيح
 
 // ---------- 7. Start Server ----------
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}` ));
+server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
