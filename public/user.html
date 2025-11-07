@@ -14,19 +14,7 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<script>
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    window.location.href = '/login.html';
-  }
-</script>
   <div class="container-page">
-    <div class="d-flex justify-content-end p-3">
-      <div class="btn-group">
-      <button id="profileBtn" class="btn btn-outline-primary"><i class="fas fa-user-circle me-2"></i>الملف الشخصي</button>
-      <button id="logoutBtn" class="btn btn-outline-danger"><i class="fas fa-sign-out-alt me-2"></i>خروج</button>
-    </div>
-    </div>
 
     <!-- الخطوة 1: اختيار الفئة -->
     <div id="step1" class="step">
@@ -119,14 +107,6 @@ const PHONE_NUMBER = "905367893256";
 /* ======================================================== */
 
 // --- 1. تعريف كل العناصر التي سنتعامل معها ---
-const profileSection = document.getElementById('profile-section');
-const profileBtn = document.getElementById('profileBtn');
-const backToOrderBtn = document.getElementById('backToOrderBtn');
-const updateProfileForm = document.getElementById('updateProfileForm');
-const updatePasswordInput = document.getElementById('update-password');
-const currentPasswordGroup = document.getElementById('current-password-group');
-const profileAlert = document.getElementById('profile-alert');
-const logoutBtn = document.getElementById('logoutBtn');
 const step1 = document.getElementById('step1');
 const step2 = document.getElementById('step2');
 const categoriesGrid = document.getElementById('categories-grid');
@@ -600,18 +580,13 @@ function populateCategories() {
 
 // دالة الانتقال بين الخطوات
 function goToStep(stepNumber, category = null) {
-  step1.style.display = 'none';
-  step2.style.display = 'none';
-  profileSection.style.display = 'none';
-
   if (stepNumber === 1) {
     step1.style.display = 'block';
+    step2.style.display = 'none';
   } else if (stepNumber === 2 && category) {
+    step1.style.display = 'none';
     step2.style.display = 'block';
     populateOrderMachine(category);
-  } else if (stepNumber === 3) {
-    profileSection.style.display = 'block';
-    loadUserProfile();
   }
 }
 
@@ -686,6 +661,7 @@ confirmOrderBtn.addEventListener('click', async () => {
 
   const service = allServices.find(s => String(s.id) === String(serviceId));
   if (!service) { orderStatusBox.innerHTML = `<div class="alert alert-danger">❌ الخدمة غير صالحة.</div>`; return; }
+
   const category = String(service.category).toLowerCase().trim();
   const allowedKeywords = platformKeywords[category];
   if (allowedKeywords && !allowedKeywords.some(keyword => link.includes(keyword))) {
@@ -796,151 +772,11 @@ async function initialize() {
     if (!res.ok) throw new Error('فشل تحميل الخدمات من الخادم.');
     allServices = await res.json();
     populateCategories();
-    // التحقق من وجود رصيد للمستخدم بعد تحميل الخدمات
-    await loadUserProfile(true);
   } catch (err) {
     console.error(err);
     categoriesGrid.innerHTML = `<div class="alert alert-danger p-3">${err.message} حاول تحديث الصفحة.</div>`;
   }
 }
-
-// ========== وظائف الملف الشخصي ==========
-
-// دالة تحميل بيانات المستخدم
-async function loadUserProfile(silent = false) {
-  const token = localStorage.getItem('authToken');
-  if (!token) return;
-
-  try {
-    const res = await fetch('/api/user/profile', {
-      headers: { 'X-Auth-Token': token }
-    });
-
-    if (!res.ok) {
-      if (!silent) profileAlert.innerHTML = `<div class="alert alert-danger">فشل تحميل بيانات الملف الشخصي.</div>`;
-      return;
-    }
-
-    const user = await res.json();
-
-    // تحديث واجهة المستخدم
-    document.getElementById('profile-username').textContent = user.username;
-    document.getElementById('profile-email').textContent = user.email;
-    document.getElementById('profile-balance').textContent = `$${user.balance.toFixed(2)}`;
-    document.getElementById('update-username').value = user.username;
-    document.getElementById('update-phone').value = user.phone;
-    
-    // حالة الحساب
-    const statusBadge = document.getElementById('profile-status');
-    statusBadge.textContent = user.status === 'active' ? 'نشط' : 'محظور';
-    statusBadge.className = `badge bg-${user.status === 'active' ? 'success' : 'danger'}`;
-
-    // حالة الرصيد
-    const balanceStatusBadge = document.getElementById('profile-balance-status');
-    balanceStatusBadge.textContent = user.balanceStatus === 'active' ? 'نشط' : 'مجمد';
-    balanceStatusBadge.className = `badge bg-${user.balanceStatus === 'active' ? 'success' : 'warning'}`;
-    
-    // إحصائيات الطلبات
-    document.getElementById('stat-total').textContent = user.totalOrders;
-    document.getElementById('stat-completed').textContent = user.completedOrders;
-    document.getElementById('stat-rejected').textContent = user.rejectedOrders;
-    document.getElementById('stat-pending').textContent = user.pendingOrders;
-
-    // رسالة تذكير الرصيد (المتطلب 7)
-    if (silent && user.balance > 0) {
-      const balanceReminder = document.createElement('div');
-      balanceReminder.id = 'balance-reminder';
-      balanceReminder.className = 'alert alert-info alert-dismissible fade show mt-3';
-      balanceReminder.innerHTML = `
-        مرحباً ${user.username}، لديك رصيد متاح قدره <strong>$${user.balance.toFixed(2)}</strong> في حسابك. يمكنك الاستفادة منه في طلباتك.
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      `;
-      document.getElementById('step2').prepend(balanceReminder);
-    }
-
-  } catch (err) {
-    console.error('Error loading user profile:', err);
-    if (!silent) profileAlert.innerHTML = `<div class="alert alert-danger">حدث خطأ أثناء تحميل الملف الشخصي.</div>`;
-  }
-}
-
-// حدث تحديث كلمة السر
-updatePasswordInput.addEventListener('input', () => {
-  currentPasswordGroup.style.display = updatePasswordInput.value.trim() !== '' ? 'block' : 'none';
-  document.getElementById('current-password').required = updatePasswordInput.value.trim() !== '';
-});
-
-// حدث إرسال نموذج تحديث الملف الشخصي
-updateProfileForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  profileAlert.innerHTML = '';
-
-  const fd = new FormData(updateProfileForm);
-  const data = Object.fromEntries(fd.entries());
-  const token = localStorage.getItem('authToken');
-
-  // إزالة الحقول الفارغة
-  for (const key in data) {
-    if (data[key] === '' || key === 'currentPassword' && data.newPassword === '') {
-      delete data[key];
-    }
-  }
-
-  if (data.newPassword && !data.currentPassword) {
-    profileAlert.innerHTML = `<div class="alert alert-warning">الرجاء إدخال كلمة السر الحالية لتغيير كلمة السر.</div>`;
-    return;
-  }
-
-  try {
-    const res = await fetch('/api/user/profile', {
-      method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json',
-        'X-Auth-Token': token
-      },
-      body: JSON.stringify(data)
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'فشل تحديث الملف الشخصي' }));
-      profileAlert.innerHTML = `<div class="alert alert-danger">❌ ${err.error || 'فشل تحديث الملف الشخصي'}.</div>`;
-      return;
-    }
-
-    profileAlert.innerHTML = `<div class="alert alert-success">✅ تم تحديث الملف الشخصي بنجاح.</div>`;
-    // إعادة تحميل البيانات بعد التحديث
-    loadUserProfile();
-    // مسح حقول كلمة السر
-    updatePasswordInput.value = '';
-    document.getElementById('current-password').value = '';
-    currentPasswordGroup.style.display = 'none';
-
-  } catch (err) {
-    profileAlert.innerHTML = `<div class="alert alert-danger">❌ تعذر الاتصال بالخادم.</div>`;
-  }
-});
-
-// حدث زر الملف الشخصي
-profileBtn.addEventListener('click', () => goToStep(3));
-
-// حدث زر العودة للطلبات
-backToOrderBtn.addEventListener('click', () => goToStep(1));
-
-// دالة تسجيل الخروج
-logoutBtn.addEventListener('click', async () => {
-  const token = localStorage.getItem('authToken');
-  try {
-    await fetch('/api/auth/logout', {
-      method: 'POST',
-      headers: { 'X-Auth-Token': token }
-    });
-  } catch (e) {
-    console.error('Logout failed on server, proceeding with client logout:', e);
-  }
-  localStorage.removeItem('authToken');
-  localStorage.removeItem('userRole');
-  window.location.href = '/login.html';
-});
 
 // بدء تشغيل السكريبت عند تحميل الصفحة
 initialize();
@@ -948,152 +784,3 @@ initialize();
 </script>
 </body>
 </html>
-<div id="profile-section" class="step" style="display:none;">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold mb-0"><i class="fas fa-user-circle me-2"></i>الملف الشخصي</h2>
-        <button class="btn btn-outline-secondary" id="backToOrderBtn"><i class="fas fa-arrow-right me-2"></i>العودة للطلبات</button>
-      </div>
-      <div class="row g-4">
-        <!-- معلومات المستخدم -->
-        <div class="col-lg-6">
-          <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white fw-bold">
-              <i class="fas fa-info-circle me-2"></i>معلومات الحساب
-            </div>
-            <div class="card-body">
-              <div class="d-flex align-items-center mb-3">
-                <img id="profile-image" src="https://via.placeholder.com/100" class="rounded-circle me-3" alt="صورة المستخدم" style="width: 60px; height: 60px;">
-                <div>
-                  <h5 id="profile-username" class="card-title fw-bold mb-0"></h5>
-                  <p id="profile-email" class="card-text text-muted mb-0"></p>
-                </div>
-              </div>
-              <p class="mb-1"><strong>الرصيد الحالي:</strong> <span id="profile-balance" class="text-success fw-bold">$0.00</span></p>
-              <p class="mb-1"><strong>حالة الحساب:</strong> <span id="profile-status" class="badge bg-success">نشط</span></p>
-              <p class="mb-1"><strong>حالة الرصيد:</strong> <span id="profile-balance-status" class="badge bg-success">نشط</span></p>
-              <hr>
-              <h6 class="fw-bold">إحصائيات الطلبات</h6>
-              <div class="row text-center">
-                <div class="col-3">
-                  <p class="mb-0 fw-bold" id="stat-total"></p>
-                  <small class="text-muted">إجمالي</small>
-                </div>
-                <div class="col-3">
-                  <p class="mb-0 fw-bold text-success" id="stat-completed"></p>
-                  <small class="text-muted">مكتمل</small>
-                </div>
-                <div class="col-3">
-                  <p class="mb-0 fw-bold text-danger" id="stat-rejected"></p>
-                  <small class="text-muted">مرفوض</small>
-                  </div>
-                <div class="col-3">
-                  <p class="mb-0 fw-bold text-warning" id="stat-pending"></p>
-                  <small class="text-muted">قيد الانتظار</small>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- تعديل المعلومات -->
-          <div class="card shadow-sm mt-4">
-            <div class="card-header bg-secondary text-white fw-bold">
-              <i class="fas fa-edit me-2"></i>تعديل المعلومات
-            </div>
-            <div class="card-body">
-              <form id="updateProfileForm">
-                <div class="mb-3">
-                  <label for="update-username" class="form-label">اسم المستخدم</label>
-                  <input type="text" class="form-control" id="update-username" name="username">
-                </div>
-                <div class="mb-3">
-                  <label for="update-phone" class="form-label">رقم الهاتف</label>
-                  <input type="tel" class="form-control" id="update-phone" name="phone">
-                </div>
-                <div class="mb-3">
-                  <label for="update-password" class="form-label">كلمة السر الجديدة (اتركها فارغة لعدم التغيير)</label>
-                  <input type="password" class="form-control" id="update-password" name="newPassword">
-                </div>
-                <div class="mb-3" id="current-password-group" style="display:none;">
-                  <label for="current-password" class="form-label">كلمة السر الحالية (مطلوبة عند تغيير كلمة السر)</label>
-                  <input type="password" class="form-control" id="current-password" name="currentPassword">
-                </div>
-                <button type="submit" class="btn btn-primary w-100">حفظ التغييرات</button>
-                <div id="profile-alert" class="mt-3"></div>
-              </form>
-              <p class="mt-3 text-muted small">لتغيير البريد الإلكتروني، يرجى <a href="https://wa.me/${PHONE_NUMBER}" target="_blank">التواصل معنا عبر واتساب</a>.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- إضافة رصيد -->
-        <div class="col-lg-6">
-          <div class="card shadow-sm">
-            <div class="card-header bg-success text-white fw-bold">
-              <i class="fas fa-wallet me-2"></i>إضافة رصيد
-            </div>
-            <div class="card-body">
-              <h5 class="card-title mb-3">اختر طريقة الدفع المفضلة</h5>
-              <div class="accordion" id="paymentAccordion">
-                
-                <!-- شام كاش -->
-                <div class="accordion-item">
-                  <h2 class="accordion-header" id="headingShamCash">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseShamCash" aria-expanded="false" aria-controls="collapseShamCash">
-                      <i class="fas fa-qrcode me-2 text-success"></i> شام كاش (Sham Cash)
-                    </button>
-                  </h2>
-                  <div id="collapseShamCash" class="accordion-collapse collapse" aria-labelledby="headingShamCash" data-bs-parent="#paymentAccordion">
-                    <div class="accordion-body text-center">
-                      <p class="fw-bold">يرجى مسح الباركود التالي لإتمام عملية الدفع:</p>
-                      <img src="https://via.placeholder.com/200?text=Sham+Cash+Barcode" alt="Sham Cash Barcode" class="img-fluid mb-3" style="max-width: 200px;">
-                      <p class="text-muted small">بعد الدفع، يرجى إرسال صورة الإيصال عبر واتساب لتأكيد الرصيد.</p>
-                      <a href="https://wa.me/${PHONE_NUMBER}?text=مرحباً، قمت بإضافة رصيد عبر شام كاش. هذا هو إيصال الدفع:" target="_blank" class="btn btn-success"><i class="fab fa-whatsapp me-2"></i>إرسال الإيصال عبر واتساب</a>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- تحويل بنكي -->
-                <div class="accordion-item">
-                  <h2 class="accordion-header" id="headingBank">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBank" aria-expanded="false" aria-controls="collapseBank">
-                      <i class="fas fa-university me-2 text-primary"></i> تحويل بنكي
-                    </button>
-                  </h2>
-                  <div id="collapseBank" class="accordion-collapse collapse" aria-labelledby="headingBank" data-bs-parent="#paymentAccordion">
-                    <div class="accordion-body">
-                      <p class="fw-bold">معلومات الحساب البنكي:</p>
-                      <ul class="list-group list-group-flush">
-                        <li class="list-group-item"><strong>اسم البنك:</strong> بنك الأمان</li>
-                        <li class="list-group-item"><strong>اسم المستفيد:</strong> [اسمك الكامل]</li>
-                        <li class="list-group-item"><strong>رقم الحساب:</strong> 001234567890</li>
-                        <li class="list-group-item"><strong>IBAN:</strong> SY01001234567890</li>
-                      </ul>
-                      <p class="text-muted small mt-3">بعد التحويل، يرجى إرسال صورة إشعار التحويل عبر واتساب لتأكيد الرصيد.</p>
-                      <a href="https://wa.me/${PHONE_NUMBER}?text=مرحباً، قمت بإضافة رصيد عبر تحويل بنكي. هذا هو إشعار التحويل:" target="_blank" class="btn btn-primary"><i class="fab fa-whatsapp me-2"></i>إرسال الإشعار عبر واتساب</a>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- حوالة عن طريق مكتب -->
-                <div class="accordion-item">
-                  <h2 class="accordion-header" id="headingOffice">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOffice" aria-expanded="false" aria-controls="collapseOffice">
-                      <i class="fas fa-handshake me-2 text-info"></i> حوالة عن طريق مكتب
-                    </button>
-                  </h2>
-                  <div id="collapseOffice" class="accordion-collapse collapse" aria-labelledby="headingOffice" data-bs-parent="#paymentAccordion">
-                    <div class="accordion-body text-center">
-                      <p class="fw-bold">لإتمام الحوالة عن طريق مكتب، يرجى التواصل معنا:</p>
-                      <a href="https://wa.me/${PHONE_NUMBER}" target="_blank" class="btn btn-success mb-2"><i class="fab fa-whatsapp me-2"></i>تواصل عبر واتساب</a>
-                      <a href="tel:${PHONE_NUMBER}" class="btn btn-info text-white"><i class="fas fa-phone me-2"></i>اتصال مباشر</a>
-                      <p class="text-muted small mt-3">سنقدم لك تفاصيل المكتب المناسب لإتمام الحوالة.</p>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-                    </div>
