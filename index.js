@@ -1,5 +1,5 @@
 // =================================================================
-//  SMM Engine - MongoDB Version (Full Compatibility)
+//  SMM Engine - MongoDB Version (Complete Fix)
 // =================================================================
 
 const http = require('http');
@@ -461,20 +461,18 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // ⬇️ نضيف هذا الكود في الـ user routes (حوالي السطر 350)
-
-if (pathname === '/api/user/orders' && method === 'GET') {
-  try {
-    const userOrders = await Order.find({ username: user }).sort({ createdAt: -1 });
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(userOrders));
-  } catch (error) {
-    res.writeHead(500, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Failed to load user orders' }));
-  }
-  return;
-}
-    
+    // طلبات المستخدم الشخصية
+    if (pathname === '/api/user/orders' && method === 'GET') {
+      try {
+        const userOrders = await Order.find({ username: user }).sort({ createdAt: -1 });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(userOrders));
+      } catch (error) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to load user orders' }));
+      }
+      return;
+    }
 
     if (method === 'POST' && pathname === '/api/auth/logout') {
       sessions.delete(req.headers['x-auth-token']);
@@ -484,188 +482,166 @@ if (pathname === '/api/user/orders' && method === 'GET') {
       return;
     }
 
-    // --- ADMIN ROUTES ---
-    if (pathname.startsWith('/api/admin/') && method === 'GET') {
+    // ==================== ADMIN ROUTES ====================
+    
+    // الإحصائيات
+    if (pathname === '/api/stats' && method === 'GET') {
       try {
         const currentUser = await User.findOne({ username: user });
-if (!currentUser || currentUser.role !== 'admin') {
+        if (!currentUser || currentUser.role !== 'admin') {
           res.writeHead(403, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Access denied' }));
           return;
         }
 
-        if (pathname === '/api/admin/users') {
-          const users = await User.find({}, { password: 0 });
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(users));
-          return;
-        }
+        const totalServices = await Service.countDocuments();
+        const totalOrders = await Order.countDocuments();
+        const pendingOrders = await Order.countDocuments({ status: 'pending' });
+        
+        // حساب متوسط السعر
+        const services = await Service.find({});
+        const priceValues = services.map(s => {
+          if (s.type === 'fixed') return parseFloat(s.price) || 0;
+          if (s.type === 'quantity') return parseFloat(s.rate) || 0;
+          return 0;
+        }).filter(v => v > 0);
+        
+        const avgPrice = priceValues.length > 0 
+          ? (priceValues.reduce((a, b) => a + b, 0) / priceValues.length).toFixed(2)
+          : 0;
 
-        if (pathname === '/api/admin/stats') {
-          const totalUsers = await User.countDocuments();
-          const totalOrders = await Order.countDocuments();
-          const pendingOrders = await Order.countDocuments({ status: 'pending' });
-          
-          const stats = {
-            totalUsers,
-            totalOrders,
-            pendingOrders,
-            totalRevenue: 0 // يمكن إضافته لاحقاً
-          };
-          
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(stats));
-          return;
-        }
+        const stats = {
+          totalServices,
+          totalOrders,
+          pendingOrders,
+          avgPrice: parseFloat(avgPrice)
+        };
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(stats));
       } catch (error) {
+        console.error('Stats error:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Database error' }));
+        res.end(JSON.stringify({ error: 'Failed to load stats' }));
       }
+      return;
     }
 
+    // جميع الطلبات (للأدمن)
+    if (pathname === '/api/orders' && method === 'GET') {
+      try {
+        const currentUser = await User.findOne({ username: user });
+        if (!currentUser || currentUser.role !== 'admin') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Access denied' }));
+          return;
+        }
+
+        const orders = await Order.find({}).sort({ createdAt: -1 });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(orders));
+      } catch (error) {
+        console.error('Orders error:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to load orders' }));
+      }
+      return;
+    }
+
+    // تحديث حالة الطلب
+    if (pathname.startsWith('/api/orders/') && method === 'PUT') {
+      try {
+        const currentUser = await User.findOne({ username: user });
+        if (!currentUser || currentUser.role !== 'admin') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Access denied' }));
+          return;
+        }
+
+        const id = parseInt(pathname.split('/').pop(), 10);
+        const body = await readBody(req);
+        const data = JSON.parse(body || '{}');
+        
+        const updatedOrder = await Order.findOneAndUpdate(
+          { id },
+          { 
+            status: data.status,
+            updatedAt: new Date()
+          },
+          { new: true }
+        );
+
+        if (updatedOrder) {
+          await logAction(user, 'order_update', { id, status: data.status });
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(updatedOrder));
+        } else {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Order not found' }));
+        }
+      } catch (error) {
+        console.error('Update order error:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to update order' }));
+      }
+      return;
+    }
+
+      // السجلات
+    if (pathname === '/api/logs' && method === 'GET') {
+      try {
+        const currentUser = await User.findOne({ username: user });
+        if (!currentUser || currentUser.role !== 'admin') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Access denied' }));
+          return;
+        }
+
+        const logs = await Log.find({}).sort({ createdAt: -1 }).limit(100);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(logs));
+      } catch (error) {
+        console.error('Logs error:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to load logs' }));
+      }
+      return;
+    }
+
+    // تحديث البيانات
+    if (pathname === '/api/admin/refresh-data' && method === 'POST') {
+      try {
+        const currentUser = await User.findOne({ username: user });
+        if (!currentUser || currentUser.role !== 'admin') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Access denied' }));
+          return;
+        }
+
+        await logAction(user, 'data_refresh');
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          message: 'تم تحديث البيانات بنجاح',
+          refreshed: true
+        }));
+      } catch (error) {
+        console.error('Refresh error:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to refresh data' }));
+      }
+      return;
+    }
+
+    // إدارة الخدمات
     if (pathname.startsWith('/api/services') && method === 'POST') {
       try {
         const currentUser = await User.findOne({ username: user });
-        if (currentUser.role !== 'admin') {
+        if (!currentUser || currentUser.role !== 'admin') {
           res.writeHead(403, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Access denied' }));
           return;
         }
-
-
-        // ⬇️ أضف هذا الكود في قسم الـ admin routes
-if (pathname === '/api/orders' && method === 'GET') {
-  try {
-    const currentUser = await User.findOne({ username: user });
-    if (!currentUser || currentUser.role !== 'admin') {
-      res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Access denied' }));
-      return;
-    }
-
-    const orders = await Order.find({}).sort({ createdAt: -1 });
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(orders));
-  } catch (error) {
-    console.error('Orders error:', error);
-    res.writeHead(500, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Failed to load orders' }));
-  }
-  return;
-}
-        
-        // =============================================================
-//  ADMIN STATS & LOGS ENDPOINTS 
-// =============================================================
-
-// الإحصائيات
-if (pathname === '/api/stats' && method === 'GET') {
-  try {
-    const currentUser = await User.findOne({ username: user });
-    if (!currentUser || currentUser.role !== 'admin') {
-      res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Access denied' }));
-      return;
-    }
-
-    const totalServices = await Service.countDocuments();
-    const totalOrders = await Order.countDocuments();
-    const pendingOrders = await Order.countDocuments({ status: 'pending' });
-    
-    // حساب متوسط السعر
-    const services = await Service.find({});
-    const priceValues = services.map(s => {
-      if (s.type === 'fixed') return parseFloat(s.price) || 0;
-      if (s.type === 'quantity') return parseFloat(s.rate) || 0;
-      return 0;
-    }).filter(v => v > 0);
-    
-    const avgPrice = priceValues.length > 0 
-      ? (priceValues.reduce((a, b) => a + b, 0) / priceValues.length).toFixed(2)
-      : 0;
-
-    const stats = {
-      totalServices,
-      totalOrders,
-      pendingOrders,
-      avgPrice: parseFloat(avgPrice)
-    };
-
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(stats));
-  } catch (error) {
-    console.error('Stats error:', error);
-    res.writeHead(500, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Failed to load stats' }));
-  }
-  return;
-}
-
-// تحديث البيانات
-if (pathname === '/api/admin/refresh-data' && method === 'POST') {
-  try {
-    const currentUser = await User.findOne({ username: user });
-    if (!currentUser || currentUser.role !== 'admin') {
-      res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Access denied' }));
-      return;
-    }
-
-    await logAction(user, 'data_refresh');
-    
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ 
-      message: 'تم تحديث البيانات بنجاح',
-      refreshed: true
-    }));
-  } catch (error) {
-    console.error('Refresh error:', error);
-    res.writeHead(500, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Failed to refresh data' }));
-  }
-  return;
-}
-
-
-        // ⬇️ أضف هذا الكود في index.js
-if (pathname.startsWith('/api/orders/') && method === 'PUT') {
-  try {
-    const currentUser = await User.findOne({ username: user });
-    if (!currentUser || currentUser.role !== 'admin') {
-      res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Access denied' }));
-      return;
-    }
-
-    const id = parseInt(pathname.split('/').pop(), 10);
-    const body = await readBody(req);
-    const data = JSON.parse(body || '{}');
-    
-    const updatedOrder = await Order.findOneAndUpdate(
-      { id },
-      { 
-        status: data.status,
-        updatedAt: new Date()
-      },
-      { new: true }
-    );
-
-    if (updatedOrder) {
-      await logAction(user, 'order_update', { id, status: data.status });
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(updatedOrder));
-    } else {
-      res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Order not found' }));
-    }
-  } catch (error) {
-    console.error('Update order error:', error);
-    res.writeHead(500, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Failed to update order' }));
-  }
-  return;
-}
-        
 
         const body = await readBody(req);
         const data = JSON.parse(body || '{}');
@@ -695,63 +671,10 @@ if (pathname.startsWith('/api/orders/') && method === 'PUT') {
       return;
     }
 
-    // ⬇️ نضيف هذا الكود بعد الـ stats (حوالي السطر 490)
-
-if (pathname === '/api/logs' && method === 'GET') {
-  try {
-    const currentUser = await User.findOne({ username: user });
-    if (currentUser.role !== 'admin') {
-      res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Access denied' }));
-      return;
-    }
-
-    const logs = await Log.find({}).sort({ createdAt: -1 }).limit(100);
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(logs));
-  } catch (error) {
-    res.writeHead(500, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Failed to load logs' }));
-  }
-  return;
-}
-
-    // ⬇️ نضيف هذا الكود بعد الـ logs (حوالي السطر 510)
-
-if (pathname === '/api/admin/refresh-data' && method === 'POST') {
-  try {
-    const currentUser = await User.findOne({ username: user });
-    if (currentUser.role !== 'admin') {
-      res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Access denied' }));
-      return;
-    }
-
-    // إعادة تحميل البيانات من MongoDB
-    const services = await Service.find({});
-    const orders = await Order.find({}).sort({ createdAt: -1 });
-    const logs = await Log.find({}).sort({ createdAt: -1 }).limit(100);
-    
-    await logAction(user, 'data_refresh');
-    
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ 
-      message: 'تم تحديث البيانات بنجاح',
-      services: services.length,
-      orders: orders.length,
-      logs: logs.length
-    }));
-  } catch (error) {
-    res.writeHead(500, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Failed to refresh data' }));
-  }
-  return;
-}
-
     if (pathname.startsWith('/api/services/') && method === 'PUT') {
       try {
         const currentUser = await User.findOne({ username: user });
-        if (currentUser.role !== 'admin') {
+        if (!currentUser || currentUser.role !== 'admin') {
           res.writeHead(403, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Access denied' }));
           return;
@@ -791,7 +714,7 @@ if (pathname === '/api/admin/refresh-data' && method === 'POST') {
     if (pathname.startsWith('/api/services/') && method === 'DELETE') {
       try {
         const currentUser = await User.findOne({ username: user });
-        if (currentUser.role !== 'admin') {
+        if (!currentUser || currentUser.role !== 'admin') {
           res.writeHead(403, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Access denied' }));
           return;
