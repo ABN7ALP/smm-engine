@@ -22,6 +22,7 @@
     "metascraper-image": "^5.45.21",
     "metascraper-title": "^5.45.21",
     "metascraper-url": "^5.45.21",
+    "mongoose": "^7.5.0",
     "node-fetch": "^2.7.0",
     "tiktok-scraper-ts": "^1.4.1",
     "tiktok-scraper-without-watermark": "^1.1.3"
