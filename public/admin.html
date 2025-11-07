@@ -1063,56 +1063,76 @@ sidebar.addEventListener('click', (e) => {
     }
 
     // ========== ORDERS ==========
-    const statusMap = {
-      pending: "⏳ قيد الانتظار",
-      processing: "⚙️ قيد التنفيذ",
-      completed: "✅ مكتمل",
-      rejected: "❌ مرفوض"
-    };
-    let allOrdersData = [];
+const statusMap = {
+  pending: "⏳ قيد الانتظار",
+  processing: "⚙️ قيد التنفيذ", 
+  completed: "✅ مكتمل",
+  rejected: "❌ مرفوض"
+};
+let allOrdersData = [];
+let allServices = []; // ⬅️ نضيف هذا
 
-    async function loadOrders() {
-      const r = await fetchWithAuth('/api/orders');
-      if (!r) return;
-      allOrdersData = await r.json();
-      const servicesRes = await fetchWithAuth('/api/services');
-      if (!servicesRes) return;
-      const services = await servicesRes.json();
-      const svcMap = {};
-      services.forEach(s => svcMap[s.id] = s);
-      renderOrders(allOrdersData, svcMap);
-    }
+async function loadOrders() {
+  const r = await fetchWithAuth('/api/orders');
+  if (!r) return;
+  allOrdersData = await r.json();
+  
+  const servicesRes = await fetchWithAuth('/api/services');
+  if (!servicesRes) return;
+  allServices = await servicesRes.json(); // ⬅️ نخزن الخدمات هنا
+  
+  renderOrders(allOrdersData);
+}
 
-    function renderOrders(list, svcMap) {
-      const tbody = document.querySelector('#orders-table tbody');
-      tbody.innerHTML = '';
-      list.forEach(o => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${o.id}</td>
-          <td>${svcMap[o.serviceId] ? svcMap[o.serviceId].name : o.serviceId}</td>
-          <td><a href="${o.link}" target="_blank" rel="noopener">${o.link.substring(0, 30)}...</a></td>
-          <td>${o.quantity || ''}</td>
-          <td>$${o.price || ''}</td>
-          <td>${statusMap[o.status] || o.status}</td>
-          <td>
-  <div class="btn-status-group">
-    <button onclick="updateOrderStatus(${o.id},'processing')" class="btn btn-sm btn-warning" title="قيد التنفيذ">
-      <i class="fas fa-cog"></i>
-    </button>
-    <button onclick="updateOrderStatus(${o.id},'completed')" class="btn btn-sm btn-success" title="مكتمل">
-      <i class="fas fa-check"></i>
-    </button>
-    <button onclick="updateOrderStatus(${o.id},'rejected')" class="btn btn-sm btn-danger" title="مرفوض">
-      <i class="fas fa-times"></i>
-    </button>
-  </div>
-</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
+function renderOrders(list) {
+  const tbody = document.getElementById('ordersTable');
+  if (!tbody) return;
+  
+  tbody.innerHTML = '';
+  
+  if (!Array.isArray(list)) {
+    console.error('Orders data is not an array:', list);
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">خطأ في تحميل البيانات</td></tr>';
+    return;
+  }
+  
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">لا توجد طلبات</td></tr>';
+    return;
+  }
+  
+  list.forEach(order => {
+    const service = allServices.find(s => String(s.id) === String(order.serviceId));
+    const serviceName = service ? service.name : `خدمة ${order.serviceId}`;
+    
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${order.id || 'N/A'}</td>
+      <td>${serviceName}</td>
+      <td><a href="${order.link}" target="_blank" class="text-truncate d-inline-block" style="max-width: 150px;">${order.link}</a></td>
+      <td>${order.quantity || '—'}</td>
+      <td>$${order.price ? order.price.toFixed(2) : '0.00'}</td>
+      <td>
+        <select class="form-select form-select-sm order-status" data-order-id="${order.id}">
+          <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>⏳ قيد الانتظار</option>
+          <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>⚙️ قيد التنفيذ</option>
+          <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>✅ مكتمل</option>
+          <option value="rejected" ${order.status === 'rejected' ? 'selected' : ''}>❌ مرفوض</option>
+        </select>
+      </td>
+      <td>${new Date(order.createdAt).toLocaleString('ar-SA')}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  
+  document.querySelectorAll('.order-status').forEach(select => {
+    select.addEventListener('change', function() {
+      updateOrderStatus(this.dataset.orderId, this.value);
+    });
+  });
+}
 
+    
     async function updateOrderStatus(id, status) {
       if (!confirm(`تأكيد تحديث حالة الطلب إلى "${statusMap[status]}"؟`)) return;
       const res = await fetchWithAuth('/api/orders/' + id, { method: 'PUT', body: JSON.stringify({ status }) });
