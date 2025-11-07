@@ -368,6 +368,15 @@
         </button>
       </form>
 
+<!-- ⬇️ أضف هذا الكود بعد زر الدخول مباشرة -->
+<div class="text-center mt-3">
+  <p class="text-muted">ليس لديك حساب؟ 
+    <a href="#" id="registerLink" style="color: #667eea; text-decoration: none; font-weight: bold;">
+      إنشاء حساب جديد
+    </a>
+  </p>
+</div>
+
       <div class="login-footer">
         <p>© 2024 لوحة التحكم. جميع الحقوق محفوظة.</p>
       </div>
@@ -466,6 +475,73 @@
         btnText.style.display = 'inline';
       }
     });
+
+    // ⬇️ أضف هذا الكود في نهاية الـ script (حوالي السطر 400)
+document.getElementById('registerLink').addEventListener('click', function(e) {
+  e.preventDefault();
+  
+  // نفتح نموذج إنشاء حساب
+  const registerHTML = `
+    <div class="register-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;">
+      <div class="register-form" style="background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 400px;">
+        <h3 class="text-center mb-4">إنشاء حساب جديد</h3>
+        <form id="registerForm">
+          <div class="mb-3">
+            <input type="text" name="username" class="form-control" placeholder="اسم المستخدم" required>
+          </div>
+          <div class="mb-3">
+            <input type="email" name="email" class="form-control" placeholder="البريد الإلكتروني" required>
+          </div>
+          <div class="mb-3">
+            <input type="password" name="password" class="form-control" placeholder="كلمة السر" required>
+          </div>
+          <div class="mb-3">
+            <input type="tel" name="phone" class="form-control" placeholder="رقم الهاتف (اختياري)">
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-fill">إنشاء حساب</button>
+            <button type="button" id="cancelRegister" class="btn btn-secondary">إلغاء</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', registerHTML);
+  
+  // أحداث النموذج
+  document.getElementById('registerForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+    
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      const result = await res.json();
+      
+      if (res.ok) {
+        alert('✅ ' + result.message);
+        document.querySelector('.register-container').remove();
+        // نملأ حقول الدخول تلقائياً
+        document.getElementById('username').value = data.username;
+        document.getElementById('password').value = data.password;
+      } else {
+        alert('❌ ' + result.error);
+      }
+    } catch (error) {
+      alert('❌ خطأ في الاتصال');
+    }
+  });
+  
+  document.getElementById('cancelRegister').addEventListener('click', function() {
+    document.querySelector('.register-container').remove();
+  });
+});
 
     // Focus on first input
     document.getElementById('username').focus();
