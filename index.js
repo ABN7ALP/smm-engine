@@ -20,7 +20,6 @@ const DB_SERVICES = path.join(__dirname, 'db.json');
 const DB_ORDERS = path.join(__dirname, 'orders.json');
 const DB_LOGS = path.join(__dirname, 'logs.json');
 const CONFIG = path.join(__dirname, 'config.json');
-const DB_USERS = path.join(__dirname, 'users.json');
 
 // ---------- 2. Helper Functions ----------
 function loadJson(filePath, defaultValue) {
@@ -37,9 +36,6 @@ function readBody(req) {
     req.on('end', () => resolve(body));
   });
 }
-
-
-
 function nowISO() { return new Date().toISOString(); }
 function isValidUrl(urlStr) {
   try {
@@ -53,39 +49,6 @@ let servicesDB = loadJson(DB_SERVICES, { services: [] });
 let ordersDB = loadJson(DB_ORDERS, { orders: [] });
 let logsDB = loadJson(DB_LOGS, { logs: [] });
 let config = loadJson(CONFIG, { users: [{ username: "admin", password: "password" }], sessionTTLMin: 240 });
-let usersDB = loadJson(DB_USERS, { users: [] });
-
-// ---------- 3. Load Data ----------
-// ... الكود السابق
-
-// ⬇️ أضف هنا مباشرة بعد تحميل البيانات
-function migrateUsers() {
-  if (usersDB.users.length === 0 && config.users && config.users.length > 0) {
-    usersDB.users = config.users.map(user => ({
-      id: Date.now() + Math.random(),
-      username: user.username,
-      password: user.password,
-      email: `${user.username}@example.com`,
-      phone: '',
-      role: user.role || (user.username === 'admin' ? 'admin' : 'user'),
-      balance: 0,
-      status: 'active',
-      avatar: '',
-      createdAt: nowISO(),
-      orders: {
-        total: 0,
-        completed: 0,
-        pending: 0,
-        rejected: 0
-      }
-    }));
-    saveJson(DB_USERS, usersDB);
-    console.log('✅ تم نقل المستخدمين إلى users.json');
-  }
-}
-
-// استدعاء الدالة مباشرة
-migrateUsers();
 
 // ---------- 4. Authentication & Session Management ----------
 const sessions = new Map();
@@ -247,99 +210,21 @@ const server = http.createServer(async (req, res ) => {
       }
 
 
-    // نعدل نظام المصادقة لاستخدام users.json بدل config.json
-// نبحث عن كود /api/auth/login ونستبدله:
-
-if (method === 'POST' && pathname === '/api/auth/login') {
-  const body = await readBody(req);
-  const { username, password } = JSON.parse(body || '{}');
-  
-  // البحث في users.json بدل config
-  const user = usersDB.users.find(u => 
-    u.username === username && 
-    u.password === password && 
-    u.status !== 'banned'
-  );
-  
-  if (user) {
-    // تحقق إذا الحساب محظور
-    if (user.status === 'banned') {
-      res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ 
-        error: 'الحساب محظور', 
-        reason: user.banReason || 'يرجى الاتصال بالدعم'
-      }));
+    if (method === 'POST' && pathname === '/api/auth/login') {
+      const body = await readBody(req);
+      const { username, password } = JSON.parse(body || '{}');
+      const user = (config.users || []).find(u => u.username === username && u.password === password);
+      if (user) {
+        const token = createSession(username);
+        logAction(username, 'login');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ token, username }));
+      } else {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid credentials' }));
+      }
       return;
     }
-    
-    const token = createSession(username);
-    logAction(username, 'login');
-    
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ 
-      token, 
-      username,
-      role: user.role || 'user',
-      balance: user.balance || 0
-    }));
-    
-  } else {
-    res.writeHead(401, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'اسم المستخدم أو كلمة السر غير صحيحة' }));
-  }
-  return;
-}
-
-    // نضيف بعد كود login مباشرة
-if (method === 'POST' && pathname === '/api/auth/register') {
-  const body = await readBody(req);
-  const { username, password, email, phone } = JSON.parse(body || '{}');
-  
-  if (!username || !password || !email) {
-    res.writeHead(400, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'جميع الحقول مطلوبة' }));
-    return;
-  }
-  
-  // التحقق إذا المستخدم موجود مسبقاً
-  const existingUser = usersDB.users.find(u => u.username === username || u.email === email);
-  if (existingUser) {
-    res.writeHead(409, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'اسم المستخدم أو الإيميل مستخدم مسبقاً' }));
-    return;
-  }
-  
-  // إنشاء المستخدم الجديد
-  const newUser = {
-    id: Date.now(),
-    username,
-    password,
-    email,
-    phone: phone || '',
-    role: 'user',
-    balance: 0,
-    status: 'active',
-    avatar: '',
-    createdAt: nowISO(),
-    orders: {
-      total: 0,
-      completed: 0,
-      pending: 0,
-      rejected: 0
-    }
-  };
-  
-  usersDB.users.push(newUser);
-  saveJson(DB_USERS, usersDB);
-  logAction(username, 'register');
-  
-  res.writeHead(201, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ 
-    message: 'تم إنشاء الحساب بنجاح',
-    username: newUser.username 
-  }));
-  return;
-}
 
     // --- B. PROTECTED ROUTES (Auth Required from this point on) ---
     const user = checkAuth(req);
@@ -497,4 +382,4 @@ if (method === 'POST' && pathname === '/api/auth/register') {
 // ---------- 7. Start Server ----------
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}` ));
-          
+      
