@@ -532,6 +532,28 @@ if (!currentUser || currentUser.role !== 'admin') {
           return;
         }
 
+
+        // ⬇️ أضف هذا الكود في قسم الـ admin routes
+if (pathname === '/api/orders' && method === 'GET') {
+  try {
+    const currentUser = await User.findOne({ username: user });
+    if (!currentUser || currentUser.role !== 'admin') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Access denied' }));
+      return;
+    }
+
+    const orders = await Order.find({}).sort({ createdAt: -1 });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(orders));
+  } catch (error) {
+    console.error('Orders error:', error);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Failed to load orders' }));
+  }
+  return;
+}
+        
         // =============================================================
 //  ADMIN STATS & LOGS ENDPOINTS 
 // =============================================================
@@ -604,6 +626,45 @@ if (pathname === '/api/admin/refresh-data' && method === 'POST') {
   return;
 }
 
+
+        // ⬇️ أضف هذا الكود في index.js
+if (pathname.startsWith('/api/orders/') && method === 'PUT') {
+  try {
+    const currentUser = await User.findOne({ username: user });
+    if (!currentUser || currentUser.role !== 'admin') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Access denied' }));
+      return;
+    }
+
+    const id = parseInt(pathname.split('/').pop(), 10);
+    const body = await readBody(req);
+    const data = JSON.parse(body || '{}');
+    
+    const updatedOrder = await Order.findOneAndUpdate(
+      { id },
+      { 
+        status: data.status,
+        updatedAt: new Date()
+      },
+      { new: true }
+    );
+
+    if (updatedOrder) {
+      await logAction(user, 'order_update', { id, status: data.status });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(updatedOrder));
+    } else {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Order not found' }));
+    }
+  } catch (error) {
+    console.error('Update order error:', error);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Failed to update order' }));
+  }
+  return;
+}
         
 
         const body = await readBody(req);
