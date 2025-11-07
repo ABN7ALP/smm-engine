@@ -488,7 +488,7 @@ if (pathname === '/api/user/orders' && method === 'GET') {
     if (pathname.startsWith('/api/admin/') && method === 'GET') {
       try {
         const currentUser = await User.findOne({ username: user });
-        if (currentUser.role !== 'admin') {
+if (!currentUser || currentUser.role !== 'admin') {
           res.writeHead(403, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Access denied' }));
           return;
@@ -532,12 +532,15 @@ if (pathname === '/api/user/orders' && method === 'GET') {
           return;
         }
 
-        // ⬇️ نضيف هذا الكود بعد الـ admin routes (حوالي السطر 450)
+        // =============================================================
+//  ADMIN STATS & LOGS ENDPOINTS 
+// =============================================================
 
+// الإحصائيات
 if (pathname === '/api/stats' && method === 'GET') {
   try {
     const currentUser = await User.findOne({ username: user });
-    if (currentUser.role !== 'admin') {
+    if (!currentUser || currentUser.role !== 'admin') {
       res.writeHead(403, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Access denied' }));
       return;
@@ -569,11 +572,39 @@ if (pathname === '/api/stats' && method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(stats));
   } catch (error) {
+    console.error('Stats error:', error);
     res.writeHead(500, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Failed to load stats' }));
   }
   return;
 }
+
+// تحديث البيانات
+if (pathname === '/api/admin/refresh-data' && method === 'POST') {
+  try {
+    const currentUser = await User.findOne({ username: user });
+    if (!currentUser || currentUser.role !== 'admin') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Access denied' }));
+      return;
+    }
+
+    await logAction(user, 'data_refresh');
+    
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ 
+      message: 'تم تحديث البيانات بنجاح',
+      refreshed: true
+    }));
+  } catch (error) {
+    console.error('Refresh error:', error);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Failed to refresh data' }));
+  }
+  return;
+}
+
+        
 
         const body = await readBody(req);
         const data = JSON.parse(body || '{}');
