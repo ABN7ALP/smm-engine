@@ -1,13 +1,14 @@
 // =================================================================
-//  SMM Engine - Final Backend Server (v4 - Correct Route Order)
+//  SMM Engine - MongoDB Version (Full Compatibility)
 // =================================================================
 
-const http = require('http' );
+const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const fetch = require('node-fetch');
-const { exec } = require('child_process'); // لاستدعاء المحلل الذكي
+const { exec } = require('child_process');
+const mongoose = require('mongoose');
 const metascraper = require('metascraper')([
   require('metascraper-url')(),
   require('metascraper-title')(),
@@ -15,20 +16,83 @@ const metascraper = require('metascraper')([
   require('metascraper-image')()
 ]);
 
-// ---------- 1. Configuration & Database Paths ----------
-const DB_SERVICES = path.join(__dirname, 'db.json');
-const DB_ORDERS = path.join(__dirname, 'orders.json');
-const DB_LOGS = path.join(__dirname, 'logs.json');
-const CONFIG = path.join(__dirname, 'config.json');
+// ---------- 1. MongoDB Connection ----------
+const MONGODB_URI = "mongodb+srv://ds132z1998_db_user:AL2sG3m1yB6BaoRY@cluster1.ehjwrgc.mongodb.net/smmdb?retryWrites=true&w=majority";
 
-// ---------- 2. Helper Functions ----------
-function loadJson(filePath, defaultValue) {
-  try { return JSON.parse(fs.readFileSync(filePath, 'utf8')); }
-  catch { return defaultValue; }
+async function connectDB() {
+  try {
+    await mongoose.connect(MONGODB_URI);
+    console.log('✅ تم الاتصال بقاعدة البيانات MongoDB بنجاح');
+  } catch (error) {
+    console.log('❌ خطأ في الاتصال بقاعدة البيانات:', error.message);
+  }
 }
-function saveJson(filePath, data) {
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+
+connectDB();
+
+// ---------- 2. Database Models ----------
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  phone: String,
+  role: { type: String, default: 'user' },
+  balance: { type: Number, default: 0 },
+  status: { type: String, default: 'active' },
+  avatar: String,
+  banReason: String,
+  orders: {
+    total: { type: Number, default: 0 },
+    completed: { type: Number, default: 0 },
+    pending: { type: Number, default: 0 },
+    rejected: { type: Number, default: 0 }
+  }
+}, { timestamps: true });
+
+const serviceSchema = new mongoose.Schema({
+  id: { type: Number, unique: true },
+  name: String,
+  category: String,
+  type: String,
+  rate: Number,
+  price: Number,
+  min: Number,
+  max: Number
+});
+
+const orderSchema = new mongoose.Schema({
+  id: { type: Number, unique: true },
+  serviceId: String,
+  link: String,
+  quantity: Number,
+  price: Number,
+  status: { type: String, default: 'pending' },
+  userId: String,
+  username: String
+}, { timestamps: true });
+
+const logSchema = new mongoose.Schema({
+  id: { type: Number, unique: true },
+  user: String,
+  action: String,
+  meta: Object
+}, { timestamps: true });
+
+const User = mongoose.model('User', userSchema);
+const Service = mongoose.model('Service', serviceSchema);
+const Order = mongoose.model('Order', orderSchema);
+const Log = mongoose.model('Log', logSchema);
+
+// ---------- 3. Helper Functions ----------
+function nowISO() { return new Date().toISOString(); }
+
+function isValidUrl(urlStr) {
+  try {
+    const u = new URL(urlStr);
+    return ['http:', 'https:'].includes(u.protocol);
+  } catch { return false; }
 }
+
 function readBody(req) {
   return new Promise((resolve) => {
     let body = '';
@@ -36,28 +100,17 @@ function readBody(req) {
     req.on('end', () => resolve(body));
   });
 }
-function nowISO() { return new Date().toISOString(); }
-function isValidUrl(urlStr) {
-  try {
-    const u = new URL(urlStr);
-    return ['http:', 'https:'].includes(u.protocol );
-  } catch { return false; }
-}
-
-// ---------- 3. Load Data ----------
-let servicesDB = loadJson(DB_SERVICES, { services: [] });
-let ordersDB = loadJson(DB_ORDERS, { orders: [] });
-let logsDB = loadJson(DB_LOGS, { logs: [] });
-let config = loadJson(CONFIG, { users: [{ username: "admin", password: "password" }], sessionTTLMin: 240 });
 
 // ---------- 4. Authentication & Session Management ----------
 const sessions = new Map();
+
 function createSession(username) {
   const token = crypto.randomBytes(24).toString('hex');
-  const ttl = (config.sessionTTLMin || 240) * 60 * 1000;
+  const ttl = 240 * 60 * 1000; // 4 hours
   sessions.set(token, { username, expires: Date.now() + ttl });
   return token;
 }
+
 function checkAuth(req) {
   const token = req.headers['x-auth-token'] || null;
   if (!token) return null;
@@ -68,22 +121,81 @@ function checkAuth(req) {
   }
   return session.username;
 }
-setInterval(() => { sessions.forEach((s, t) => { if (Date.now() > s.expires) sessions.delete(t); }); }, 10 * 60 * 1000);
+
+setInterval(() => {
+  sessions.forEach((s, t) => {
+    if (Date.now() > s.expires) sessions.delete(t);
+  });
+}, 10 * 60 * 1000);
 
 // ---------- 5. Logging & Caching ----------
-function logAction(user, action, meta = {}) {
-  const entry = { id: Date.now(), time: nowISO(), user, action, meta };
-  logsDB.logs.unshift(entry);
-  if (logsDB.logs.length > 2000) logsDB.logs.pop();
-  saveJson(DB_LOGS, logsDB);
+async function logAction(user, action, meta = {}) {
+  try {
+    const maxIdLog = await Log.findOne().sort('-id').exec();
+    const newId = (maxIdLog?.id || 0) + 1;
+    
+    await Log.create({
+      id: newId,
+      user,
+      action,
+      meta,
+      createdAt: new Date()
+    });
+  } catch (error) {
+    console.log('❌ خطأ في حفظ السجل:', error.message);
+  }
 }
+
 const previewCache = new Map();
 const PREVIEW_TTL = 10 * 60 * 1000;
 
-// ---------- 6. Main Server Logic ----------
-const server = http.createServer(async (req, res ) => {
+// ---------- 6. Initialize Default Data ----------
+async function initializeDefaultData() {
   try {
-    const url = new URL(req.url, `http://${req.headers.host}` );
+    // التحقق إذا فيه خدمات موجودة
+    const serviceCount = await Service.countDocuments();
+    if (serviceCount === 0) {
+      console.log('🔧 جاري إنشاء الخدمات الافتراضية...');
+      
+      const defaultServices = [
+        { id: 1, name: "متابعين انستجرام", category: "انستا", type: "quantity", rate: 5, min: 100, max: 10000 },
+        { id: 2, name: "لايكات انستجرام", category: "انستا", type: "quantity", rate: 2, min: 100, max: 5000 },
+        { id: 3, name: "مشاهدات يوتيوب", category: "يوتيوب", type: "quantity", rate: 3, min: 1000, max: 50000 },
+        { id: 4, name: "إعجابات فيسبوك", category: "فيس بوك", type: "quantity", rate: 4, min: 100, max: 10000 }
+      ];
+      
+      await Service.insertMany(defaultServices);
+      console.log('✅ تم إنشاء الخدمات الافتراضية');
+    }
+
+    // التحقق إذا فيه أدمن
+    const adminCount = await User.countDocuments({ username: 'admin' });
+    if (adminCount === 0) {
+      await User.create({
+        username: 'admin',
+        password: 'admin123',
+        email: 'admin@smm.com',
+        role: 'admin',
+        balance: 0,
+        status: 'active'
+      });
+      console.log('✅ تم إنشاء حساب الأدمن');
+    }
+  } catch (error) {
+    console.log('❌ خطأ في تهيئة البيانات:', error.message);
+  }
+}
+
+// تشغيل التهيئة بعد الاتصال
+mongoose.connection.once('open', async () => {
+  console.log('📊 جاري تهيئة البيانات...');
+  await initializeDefaultData();
+});
+
+// ---------- 7. Main Server Logic ----------
+const server = http.createServer(async (req, res) => {
+  try {
+    const url = new URL(req.url, `http://${req.headers.host}`);
     const pathname = url.pathname;
     const method = req.method;
 
@@ -93,9 +205,11 @@ const server = http.createServer(async (req, res ) => {
       const publicDir = path.join(__dirname, 'public');
       const safePath = path.normalize(pathname).replace(/^(\.\.[\/\\])+/, '');
       let filePath = path.join(publicDir, safePath === '/' ? 'user.html' : safePath);
+      
       if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
         filePath = path.join(publicDir, 'user.html');
       }
+      
       const ext = path.extname(filePath).toLowerCase();
       const mimeTypes = { '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript' };
       res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'application/octet-stream' });
@@ -105,66 +219,107 @@ const server = http.createServer(async (req, res ) => {
 
     if (method === 'GET' && pathname.startsWith('/api/orders/public/')) {
       const id = parseInt(pathname.split('/').pop(), 10);
-      const order = (ordersDB.orders || []).find(o => o.id === id);
-      if (order) {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(order));
-      } else {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Order not found' }));
+      try {
+        const order = await Order.findOne({ id });
+        if (order) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(order));
+        } else {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Order not found' }));
+        }
+      } catch (error) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Database error' }));
       }
       return;
     }
 
     if (method === 'GET' && pathname === '/api/services') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(servicesDB.services || []));
+      try {
+        const services = await Service.find({});
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(services));
+      } catch (error) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to load services' }));
+      }
       return;
     }
 
     if (method === 'POST' && pathname === '/api/orders') {
       const body = await readBody(req);
       const data = JSON.parse(body || '{}');
+      
       if (!data.serviceId || !data.link || !isValidUrl(data.link)) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Missing or invalid fields' }));
         return;
       }
-      const order = { id: Date.now(), ...data, status: 'pending', createdAt: nowISO() };
-      ordersDB.orders.unshift(order);
-      saveJson(DB_ORDERS, ordersDB);
-      logAction('public', 'order_create', { id: order.id });
-      res.writeHead(201, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(order));
+
+      try {
+        const maxIdOrder = await Order.findOne().sort('-id').exec();
+        const newId = (maxIdOrder?.id || 0) + 1;
+        
+        const order = await Order.create({
+          id: newId,
+          serviceId: data.serviceId,
+          link: data.link,
+          quantity: data.quantity,
+          price: data.price,
+          status: 'pending',
+          username: 'public'
+        });
+
+        await logAction('public', 'order_create', { id: order.id });
+        
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(order));
+      } catch (error) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to create order' }));
+      }
       return;
     }
     
     if (method === 'POST' && pathname === '/api/preview') {
       const body = await readBody(req);
       const { url: link } = JSON.parse(body || '{}');
+      
       if (!link || !isValidUrl(link)) {
-        res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Invalid URL' })); return;
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid URL' }));
+        return;
       }
+      
       const cached = previewCache.get(link);
       if (cached && (Date.now() - cached.time < PREVIEW_TTL)) {
-        res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(cached.data)); return;
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(cached.data));
+        return;
       }
+      
       try {
         const response = await fetch(link, { timeout: 8000 });
         const html = await response.text();
         const meta = await metascraper({ html, url: link });
-        const result = { url: meta.url || link, title: meta.title || '', description: meta.description || '', image: meta.image || '' };
+        const result = {
+          url: meta.url || link,
+          title: meta.title || '',
+          description: meta.description || '',
+          image: meta.image || ''
+        };
+        
         previewCache.set(link, { time: Date.now(), data: result });
-        res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(result));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(result));
       } catch (err) {
-        res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Failed to fetch preview' }));
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to fetch preview' }));
       }
       return;
     }
 
-    // =============================================================
-    //  SMART LINK ANALYZER ENDPOINT - (MOVED TO PUBLIC SECTION)
-    // =============================================================
     if (method === 'POST' && pathname === '/api/analyze') {
       const body = await readBody(req);
       const { url: linkToAnalyze } = JSON.parse(body || '{}');
@@ -176,57 +331,129 @@ const server = http.createServer(async (req, res ) => {
       }
 
       exec(`node analyzer.js "${linkToAnalyze}"`, (error, stdout, stderr) => {
-              // نطبع كل المخرجات دائماً لتشخيص الأخطاء
-              console.log(`[ANALYZER STDOUT]: ${stdout}`);
-              console.error(`[ANALYZER STDERR]: ${stderr}`);
+        console.log(`[ANALYZER STDOUT]: ${stdout}`);
+        console.error(`[ANALYZER STDERR]: ${stderr}`);
 
-              if (error) {
-                  console.error(`[ANALYZER EXEC ERROR]: ${error.message}`);
-                  res.writeHead(500, { 'Content-Type': 'application/json' });
-                  res.end(JSON.stringify({ 
-                      error: 'Failed to execute analyzer script.', 
-                      details: stderr || error.message 
-                  }));
-                  return;
-              }
-
-              try {
-                  if (!stdout) {
-                      throw new Error("Analyzer returned empty output.");
-                  }
-                  const analysisResult = JSON.parse(stdout);
-                  res.writeHead(200, { 'Content-Type': 'application/json' });
-                  res.end(JSON.stringify(analysisResult));
-              } catch (e) {
-                  console.error(`[ANALYZER PARSING ERROR]: ${e.message}`);
-                  res.writeHead(500, { 'Content-Type': 'application/json' });
-                  res.end(JSON.stringify({ 
-                      error: 'Failed to parse analyzer output.', 
-                      details: stdout 
-                  }));
-              }
-          });
+        if (error) {
+          console.error(`[ANALYZER EXEC ERROR]: ${error.message}`);
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            error: 'Failed to execute analyzer script.', 
+            details: stderr || error.message 
+          }));
           return;
-      }
+        }
 
+        try {
+          if (!stdout) {
+            throw new Error("Analyzer returned empty output.");
+          }
+          const analysisResult = JSON.parse(stdout);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(analysisResult));
+        } catch (e) {
+          console.error(`[ANALYZER PARSING ERROR]: ${e.message}`);
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            error: 'Failed to parse analyzer output.', 
+            details: stdout 
+          }));
+        }
+      });
+      return;
+    }
 
     if (method === 'POST' && pathname === '/api/auth/login') {
       const body = await readBody(req);
       const { username, password } = JSON.parse(body || '{}');
-      const user = (config.users || []).find(u => u.username === username && u.password === password);
-      if (user) {
-        const token = createSession(username);
-        logAction(username, 'login');
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ token, username }));
-      } else {
-        res.writeHead(401, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Invalid credentials' }));
+      
+      try {
+        const user = await User.findOne({ username, password, status: 'active' });
+        
+        if (user) {
+          const token = createSession(username);
+          await logAction(username, 'login');
+          
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            token, 
+            username,
+            role: user.role,
+            balance: user.balance
+          }));
+        } else {
+          // التحقق إذا الحساب محظور
+          const bannedUser = await User.findOne({ username, password, status: 'banned' });
+          if (bannedUser) {
+            res.writeHead(403, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ 
+              error: 'الحساب محظور', 
+              reason: bannedUser.banReason || 'يرجى الاتصال بالدعم'
+            }));
+          } else {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'اسم المستخدم أو كلمة السر غير صحيحة' }));
+          }
+        }
+      } catch (error) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في الخادم' }));
       }
       return;
     }
 
-    // --- B. PROTECTED ROUTES (Auth Required from this point on) ---
+    if (method === 'POST' && pathname === '/api/auth/register') {
+      const body = await readBody(req);
+      const { username, password, email, phone } = JSON.parse(body || '{}');
+      
+      if (!username || !password || !email) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'جميع الحقول مطلوبة' }));
+        return;
+      }
+      
+      try {
+        const existingUser = await User.findOne({ 
+          $or: [{ username }, { email }] 
+        });
+        
+        if (existingUser) {
+          res.writeHead(409, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'اسم المستخدم أو الإيميل مستخدم مسبقاً' }));
+          return;
+        }
+        
+        const newUser = await User.create({
+          username,
+          password,
+          email,
+          phone: phone || '',
+          role: 'user',
+          balance: 0,
+          status: 'active',
+          orders: {
+            total: 0,
+            completed: 0,
+            pending: 0,
+            rejected: 0
+          }
+        });
+
+        await logAction(username, 'register');
+        
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          message: 'تم إنشاء الحساب بنجاح',
+          username: newUser.username 
+        }));
+      } catch (error) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في إنشاء الحساب' }));
+      }
+      return;
+    }
+
+    // --- B. PROTECTED ROUTES (Auth Required) ---
     const user = checkAuth(req);
     if (!user) {
       res.writeHead(401, { 'Content-Type': 'application/json' });
@@ -236,19 +463,68 @@ const server = http.createServer(async (req, res ) => {
 
     if (method === 'POST' && pathname === '/api/auth/logout') {
       sessions.delete(req.headers['x-auth-token']);
-      logAction(user, 'logout');
+      await logAction(user, 'logout');
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true }));
       return;
     }
 
-    if (pathname.startsWith('/api/services')) {
-      if (method === 'POST') {
+    // --- ADMIN ROUTES ---
+    if (pathname.startsWith('/api/admin/') && method === 'GET') {
+      try {
+        const currentUser = await User.findOne({ username: user });
+        if (currentUser.role !== 'admin') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Access denied' }));
+          return;
+        }
+
+        if (pathname === '/api/admin/users') {
+          const users = await User.find({}, { password: 0 });
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(users));
+          return;
+        }
+
+        if (pathname === '/api/admin/stats') {
+          const totalUsers = await User.countDocuments();
+          const totalOrders = await Order.countDocuments();
+          const pendingOrders = await Order.countDocuments({ status: 'pending' });
+          
+          const stats = {
+            totalUsers,
+            totalOrders,
+            pendingOrders,
+            totalRevenue: 0 // يمكن إضافته لاحقاً
+          };
+          
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(stats));
+          return;
+        }
+      } catch (error) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Database error' }));
+      }
+    }
+
+    if (pathname.startsWith('/api/services') && method === 'POST') {
+      try {
+        const currentUser = await User.findOne({ username: user });
+        if (currentUser.role !== 'admin') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Access denied' }));
+          return;
+        }
+
         const body = await readBody(req);
         const data = JSON.parse(body || '{}');
-        const maxId = servicesDB.services.reduce((max, s) => s.id > max ? s.id : max, 0);
-        const newService = {
-          id: maxId + 1,
+        
+        const maxIdService = await Service.findOne().sort('-id').exec();
+        const newId = (maxIdService?.id || 0) + 1;
+        
+        const newService = await Service.create({
+          id: newId,
           name: data.name,
           category: data.category,
           type: data.type,
@@ -256,111 +532,83 @@ const server = http.createServer(async (req, res ) => {
           price: data.price ? parseFloat(data.price) : undefined,
           min: data.min ? parseInt(data.min, 10) : undefined,
           max: data.max ? parseInt(data.max, 10) : undefined,
-        };
-        servicesDB.services.push(newService);
-        saveJson(DB_SERVICES, servicesDB);
-        logAction(user, 'service_create', { id: newService.id, name: newService.name });
+        });
+
+        await logAction(user, 'service_create', { id: newService.id, name: newService.name });
+        
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(newService));
-        return;
+      } catch (error) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to create service' }));
       }
+      return;
+    }
 
-      const id = parseInt(pathname.split('/').pop(), 10);
-      if (method === 'PUT') {
+    if (pathname.startsWith('/api/services/') && method === 'PUT') {
+      try {
+        const currentUser = await User.findOne({ username: user });
+        if (currentUser.role !== 'admin') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Access denied' }));
+          return;
+        }
+
+        const id = parseInt(pathname.split('/').pop(), 10);
         const body = await readBody(req);
         const data = JSON.parse(body || '{}');
-        const idx = servicesDB.services.findIndex(s => s.id === id);
-        if (idx > -1) {
-          const updatedData = {
+        
+        const updatedService = await Service.findOneAndUpdate(
+          { id },
+          {
             ...data,
             rate: data.rate ? parseFloat(data.rate) : undefined,
             price: data.price ? parseFloat(data.price) : undefined,
             min: data.min ? parseInt(data.min, 10) : undefined,
             max: data.max ? parseInt(data.max, 10) : undefined,
-          };
-          servicesDB.services[idx] = { ...servicesDB.services[idx], ...updatedData };
-          saveJson(DB_SERVICES, servicesDB);
-          logAction(user, 'service_update', { id, changes: data });
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(servicesDB.services[idx]));
-        } else { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Not Found' })); }
-        return;
-      }
+          },
+          { new: true }
+        );
 
-      if (method === 'DELETE') {
-        const initialLength = servicesDB.services.length;
-        servicesDB.services = servicesDB.services.filter(s => s.id !== id);
-        if (servicesDB.services.length < initialLength) {
-          saveJson(DB_SERVICES, servicesDB);
-          logAction(user, 'service_delete', { id });
+        if (updatedService) {
+          await logAction(user, 'service_update', { id, changes: data });
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(updatedService));
+        } else {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Service not found' }));
+        }
+      } catch (error) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to update service' }));
+      }
+      return;
+    }
+
+    if (pathname.startsWith('/api/services/') && method === 'DELETE') {
+      try {
+        const currentUser = await User.findOne({ username: user });
+        if (currentUser.role !== 'admin') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Access denied' }));
+          return;
+        }
+
+        const id = parseInt(pathname.split('/').pop(), 10);
+        const deletedService = await Service.findOneAndDelete({ id });
+
+        if (deletedService) {
+          await logAction(user, 'service_delete', { id });
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ ok: true }));
         } else {
           res.writeHead(404, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Service not found' }));
         }
-        return;
+      } catch (error) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to delete service' }));
       }
-    }
-
-    if (pathname === '/api/orders' && method === 'GET') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(ordersDB.orders || []));
-      return;
-    }
-
-    if (pathname.startsWith('/api/orders/') && method === 'PUT') {
-      const id = parseInt(pathname.split('/').pop(), 10);
-      const idx = ordersDB.orders.findIndex(o => o.id === id);
-      if (idx > -1) {
-        const body = await readBody(req);
-        const data = JSON.parse(body || '{}');
-        ordersDB.orders[idx] = { ...ordersDB.orders[idx], ...data, updatedAt: nowISO() };
-        saveJson(DB_ORDERS, ordersDB);
-        logAction(user, 'order_update', { id, changes: data });
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(ordersDB.orders[idx]));
-      } else { res.writeHead(404); res.end(); }
-      return;
-    }
-
-    if (pathname === '/api/stats' && method === 'GET') {
-      const orders = ordersDB.orders || [];
-      const services = servicesDB.services || [];
-      const priceValues = services.map(s => parseFloat(s.type === 'fixed' ? s.price : s.rate) || 0).filter(v => v > 0);
-      const stats = {
-        totalServices: services.length,
-        totalOrders: orders.length,
-        pendingOrders: orders.filter(o => o.status === 'pending').length,
-        avgPrice: priceValues.length ? (priceValues.reduce((a, b) => a + b, 0) / priceValues.length).toFixed(2) : 0
-      };
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(stats));
-      return;
-    }
-
-    if (pathname === '/api/logs' && method === 'GET') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(logsDB.logs || []));
-      return;
-    }
-
-    if (method === 'GET' && pathname.startsWith('/api/export/')) {
-      const type = pathname.split('/').pop();
-      let data, header;
-      if (type === 'services.csv') {
-        data = servicesDB.services || [];
-        header = 'id,name,category,type,price_or_rate,min,max\n';
-        const rows = data.map(s => `${s.id},"${s.name || ''}","${s.category || ''}",${s.type},${s.type === 'fixed' ? s.price || '' : s.rate || ''},${s.min || ''},${s.max || ''}`).join('\n');
-        res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="services.csv"' });
-        res.end('\uFEFF' + header + rows);
-      } else if (type === 'orders.csv') {
-        data = ordersDB.orders || [];
-        header = 'id,serviceId,link,quantity,price,status,createdAt,updatedAt\n';
-        const rows = data.map(o => `${o.id},${o.serviceId},"${o.link || ''}",${o.quantity || ''},${o.price || ''},${o.status},${o.createdAt || ''},${o.updatedAt || ''}`).join('\n');
-        res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="orders.csv"' });
-        res.end('\uFEFF' + header + rows);
-      } else { res.writeHead(404); res.end('Not Found'); }
       return;
     }
 
@@ -379,7 +627,6 @@ const server = http.createServer(async (req, res ) => {
   }
 });
 
-// ---------- 7. Start Server ----------
+// ---------- 8. Start Server ----------
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}` ));
-      
+server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
