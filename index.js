@@ -1,5 +1,5 @@
 // =================================================================
-//  SMM Engine - MongoDB Version (Complete Fix)
+//  SMM Engine - نظام متكامل 100% (مصحح ومرتب)
 // =================================================================
 
 const http = require('http');
@@ -16,21 +16,29 @@ const metascraper = require('metascraper')([
   require('metascraper-image')()
 ]);
 
-// ---------- 1. MongoDB Connection ----------
+// ==================== إعدادات الاتصال بقاعدة البيانات ====================
 const MONGODB_URI = "mongodb+srv://ds132z1998_db_user:AL2sG3m1yB6BaoRY@cluster1.ehjwrgc.mongodb.net/smmdb?retryWrites=true&w=majority";
 
+/**
+ * الاتصال بقاعدة البيانات MongoDB
+ */
 async function connectDB() {
   try {
     await mongoose.connect(MONGODB_URI);
     console.log('✅ تم الاتصال بقاعدة البيانات MongoDB بنجاح');
   } catch (error) {
     console.log('❌ خطأ في الاتصال بقاعدة البيانات:', error.message);
+    process.exit(1); // إيقاف التطبيق إذا فشل الاتصال
   }
 }
 
 connectDB();
 
-// ---------- 2. Database Models ----------
+// ==================== نماذج قاعدة البيانات ====================
+
+/**
+ * نموذج المستخدم - تخزين بيانات المستخدمين
+ */
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
@@ -60,7 +68,47 @@ const userSchema = new mongoose.Schema({
     updatedAt: { type: Date, default: Date.now }
 });
 
-// نموذج معاملات الرصيد
+/**
+ * نموذج الخدمة - تخزين خدمات SMM
+ */
+const serviceSchema = new mongoose.Schema({
+  id: { type: Number, unique: true },
+  name: String,
+  category: String,
+  type: String,
+  rate: Number,
+  price: Number,
+  min: Number,
+  max: Number
+});
+
+/**
+ * نموذج الطلب - تخزين طلبات المستخدمين
+ */
+const orderSchema = new mongoose.Schema({
+  id: { type: Number, unique: true },
+  serviceId: String,
+  link: String,
+  quantity: Number,
+  price: Number,
+  status: { type: String, default: 'pending' },
+  userId: String,
+  username: String
+}, { timestamps: true });
+
+/**
+ * نموذج السجل - تخزين سجلات النظام
+ */
+const logSchema = new mongoose.Schema({
+  id: { type: Number, unique: true },
+  user: String,
+  action: String,
+  meta: Object
+}, { timestamps: true });
+
+/**
+ * نموذج المعاملة - تخزين معاملات الرصيد
+ */
 const transactionSchema = new mongoose.Schema({
     id: { type: Number, unique: true },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -85,7 +133,9 @@ const transactionSchema = new mongoose.Schema({
     processedBy: String
 });
 
-// نموذج الإشعارات
+/**
+ * نموذج الإشعار - تخزين إشعارات المستخدمين
+ */
 const notificationSchema = new mongoose.Schema({
     id: { type: Number, unique: true },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -98,6 +148,7 @@ const notificationSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
+// ==================== تعريف النماذج ====================
 const User = mongoose.model('User', userSchema);
 const Service = mongoose.model('Service', serviceSchema);
 const Order = mongoose.model('Order', orderSchema);
@@ -105,82 +156,79 @@ const Log = mongoose.model('Log', logSchema);
 const Transaction = mongoose.model('Transaction', transactionSchema);
 const Notification = mongoose.model('Notification', notificationSchema);
 
+// ==================== الدوال المساعدة ====================
 
-const serviceSchema = new mongoose.Schema({
-  id: { type: Number, unique: true },
-  name: String,
-  category: String,
-  type: String,
-  rate: Number,
-  price: Number,
-  min: Number,
-  max: Number
-});
+/**
+ * الحصول على الوقت الحالي بصيغة ISO
+ */
+function nowISO() { 
+    return new Date().toISOString(); 
+}
 
-const orderSchema = new mongoose.Schema({
-  id: { type: Number, unique: true },
-  serviceId: String,
-  link: String,
-  quantity: Number,
-  price: Number,
-  status: { type: String, default: 'pending' },
-  userId: String,
-  username: String
-}, { timestamps: true });
-
-const logSchema = new mongoose.Schema({
-  id: { type: Number, unique: true },
-  user: String,
-  action: String,
-  meta: Object
-}, { timestamps: true });
-
-// ---------- 3. Helper Functions ----------
-function nowISO() { return new Date().toISOString(); }
-
+/**
+ * التحقق من صحة الرابط
+ */
 function isValidUrl(urlStr) {
   try {
     const u = new URL(urlStr);
     return ['http:', 'https:'].includes(u.protocol);
-  } catch { return false; }
+  } catch { 
+    return false; 
+  }
 }
 
+/**
+ * قراءة body الطلب
+ */
 function readBody(req) {
   return new Promise((resolve) => {
     let body = '';
-    req.on('data', c => body += c);
+    req.on('data', chunk => body += chunk);
     req.on('end', () => resolve(body));
   });
 }
 
-// ---------- 4. Authentication & Session Management ----------
+// ==================== نظام المصادقة وإدارة الجلسات ====================
 const sessions = new Map();
 
+/**
+ * إنشاء جلسة جديدة للمستخدم
+ */
 function createSession(username) {
   const token = crypto.randomBytes(24).toString('hex');
-  const ttl = 240 * 60 * 1000; // 4 hours
+  const ttl = 240 * 60 * 1000; // 4 ساعات
   sessions.set(token, { username, expires: Date.now() + ttl });
   return token;
 }
 
+/**
+ * التحقق من صحة التوكن
+ */
 function checkAuth(req) {
   const token = req.headers['x-auth-token'] || null;
   if (!token) return null;
+  
   const session = sessions.get(token);
   if (!session || Date.now() > session.expires) {
     if (session) sessions.delete(token);
     return null;
   }
+  
   return session.username;
 }
 
+// تنظيف الجلسات المنتهية كل 10 دقائق
 setInterval(() => {
-  sessions.forEach((s, t) => {
-    if (Date.now() > s.expires) sessions.delete(t);
+  sessions.forEach((session, token) => {
+    if (Date.now() > session.expires) sessions.delete(token);
   });
 }, 10 * 60 * 1000);
 
-// ---------- 5. Logging & Caching ----------
+// ==================== نظام السجلات والكاش ====================
+
+/**
+ * تسجيل إجراء في النظام
+ */
 async function logAction(user, action, meta = {}) {
   try {
     const maxIdLog = await Log.findOne().sort('-id').exec();
@@ -199,12 +247,16 @@ async function logAction(user, action, meta = {}) {
 }
 
 const previewCache = new Map();
-const PREVIEW_TTL = 10 * 60 * 1000;
+const PREVIEW_TTL = 10 * 60 * 1000; // 10 دقائق
 
-// ---------- 6. Initialize Default Data ----------
+// ==================== تهيئة البيانات الافتراضية ====================
+
+/**
+ * إنشاء البيانات الافتراضية عند التشغيل الأول
+ */
 async function initializeDefaultData() {
   try {
-    // التحقق إذا فيه خدمات موجودة
+    // التحقق من وجود خدمات
     const serviceCount = await Service.countDocuments();
     if (serviceCount === 0) {
       console.log('🔧 جاري إنشاء الخدمات الافتراضية...');
@@ -220,7 +272,7 @@ async function initializeDefaultData() {
       console.log('✅ تم إنشاء الخدمات الافتراضية');
     }
 
-    // التحقق إذا فيه أدمن
+    // التحقق من وجود أدمن
     const adminCount = await User.countDocuments({ username: 'admin' });
     if (adminCount === 0) {
       await User.create({
@@ -238,21 +290,22 @@ async function initializeDefaultData() {
   }
 }
 
-// تشغيل التهيئة بعد الاتصال
+// تشغيل التهيئة بعد الاتصال بقاعدة البيانات
 mongoose.connection.once('open', async () => {
   console.log('📊 جاري تهيئة البيانات...');
   await initializeDefaultData();
 });
 
-// ---------- 7. Main Server Logic ----------
+// ==================== السيرفر الرئيسي ====================
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const pathname = url.pathname;
     const method = req.method;
 
-    // --- A. PUBLIC ROUTES (No Auth Needed) ---
+    // ==================== المسارات العامة (لا تحتاج مصادقة) ====================
 
+    // خدمة الملفات الثابتة
     if (method === 'GET' && !pathname.startsWith('/api/')) {
       const publicDir = path.join(__dirname, 'public');
       const safePath = path.normalize(pathname).replace(/^(\.\.[\/\\])+/, '');
@@ -263,12 +316,21 @@ const server = http.createServer(async (req, res) => {
       }
       
       const ext = path.extname(filePath).toLowerCase();
-      const mimeTypes = { '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript' };
+      const mimeTypes = { 
+        '.html': 'text/html', 
+        '.css': 'text/css', 
+        '.js': 'application/javascript',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.gif': 'image/gif'
+      };
+      
       res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'application/octet-stream' });
       fs.createReadStream(filePath).pipe(res);
       return;
     }
 
+    // الحصول على طلب عام (للعرض العام)
     if (method === 'GET' && pathname.startsWith('/api/orders/public/')) {
       const id = parseInt(pathname.split('/').pop(), 10);
       try {
@@ -287,6 +349,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // الحصول على الخدمات
     if (method === 'GET' && pathname === '/api/services') {
       try {
         const services = await Service.find({});
@@ -299,6 +362,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // إنشاء طلب جديد
     if (method === 'POST' && pathname === '/api/orders') {
       const body = await readBody(req);
       const data = JSON.parse(body || '{}');
@@ -320,10 +384,10 @@ const server = http.createServer(async (req, res) => {
           quantity: data.quantity,
           price: data.price,
           status: 'pending',
-          username: 'public'
+          username: data.username || 'public'
         });
 
-        await logAction('public', 'order_create', { id: order.id });
+        await logAction(data.username || 'public', 'order_create', { id: order.id });
         
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(order));
@@ -334,6 +398,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     
+    // معاينة الرابط
     if (method === 'POST' && pathname === '/api/preview') {
       const body = await readBody(req);
       const { url: link } = JSON.parse(body || '{}');
@@ -372,6 +437,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // تحليل الرابط
     if (method === 'POST' && pathname === '/api/analyze') {
       const body = await readBody(req);
       const { url: linkToAnalyze } = JSON.parse(body || '{}');
@@ -415,6 +481,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // تسجيل الدخول
     if (method === 'POST' && pathname === '/api/auth/login') {
       const body = await readBody(req);
       const { username, password } = JSON.parse(body || '{}');
@@ -456,221 +523,205 @@ const server = http.createServer(async (req, res) => {
 
     // ==================== نظام المستخدمين ====================
 
-// تسجيل مستخدم جديد
-if (method === 'POST' && pathname === '/api/auth/register') {
-    const body = await readBody(req);
-    const { username, password, email, phone, fullName } = JSON.parse(body || '{}');
-    
-    if (!username || !password || !email) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'اسم المستخدم، كلمة السر، والبريد الإلكتروني مطلوبة' }));
-        return;
-    }
+    // تسجيل مستخدم جديد
+    if (method === 'POST' && pathname === '/api/auth/register') {
+        const body = await readBody(req);
+        const { username, password, email, phone, fullName } = JSON.parse(body || '{}');
+        
+        if (!username || !password || !email) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'اسم المستخدم، كلمة السر، والبريد الإلكتروني مطلوبة' }));
+            return;
+        }
 
-    // التحقق من صحة البريد الإلكتروني
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'صيغة البريد الإلكتروني غير صحيحة' }));
-        return;
-    }
+        // التحقق من صحة البريد الإلكتروني
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'صيغة البريد الإلكتروني غير صحيحة' }));
+            return;
+        }
 
-    // التحقق من قوة كلمة السر
-    if (password.length < 6) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'كلمة السر يجب أن تكون 6 أحرف على الأقل' }));
-        return;
-    }
+        // التحقق من قوة كلمة السر
+        if (password.length < 6) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'كلمة السر يجب أن تكون 6 أحرف على الأقل' }));
+            return;
+        }
 
-    try {
-        // التحقق من عدم وجود مستخدم بنفس الاسم أو البريد
-        const existingUser = await User.findOne({
-            $or: [{ username }, { email }]
-        });
+        try {
+            // التحقق من عدم وجود مستخدم بنفس الاسم أو البريد
+            const existingUser = await User.findOne({
+                $or: [{ username }, { email }]
+            });
 
-        if (existingUser) {
-            res.writeHead(409, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ 
-                error: 'مستخدم موجود مسبقاً',
-                details: existingUser.username === username ? 
-                        'اسم المستخدم مستخدم مسبقاً' : 'البريد الإلكتروني مستخدم مسبقاً'
+            if (existingUser) {
+                res.writeHead(409, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ 
+                    error: 'مستخدم موجود مسبقاً',
+                    details: existingUser.username === username ? 
+                            'اسم المستخدم مستخدم مسبقاً' : 'البريد الإلكتروني مستخدم مسبقاً'
+                }));
+                return;
+            }
+
+            // إنشاء المستخدم الجديد
+            const newUser = await User.create({
+                username,
+                password,
+                email,
+                phone: phone || '',
+                fullName: fullName || '',
+                role: 'user',
+                balance: 0,
+                status: 'active',
+                orders: {
+                    total: 0,
+                    completed: 0,
+                    pending: 0,
+                    rejected: 0
+                },
+                lastLogin: new Date()
+            });
+
+            // إنشاء إشعار ترحيبي
+            await Notification.create({
+                id: Date.now(),
+                userId: newUser._id,
+                type: 'success',
+                title: 'مرحباً بك!',
+                message: 'تم إنشاء حسابك بنجاح. يمكنك الآن استخدام جميع ميزات المنصة.',
+                relatedTo: 'system'
+            });
+
+            await logAction('system', 'user_register', { 
+                username: newUser.username, 
+                userId: newUser._id 
+            });
+
+            res.writeHead(201, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                success: true,
+                message: 'تم إنشاء الحساب بنجاح',
+                user: {
+                    id: newUser._id,
+                    username: newUser.username,
+                    email: newUser.email,
+                    role: newUser.role
+                }
             }));
-            return;
+
+        } catch (error) {
+            console.error('خطأ في إنشاء المستخدم:', error);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'خطأ في إنشاء الحساب' }));
         }
-
-        // إنشاء المستخدم الجديد
-        const newUser = await User.create({
-            username,
-            password,
-            email,
-            phone: phone || '',
-            fullName: fullName || '',
-            role: 'user',
-            balance: 0,
-            status: 'active',
-            orders: {
-                total: 0,
-                completed: 0,
-                pending: 0,
-                rejected: 0
-            },
-            lastLogin: new Date()
-        });
-
-        // إنشاء إشعار ترحيبي
-        await Notification.create({
-            id: Date.now(),
-            userId: newUser._id,
-            type: 'success',
-            title: 'مرحباً بك!',
-            message: 'تم إنشاء حسابك بنجاح. يمكنك الآن استخدام جميع ميزات المنصة.',
-            relatedTo: 'system'
-        });
-
-        await logAction('system', 'user_register', { 
-            username: newUser.username, 
-            userId: newUser._id 
-        });
-
-        res.writeHead(201, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-            success: true,
-            message: 'تم إنشاء الحساب بنجاح',
-            user: {
-                id: newUser._id,
-                username: newUser.username,
-                email: newUser.email,
-                role: newUser.role
-            }
-        }));
-
-    } catch (error) {
-        console.error('خطأ في إنشاء المستخدم:', error);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'خطأ في إنشاء الحساب' }));
-    }
-    return;
-}
-
-
-    // الحصول على بيانات المستخدم
-if (method === 'GET' && pathname === '/api/user/profile') {
-    const username = checkAuth(req);
-    if (!username) {
-        res.writeHead(401, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'غير مصرح' }));
         return;
     }
 
-    try {
-        const user = await User.findOne({ username });
-        if (!user) {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
-            return;
-        }
-
-        // إرجاع بيانات المستخدم بدون كلمة السر
-        const userData = {
-            id: user._id,
-            username: user.username,
-            email: user.email,
-            phone: user.phone,
-            fullName: user.fullName,
-            avatar: user.avatar,
-            role: user.role,
-            balance: user.balance,
-            totalSpent: user.totalSpent,
-            status: user.status,
-            orders: user.orders,
-            lastLogin: user.lastLogin,
-            createdAt: user.createdAt
-        };
-
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(userData));
-
-    } catch (error) {
-        console.error('خطأ في جلب بيانات المستخدم:', error);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'خطأ في جلب البيانات' }));
-    }
-    return;
-}
-
-// تحديث بيانات المستخدم
-if (method === 'PUT' && pathname === '/api/user/profile') {
+    // ==================== المسارات المحمية (تحتاج مصادقة) ====================
     const username = checkAuth(req);
     if (!username) {
-        res.writeHead(401, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'غير مصرح' }));
-        return;
-    }
-
-    const body = await readBody(req);
-    const updateData = JSON.parse(body || '{}');
-
-    try {
-        // منع تحديث بعض الحقول
-        delete updateData.username;
-        delete updateData.email;
-        delete updateData.role;
-        delete updateData.balance;
-        delete updateData.status;
-
-        const updatedUser = await User.findOneAndUpdate(
-            { username },
-            { 
-                ...updateData,
-                updatedAt: new Date()
-            },
-            { new: true }
-        );
-
-        if (!updatedUser) {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
-            return;
-        }
-
-        await logAction(username, 'profile_update', { 
-            updatedFields: Object.keys(updateData) 
-        });
-
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-            success: true,
-            message: 'تم تحديث البيانات بنجاح',
-            user: {
-                username: updatedUser.username,
-                email: updatedUser.email,
-                phone: updatedUser.phone,
-                fullName: updatedUser.fullName,
-                avatar: updatedUser.avatar
-            }
-        }));
-
-    } catch (error) {
-        console.error('خطأ في تحديث بيانات المستخدم:', error);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'خطأ في تحديث البيانات' }));
-    }
-    return;
-}
-
-    
-    // --- B. PROTECTED ROUTES (Auth Required) ---
-    const user = checkAuth(req);
-    if (!user) {
       res.writeHead(401, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Unauthorized: Authentication required' }));
       return;
     }
 
+    // الحصول على بيانات المستخدم
+    if (pathname === '/api/user/profile' && method === 'GET') {
+        try {
+            const user = await User.findOne({ username });
+            if (!user) {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+                return;
+            }
+
+            // إرجاع بيانات المستخدم بدون كلمة السر
+            const userData = {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                phone: user.phone,
+                fullName: user.fullName,
+                avatar: user.avatar,
+                role: user.role,
+                balance: user.balance,
+                totalSpent: user.totalSpent,
+                status: user.status,
+                orders: user.orders,
+                lastLogin: user.lastLogin,
+                createdAt: user.createdAt
+            };
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(userData));
+
+        } catch (error) {
+            console.error('خطأ في جلب بيانات المستخدم:', error);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'خطأ في جلب البيانات' }));
+        }
+        return;
+    }
+
+    // تحديث بيانات المستخدم
+    if (pathname === '/api/user/profile' && method === 'PUT') {
+        const body = await readBody(req);
+        const updateData = JSON.parse(body || '{}');
+
+        try {
+            // منع تحديث بعض الحقول
+            delete updateData.username;
+            delete updateData.email;
+            delete updateData.role;
+            delete updateData.balance;
+            delete updateData.status;
+
+            const updatedUser = await User.findOneAndUpdate(
+                { username },
+                { 
+                    ...updateData,
+                    updatedAt: new Date()
+                },
+                { new: true }
+            );
+
+            if (!updatedUser) {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+                return;
+            }
+
+            await logAction(username, 'profile_update', { 
+                updatedFields: Object.keys(updateData) 
+            });
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                success: true,
+                message: 'تم تحديث البيانات بنجاح',
+                user: {
+                    username: updatedUser.username,
+                    email: updatedUser.email,
+                    phone: updatedUser.phone,
+                    fullName: updatedUser.fullName,
+                    avatar: updatedUser.avatar
+                }
+            }));
+
+        } catch (error) {
+            console.error('خطأ في تحديث بيانات المستخدم:', error);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'خطأ في تحديث البيانات' }));
+        }
+        return;
+    }
+
     // طلبات المستخدم الشخصية
     if (pathname === '/api/user/orders' && method === 'GET') {
       try {
-        const userOrders = await Order.find({ username: user }).sort({ createdAt: -1 });
+        const userOrders = await Order.find({ username }).sort({ createdAt: -1 });
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(userOrders));
       } catch (error) {
@@ -680,26 +731,30 @@ if (method === 'PUT' && pathname === '/api/user/profile') {
       return;
     }
 
+    // تسجيل الخروج
     if (method === 'POST' && pathname === '/api/auth/logout') {
       sessions.delete(req.headers['x-auth-token']);
-      await logAction(user, 'logout');
+      await logAction(username, 'logout');
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true }));
       return;
     }
 
-    // ==================== ADMIN ROUTES ====================
+    // ==================== مسارات الأدمن ====================
     
+    // التحقق من صلاحيات الأدمن
+    const currentUser = await User.findOne({ username });
+    const isAdmin = currentUser && currentUser.role === 'admin';
+
+    if (!isAdmin && pathname.startsWith('/api/admin')) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Access denied' }));
+        return;
+    }
+
     // الإحصائيات
     if (pathname === '/api/stats' && method === 'GET') {
       try {
-        const currentUser = await User.findOne({ username: user });
-        if (!currentUser || currentUser.role !== 'admin') {
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Access denied' }));
-          return;
-        }
-
         const totalServices = await Service.countDocuments();
         const totalOrders = await Order.countDocuments();
         const pendingOrders = await Order.countDocuments({ status: 'pending' });
@@ -736,13 +791,6 @@ if (method === 'PUT' && pathname === '/api/user/profile') {
     // جميع الطلبات (للأدمن)
     if (pathname === '/api/orders' && method === 'GET') {
       try {
-        const currentUser = await User.findOne({ username: user });
-        if (!currentUser || currentUser.role !== 'admin') {
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Access denied' }));
-          return;
-        }
-
         const orders = await Order.find({}).sort({ createdAt: -1 });
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(orders));
@@ -757,13 +805,6 @@ if (method === 'PUT' && pathname === '/api/user/profile') {
     // تحديث حالة الطلب
     if (pathname.startsWith('/api/orders/') && method === 'PUT') {
       try {
-        const currentUser = await User.findOne({ username: user });
-        if (!currentUser || currentUser.role !== 'admin') {
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Access denied' }));
-          return;
-        }
-
         const id = parseInt(pathname.split('/').pop(), 10);
         const body = await readBody(req);
         const data = JSON.parse(body || '{}');
@@ -778,7 +819,7 @@ if (method === 'PUT' && pathname === '/api/user/profile') {
         );
 
         if (updatedOrder) {
-          await logAction(user, 'order_update', { id, status: data.status });
+          await logAction(username, 'order_update', { id, status: data.status });
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify(updatedOrder));
         } else {
@@ -793,16 +834,9 @@ if (method === 'PUT' && pathname === '/api/user/profile') {
       return;
     }
 
-      // السجلات
+    // السجلات
     if (pathname === '/api/logs' && method === 'GET') {
       try {
-        const currentUser = await User.findOne({ username: user });
-        if (!currentUser || currentUser.role !== 'admin') {
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Access denied' }));
-          return;
-        }
-
         const logs = await Log.find({}).sort({ createdAt: -1 }).limit(100);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(logs));
@@ -817,14 +851,7 @@ if (method === 'PUT' && pathname === '/api/user/profile') {
     // تحديث البيانات
     if (pathname === '/api/admin/refresh-data' && method === 'POST') {
       try {
-        const currentUser = await User.findOne({ username: user });
-        if (!currentUser || currentUser.role !== 'admin') {
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Access denied' }));
-          return;
-        }
-
-        await logAction(user, 'data_refresh');
+        await logAction(username, 'data_refresh');
         
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ 
@@ -842,13 +869,6 @@ if (method === 'PUT' && pathname === '/api/user/profile') {
     // إدارة الخدمات
     if (pathname.startsWith('/api/services') && method === 'POST') {
       try {
-        const currentUser = await User.findOne({ username: user });
-        if (!currentUser || currentUser.role !== 'admin') {
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Access denied' }));
-          return;
-        }
-
         const body = await readBody(req);
         const data = JSON.parse(body || '{}');
         
@@ -866,7 +886,7 @@ if (method === 'PUT' && pathname === '/api/user/profile') {
           max: data.max ? parseInt(data.max, 10) : undefined,
         });
 
-        await logAction(user, 'service_create', { id: newService.id, name: newService.name });
+        await logAction(username, 'service_create', { id: newService.id, name: newService.name });
         
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(newService));
@@ -879,13 +899,6 @@ if (method === 'PUT' && pathname === '/api/user/profile') {
 
     if (pathname.startsWith('/api/services/') && method === 'PUT') {
       try {
-        const currentUser = await User.findOne({ username: user });
-        if (!currentUser || currentUser.role !== 'admin') {
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Access denied' }));
-          return;
-        }
-
         const id = parseInt(pathname.split('/').pop(), 10);
         const body = await readBody(req);
         const data = JSON.parse(body || '{}');
@@ -903,7 +916,7 @@ if (method === 'PUT' && pathname === '/api/user/profile') {
         );
 
         if (updatedService) {
-          await logAction(user, 'service_update', { id, changes: data });
+          await logAction(username, 'service_update', { id, changes: data });
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify(updatedService));
         } else {
@@ -919,18 +932,11 @@ if (method === 'PUT' && pathname === '/api/user/profile') {
 
     if (pathname.startsWith('/api/services/') && method === 'DELETE') {
       try {
-        const currentUser = await User.findOne({ username: user });
-        if (!currentUser || currentUser.role !== 'admin') {
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Access denied' }));
-          return;
-        }
-
         const id = parseInt(pathname.split('/').pop(), 10);
         const deletedService = await Service.findOneAndDelete({ id });
 
         if (deletedService) {
-          await logAction(user, 'service_delete', { id });
+          await logAction(username, 'service_delete', { id });
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ ok: true }));
         } else {
@@ -944,7 +950,7 @@ if (method === 'PUT' && pathname === '/api/user/profile') {
       return;
     }
 
-    // --- C. NOT FOUND ---
+    // --- المسار غير موجود ---
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'API Endpoint Not Found' }));
 
@@ -959,6 +965,6 @@ if (method === 'PUT' && pathname === '/api/user/profile') {
   }
 });
 
-// ---------- 8. Start Server ----------
+// ==================== تشغيل السيرفر ====================
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
