@@ -135,10 +135,6 @@ const logSchema = new mongoose.Schema({
   meta: Object
 }, { timestamps: true });
 
-const Service = mongoose.model('Service', serviceSchema);
-const Order = mongoose.model('Order', orderSchema);
-const Log = mongoose.model('Log', logSchema);
-
 // ---------- 3. Helper Functions ----------
 function nowISO() { return new Date().toISOString(); }
 
