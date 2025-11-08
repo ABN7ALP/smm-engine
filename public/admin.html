@@ -868,17 +868,15 @@ body.dark-mode .input-group-text {
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   
 <script>
+
 // =================================================================
-//  لوحة تحكم SMM Engine - الإصدار الكامل مع MongoDB
+//  لوحة تحكم SMM Engine - الإصدار الكامل مع إصلاح الأخطاء
 // =================================================================
 
 // ========== المتغيرات العامة ==========
-const body = document.body; // ⬅️ أضفنا هذا
 let allServices = [];
 let allOrdersData = [];
 let allServicesData = [];
-
-// خريطة حالات الطلبات
 const statusMap = {
     pending: "⏳ قيد الانتظار",
     processing: "⚙️ قيد التنفيذ", 
@@ -888,53 +886,38 @@ const statusMap = {
 
 // ========== نظام الواجهة ==========
 
-/**
- * تهيئة نظام الثيم (الوضع الفاتح/الداكن)
- */
 function initializeTheme() {
+    const body = document.body;
     const savedTheme = localStorage.getItem('theme') || 'light';
-
     body.classList.remove('light-mode', 'dark-mode');
     body.classList.add(savedTheme + '-mode');
     updateThemeIcon();
 }
 
-/**
- * تبديل وضع الثيم
- */
-
-  function setupThemeToggle() {
+function setupThemeToggle() {
+    const body = document.body;
     const themeSidebarToggle = document.querySelector('.theme-sidebar-toggle');
-
+    
     if (!themeSidebarToggle) {
-        console.warn('زر تبديل الثيم غير موجود');
+        console.error('عنصر تبديل الثيم غير موجود');
         return;
     }
 
     themeSidebarToggle.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        
         const isDark = body.classList.contains('dark-mode');
         body.classList.remove('light-mode', 'dark-mode');
         body.classList.add(isDark ? 'light-mode' : 'dark-mode');
         localStorage.setItem('theme', isDark ? 'light' : 'dark');
         updateThemeIcon();
     });
+}
 
-    // إزالة زر تبديل الوضع من الهيدر إذا موجود
-    const headerControls = document.querySelector('.header-controls');
-    if (headerControls) {
-        headerControls.innerHTML = '';
-    }
-  }
-
-
-/**
- * تحديث أيقونة الثيم في الشريط الجانبي
- */
 function updateThemeIcon() {
+    const body = document.body;
     const themeSidebarToggle = document.querySelector('.theme-sidebar-toggle');
+    
     if (!themeSidebarToggle) return;
     
     const isDark = body.classList.contains('dark-mode');
@@ -947,22 +930,22 @@ function updateThemeIcon() {
     if (text) {
         text.textContent = isDark ? 'الوضع الفاتح' : 'الوضع الداكن';
     }
+}
 
-
-/**
- * تهيئة القائمة الجانبية
- */
 function initializeSidebar() {
     const menuToggle = document.getElementById('menuToggle');
     const sidebar = document.querySelector('.sidebar');
     const navLinks = document.querySelectorAll('.nav-link');
 
-    // تبديل فتح/إغلاق القائمة
+    if (!menuToggle || !sidebar) {
+        console.error('عناصر القائمة الجانبية غير موجودة');
+        return;
+    }
+
     menuToggle.addEventListener('click', () => {
         sidebar.classList.toggle('open');
     });
 
-    // إغلاق القائمة عند النقر خارجها
     document.addEventListener('click', (e) => {
         const isClickInsideSidebar = sidebar.contains(e.target);
         const isClickOnMenuToggle = menuToggle.contains(e.target);
@@ -972,29 +955,33 @@ function initializeSidebar() {
         }
     });
 
-    // منع إغلاق القائمة عند النقر داخلها
     sidebar.addEventListener('click', (e) => {
         e.stopPropagation();
     });
 
-    // إضافة أحداث التنقل للقائمة
     navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             if (link.id !== 'logoutBtn') {
                 e.preventDefault();
                 const section = link.dataset.section;
                 
-                // إزالة النشاط من جميع الروابط
                 navLinks.forEach(l => l.classList.remove('active'));
                 link.classList.add('active');
 
-                // إخفاء جميع الأقسام
                 document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
                 
-                // إظهار القسم المحدد
-                showSection(section);
+                if (section === 'dashboard') {
+                    document.getElementById('dashboard-section').style.display = 'block';
+                } else if (section === 'services') {
+                    document.getElementById('services-section').style.display = 'block';
+                } else if (section === 'orders') {
+                    document.getElementById('orders-section').style.display = 'block';
+                } else if (section === 'add-service') {
+                    document.getElementById('add-service-section').style.display = 'block';
+                } else if (section === 'logs') {
+                    document.getElementById('logs-section').style.display = 'block';
+                }
 
-                // إغلاق القائمة الجانبية على الجوال
                 if (window.innerWidth <= 768) {
                     sidebar.classList.remove('open');
                 }
@@ -1003,29 +990,8 @@ function initializeSidebar() {
     });
 }
 
-/**
- * إظهار القسم المحدد
- */
-function showSection(section) {
-    const sectionMap = {
-        'dashboard': 'dashboard-section',
-        'services': 'services-section',
-        'orders': 'orders-section',
-        'add-service': 'add-service-section',
-        'logs': 'logs-section'
-    };
-
-    const sectionId = sectionMap[section];
-    if (sectionId) {
-        document.getElementById(sectionId).style.display = 'block';
-    }
-}
-
 // ========== نظام المصادقة ==========
 
-/**
- * التحقق من المصادقة وتهيئة الرأس
- */
 function initializeAuth() {
     const token = localStorage.getItem('authToken');
     if (!token) {
@@ -1039,31 +1005,19 @@ function initializeAuth() {
     };
 }
 
-/**
- * طلب مع المصادقة
- */
 async function fetchWithAuth(url, options = {}) {
-    const token = localStorage.getItem('authToken');
-    
-    // إذا مافيش token، اذهب لتسجيل الدخول
-    if (!token) {
+    if (!window.headers) {
         window.location.href = '/login.html';
         return null;
     }
     
-    options.headers = { 
-        'Content-Type': 'application/json', 
-        'x-auth-token': token,
-        ...(options.headers || {})
-    };
+    options.headers = { ...window.headers, ...(options.headers || {}) };
     
     try {
         const response = await fetch(url, options);
         
         if (response.status === 401) {
-            // Token منتهي أو غير صالح
             localStorage.removeItem('authToken');
-            alert("انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.");
             window.location.href = '/login.html';
             return null;
         }
@@ -1075,27 +1029,24 @@ async function fetchWithAuth(url, options = {}) {
     }
 }
 
-/**
- * تسجيل الخروج
- */
 async function logout() {
-    await fetchWithAuth('/api/auth/logout', { method: 'POST' });
-    localStorage.removeItem('authToken');
-    window.location.href = '/login.html';
+    try {
+        await fetchWithAuth('/api/auth/logout', { method: 'POST' });
+    } catch (error) {
+        console.error('خطأ في تسجيل الخروج:', error);
+    } finally {
+        localStorage.removeItem('authToken');
+        window.location.href = '/login.html';
+    }
 }
 
 // ========== نظام الإشعارات ==========
 
-/**
- * عرض إشعار للمستخدم
- */
-
-  function showNotification(msg, type = 'success') {
+function showNotification(msg, type = 'success') {
     const notificationContainer = document.getElementById('notification-container');
     if (!notificationContainer) return;
     
     const notification = document.createElement('div');
-    
     notification.className = `notification ${type}`;
     notification.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1110,7 +1061,6 @@ async function logout() {
     
     notificationContainer.appendChild(notification);
     
-    // إزالة الإشعار تلقائياً بعد 4 ثواني
     setTimeout(() => {
         if (notification.parentNode) {
             notification.remove();
@@ -1118,17 +1068,12 @@ async function logout() {
     }, 4000);
 }
 
-// دالة مختصرة لعرض الإشعارات
 function show(msg, type = 'success') {
     showNotification(msg, type);
 }
-  
 
 // ========== نظام الإحصائيات ==========
 
-/**
- * تحميل وعرض الإحصائيات
- */
 async function loadStats() {
     try {
         const response = await fetchWithAuth('/api/stats');
@@ -1136,7 +1081,6 @@ async function loadStats() {
         
         const stats = await response.json();
         
-        // تحديث واجهة الإحصائيات
         document.getElementById('total-services').textContent = stats.totalServices;
         document.getElementById('total-orders').textContent = stats.totalOrders;
         document.getElementById('pending-orders').textContent = stats.pendingOrders;
@@ -1149,16 +1093,13 @@ async function loadStats() {
 
 // ========== نظام الخدمات ==========
 
-/**
- * تحميل جميع الخدمات
- */
 async function loadServices() {
     try {
         const response = await fetchWithAuth('/api/services');
         if (!response) return;
         
         allServicesData = await response.json();
-        allServices = allServicesData; // نسخ للاستخدام في الطلبات
+        allServices = allServicesData;
         renderServices(allServicesData);
         
     } catch (error) {
@@ -1166,9 +1107,6 @@ async function loadServices() {
     }
 }
 
-/**
- * عرض الخدمات في الجدول
- */
 function renderServices(servicesList) {
     const tbody = document.querySelector('#services-table tbody');
     if (!tbody) return;
@@ -1205,18 +1143,12 @@ function renderServices(servicesList) {
 
 // ========== نظام الطلبات ==========
 
-  async function loadOrders() {
+async function loadOrders() {
     try {
-        console.log('جاري تحميل الطلبات...');
         const response = await fetchWithAuth('/api/orders');
-        if (!response) {
-            console.error('فشل في جلب الطلبات - لا يوجد رد');
-            return;
-        }
+        if (!response) return;
         
         const ordersData = await response.json();
-        console.log('الطلبات المحملة:', ordersData);
-        
         allOrdersData = ordersData;
         renderOrders(ordersData);
         
@@ -1225,19 +1157,12 @@ function renderServices(servicesList) {
     }
 }
 
-/**
- * عرض الطلبات في الجدول
- */
 function renderOrders(ordersList) {
     const tbody = document.getElementById('ordersTable');
-    if (!tbody) {
-        console.error('جدول الطلبات غير موجود');
-        return;
-    }
+    if (!tbody) return;
     
     tbody.innerHTML = '';
     
-    // التحقق من صحة البيانات
     if (!Array.isArray(ordersList)) {
         console.error('بيانات الطلبات ليست مصفوفة:', ordersList);
         tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">خطأ في تحميل البيانات</td></tr>';
@@ -1249,7 +1174,6 @@ function renderOrders(ordersList) {
         return;
     }
     
-    // عرض كل طلب
     ordersList.forEach(order => {
         const service = allServices.find(s => String(s.id) === String(order.serviceId));
         const serviceName = service ? service.name : `خدمة ${order.serviceId}`;
@@ -1278,20 +1202,6 @@ function renderOrders(ordersList) {
         tbody.appendChild(tr);
     });
     
-    // إضافة أحداث لتغيير حالة الطلبات
-    setupOrderStatusEvents();
-}
-  
-/**
- * تحميل جميع الطلبات
- */
-async function loadOrders() {
-
-
-/**
- * إعداد أحداث تغيير حالة الطلبات
- */
-function setupOrderStatusEvents() {
     document.querySelectorAll('.order-status').forEach(select => {
         select.addEventListener('change', function() {
             updateOrderStatus(this.dataset.orderId, this.value);
@@ -1299,9 +1209,6 @@ function setupOrderStatusEvents() {
     });
 }
 
-/**
- * تحديث حالة الطلب
- */
 async function updateOrderStatus(orderId, newStatus) {
     try {
         const response = await fetchWithAuth(`/api/orders/${orderId}`, {
@@ -1311,7 +1218,7 @@ async function updateOrderStatus(orderId, newStatus) {
 
         if (response && response.ok) {
             show('✅ تم تحديث حالة الطلب بنجاح', 'success');
-            loadOrders(); // إعادة تحميل الطلبات
+            loadOrders();
         } else {
             show('❌ فشل في تحديث حالة الطلب', 'error');
         }
@@ -1323,9 +1230,6 @@ async function updateOrderStatus(orderId, newStatus) {
 
 // ========== نظام السجلات ==========
 
-/**
- * تحميل وعرض سجلات النظام
- */
 async function loadLogs() {
     try {
         const response = await fetchWithAuth('/api/logs');
@@ -1334,8 +1238,10 @@ async function loadLogs() {
         const logs = await response.json();
         const logsBox = document.getElementById('logsBox');
         
+        if (!logsBox) return;
+        
         logsBox.innerHTML = logs.slice(0, 50).map(log => `
-            <div class="log-entry">
+            <div>
                 <small style="color: #6c757d;">
                     <i class="fas fa-clock"></i> [${new Date(log.createdAt).toLocaleString()}]
                 </small>
@@ -1351,26 +1257,22 @@ async function loadLogs() {
 
 // ========== نظام إدارة الخدمات ==========
 
-/**
- * تهيئة نموذج إضافة/تعديل الخدمة
- */
 function initializeServiceForm() {
     const form = document.getElementById('serviceForm');
     const typeSelect = document.getElementById('typeSelect');
 
-    // تغيير نوع الخدمة
+    if (!form || !typeSelect) {
+        console.error('عناصر نموذج الخدمة غير موجودة');
+        return;
+    }
+
     typeSelect.addEventListener('change', handleServiceTypeChange);
 
-    // زر مسح النموذج
     document.getElementById('clearFormBtn').addEventListener('click', clearServiceForm);
 
-    // إرسال النموذج
     form.addEventListener('submit', handleServiceSubmit);
 }
 
-/**
- * التعامل مع تغيير نوع الخدمة
- */
 function handleServiceTypeChange() {
     const typeSelect = document.getElementById('typeSelect');
     
@@ -1389,9 +1291,6 @@ function handleServiceTypeChange() {
     }
 }
 
-/**
- * مسح نموذج الخدمة
- */
 function clearServiceForm() {
     const form = document.getElementById('serviceForm');
     form.reset();
@@ -1401,9 +1300,6 @@ function clearServiceForm() {
     typeSelect.dispatchEvent(new Event('change'));
 }
 
-/**
- * التعامل مع إرسال نموذج الخدمة
- */
 async function handleServiceSubmit(e) {
     e.preventDefault();
     
@@ -1411,7 +1307,6 @@ async function handleServiceSubmit(e) {
     const data = Object.fromEntries(formData.entries());
     const serviceId = data.id;
 
-    // تنظيف البيانات حسب نوع الخدمة
     if (data.type === 'fixed') {
         delete data.rate;
         delete data.min;
@@ -1424,14 +1319,12 @@ async function handleServiceSubmit(e) {
         let response;
         
         if (serviceId) {
-            // تحديث خدمة موجودة
             delete data.id;
             response = await fetchWithAuth(`/api/services/${serviceId}`, {
                 method: 'PUT',
                 body: JSON.stringify(data)
             });
         } else {
-            // إضافة خدمة جديدة
             response = await fetchWithAuth('/api/services', {
                 method: 'POST',
                 body: JSON.stringify(data)
@@ -1451,14 +1344,10 @@ async function handleServiceSubmit(e) {
     }
 }
 
-/**
- * تحرير خدمة موجودة
- */
 window.editService = async function(serviceId) {
     const service = allServicesData.find(s => s.id === serviceId);
     if (!service) return;
     
-    // تعبئة النموذج ببيانات الخدمة
     document.querySelector('[name=name]').value = service.name || '';
     document.querySelector('[name=category]').value = service.category || '';
     document.getElementById('serviceIdInput').value = service.id;
@@ -1475,13 +1364,14 @@ window.editService = async function(serviceId) {
         document.querySelector('[name=max]').value = service.max || '';
     }
     
-    // الانتقال لقسم إضافة الخدمة
-    navigateToSection('add-service');
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    document.querySelector('[data-section="add-service"]').classList.add('active');
+    document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+    document.getElementById('add-service-section').style.display = 'block';
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-/**
- * حذف خدمة
- */
 window.deleteService = async function(serviceId) {
     if (!confirm('⚠️ تأكيد حذف الخدمة؟ سيتم حذفها نهائياً.')) return;
     
@@ -1502,52 +1392,38 @@ window.deleteService = async function(serviceId) {
     }
 };
 
-/**
- * التنقل لقسم معين
- */
-function navigateToSection(section) {
-    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-    document.querySelector(`[data-section="${section}"]`).classList.add('active');
-    
-    document.querySelectorAll('.section').forEach(section => section.style.display = 'none');
-    document.getElementById(`${section}-section`).style.display = 'block';
-    
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
 // ========== نظام البحث ==========
 
-/**
- * إعداد نظام البحث
- */
 function initializeSearch() {
-    // بحث الخدمات
-    document.getElementById('searchServices').addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        const filtered = allServicesData.filter(service =>
-            service.name.toLowerCase().includes(query) ||
-            service.category.toLowerCase().includes(query)
-        );
-        renderServices(filtered);
-    });
+    const searchServices = document.getElementById('searchServices');
+    const searchOrders = document.getElementById('searchOrders');
 
-    // بحث الطلبات
-    document.getElementById('searchOrders').addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        const filtered = allOrdersData.filter(order =>
-            String(order.id).includes(query) ||
-            order.link.toLowerCase().includes(query) ||
-            (allServices.find(s => s.id == order.serviceId)?.name.toLowerCase().includes(query))
-        );
-        renderOrders(filtered);
-    });
+    if (searchServices) {
+        searchServices.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = allServicesData.filter(service =>
+                service.name.toLowerCase().includes(query) ||
+                service.category.toLowerCase().includes(query)
+            );
+            renderServices(filtered);
+        });
+    }
+
+    if (searchOrders) {
+        searchOrders.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = allOrdersData.filter(order =>
+                String(order.id).includes(query) ||
+                order.link.toLowerCase().includes(query) ||
+                (allServices.find(s => s.id == order.serviceId)?.name.toLowerCase().includes(query))
+            );
+            renderOrders(filtered);
+        });
+    }
 }
 
 // ========== نظام التحديث ==========
 
-/**
- * تحديث جميع البيانات
- */
 async function reloadAll() {
     await Promise.all([
         loadStats(),
@@ -1557,35 +1433,32 @@ async function reloadAll() {
     ]);
 }
 
-/**
- * زر تحديث البيانات
- */
-document.getElementById('refreshBtn').onclick = async function() {
-    const btn = this;
-    const originalHTML = btn.innerHTML;
-    
-    // إضافة تأثير التحميل
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحديث...';
-    btn.disabled = true;
-    
-    try {
-        await reloadAll();
-        show('✅ تم تحديث البيانات');
-    } catch (error) {
-        console.error('خطأ في تحديث البيانات:', error);
-        show('❌ فشل في تحديث البيانات', 'error');
-    } finally {
-        // إعادة الحالة الأصلية
-        btn.innerHTML = originalHTML;
-        btn.disabled = false;
-    }
-};
+function setupRefreshButton() {
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (!refreshBtn) return;
+
+    refreshBtn.onclick = async function() {
+        const btn = this;
+        const originalHTML = btn.innerHTML;
+        
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحديث...';
+        btn.disabled = true;
+        
+        try {
+            await reloadAll();
+            show('✅ تم تحديث البيانات');
+        } catch (error) {
+            console.error('خطأ في تحديث البيانات:', error);
+            show('❌ فشل في تحديث البيانات', 'error');
+        } finally {
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        }
+    };
+}
 
 // ========== نظام التصدير ==========
 
-/**
- * تحميل ملف CSV
- */
 async function downloadCSV(endpoint, filename) {
     try {
         const response = await fetchWithAuth(endpoint);
@@ -1612,48 +1485,51 @@ async function downloadCSV(endpoint, filename) {
     }
 }
 
-// إعداد أزرار التصدير
-document.getElementById('exportServices').onclick = () => {
-    downloadCSV('/api/export/services.csv', 'الخدمات.csv');
-};
+function setupExportButtons() {
+    const exportServices = document.getElementById('exportServices');
+    const exportOrders = document.getElementById('exportOrders');
 
-document.getElementById('exportOrders').onclick = () => {
-    downloadCSV('/api/export/orders.csv', 'الطلبات.csv');
-};
+    if (exportServices) {
+        exportServices.onclick = () => {
+            downloadCSV('/api/export/services.csv', 'الخدمات.csv');
+        };
+    }
+
+    if (exportOrders) {
+        exportOrders.onclick = () => {
+            downloadCSV('/api/export/orders.csv', 'الطلبات.csv');
+        };
+    }
+}
 
 // ========== التهيئة الرئيسية ==========
 
-/**
- * تهيئة التطبيق بالكامل
- */
 function initializeApp() {
     console.log('جاري تهيئة التطبيق...');
     
     try {
-        // تهيئة الواجهة
         initializeTheme();
         setupThemeToggle();
-        
-        // تهيئة النظام
+        initializeSidebar();
         initializeAuth();
+        initializeServiceForm();
+        initializeSearch();
+        setupRefreshButton();
+        setupExportButtons();
         
-        // إعداد الأحداث
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.onclick = logout;
-        }
+        document.getElementById('logoutBtn').onclick = logout;
         
-        // تحميل البيانات الأولية
         reloadAll();
         
-        console.log('تم تهيئة التطبيق بنجاح');
+        console.log('✅ تم تهيئة التطبيق بنجاح');
     } catch (error) {
-        console.error('خطأ في تهيئة التطبيق:', error);
+        console.error('❌ خطأ في تهيئة التطبيق:', error);
     }
 }
 
-// بدء تشغيل التطبيق عندما يتم تحميل الصفحة
+// بدء تشغيل التطبيق
 document.addEventListener('DOMContentLoaded', initializeApp);
+    
 </script>
 </body>
 </html>
