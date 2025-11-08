@@ -1072,24 +1072,39 @@ const statusMap = {
 let allOrdersData = [];
 let allServices = []; // ⬅️ نضيف هذا
 
-async function loadOrders() {
-  const r = await fetchWithAuth('/api/orders');
-  if (!r) return;
-  allOrdersData = await r.json();
-  
-  const servicesRes = await fetchWithAuth('/api/services');
-  if (!servicesRes) return;
-  allServices = await servicesRes.json(); // ⬅️ نخزن الخدمات هنا
-  
-  renderOrders(allOrdersData);
-}
 
-function renderOrders(list) {
+    async function loadOrders() {
+  try {
+    const r = await fetchWithAuth('/api/orders');
+    if (!r) {
+      console.error('Failed to fetch orders');
+      return;
+    }
+    
+    const ordersData = await r.json();
+    console.log('Orders loaded:', ordersData); // للتdebug
+    
+    // تحميل الخدمات إذا ما كانت محملة
+    if (!allServices || allServices.length === 0) {
+      const servicesRes = await fetchWithAuth('/api/services');
+      if (servicesRes) {
+        allServices = await servicesRes.json();
+      }
+    }
+    
+    renderOrders(ordersData);
+  } catch (error) {
+    console.error('Error loading orders:', error);
+  }
+    }
+
+    function renderOrders(list) {
   const tbody = document.getElementById('ordersTable');
   if (!tbody) return;
   
   tbody.innerHTML = '';
   
+  // التأكد أن list عبارة عن array
   if (!Array.isArray(list)) {
     console.error('Orders data is not an array:', list);
     tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">خطأ في تحميل البيانات</td></tr>';
@@ -1102,14 +1117,21 @@ function renderOrders(list) {
   }
   
   list.forEach(order => {
+    // البحث في allServices بدل svcMap
     const service = allServices.find(s => String(s.id) === String(order.serviceId));
     const serviceName = service ? service.name : `خدمة ${order.serviceId}`;
+    
+    const statusText = statusMap[order.status] || order.status;
     
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${order.id || 'N/A'}</td>
       <td>${serviceName}</td>
-      <td><a href="${order.link}" target="_blank" class="text-truncate d-inline-block" style="max-width: 150px;">${order.link}</a></td>
+      <td>
+        <a href="${order.link}" target="_blank" class="text-truncate d-inline-block" style="max-width: 150px;">
+          ${order.link}
+        </a>
+      </td>
       <td>${order.quantity || '—'}</td>
       <td>$${order.price ? order.price.toFixed(2) : '0.00'}</td>
       <td>
@@ -1125,24 +1147,37 @@ function renderOrders(list) {
     tbody.appendChild(tr);
   });
   
+  // إضافة events لتغيير الحالة
   document.querySelectorAll('.order-status').forEach(select => {
     select.addEventListener('change', function() {
       updateOrderStatus(this.dataset.orderId, this.value);
     });
   });
-}
-
-    
-    async function updateOrderStatus(id, status) {
-      if (!confirm(`تأكيد تحديث حالة الطلب إلى "${statusMap[status]}"؟`)) return;
-      const res = await fetchWithAuth('/api/orders/' + id, { method: 'PUT', body: JSON.stringify({ status }) });
-      if (res && res.ok) {
-        show('✅ تم تحديث حالة الطلب');
-        reloadAll();
-      } else {
-        show('❌ فشل التحديث', 'error');
-      }
     }
+
+
+    async function updateOrderStatus(orderId, newStatus) {
+  try {
+    const response = await fetchWithAuth(`/api/orders/${orderId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status: newStatus })
+    });
+
+    if (response && response.ok) {
+      showAlert('✅ تم تحديث حالة الطلب بنجاح', 'success');
+      loadOrders(); // إعادة تحميل الطلبات
+    } else {
+      showAlert('❌ فشل في تحديث حالة الطلب', 'error');
+    }
+  } catch (error) {
+    console.error('Error updating order:', error);
+    showAlert('❌ خطأ في تحديث حالة الطلب', 'error');
+  }
+    }
+    
 
     // ========== LOGS ==========
     async function loadLogs() {
