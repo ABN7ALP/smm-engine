@@ -869,6 +869,25 @@ body.dark-mode .input-group-text {
   
   <script>
 
+    // في بداية الـ script في admin.html أضف:
+let allServices = [];
+
+// دالة لتحميل الخدمات
+async function loadServices() {
+  try {
+    const response = await fetchWithAuth('/api/services');
+    if (response) {
+      allServices = await response.json();
+      console.log('Services loaded:', allServices);
+    }
+  } catch (error) {
+    console.error('Error loading services:', error);
+  }
+}
+
+// استدعاء دالة تحميل الخدمات مع التحميل الأولي
+loadServices();
+
     // ========== THEME TOGGLE ==========
 const body = document.body;
 const savedTheme = localStorage.getItem('theme') || 'light';
