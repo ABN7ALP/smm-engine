@@ -770,20 +770,22 @@ body.dark-mode .input-group-text {
             <input id="searchOrders" type="text" class="form-control" placeholder="🔍 ابحث عن طلب بالرقم أو الرابط...">
           </div>
           <div class="table-responsive">
-            <table id="orders-table" class="table table-striped table-hover">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>الخدمة</th>
-                  <th>الرابط</th>
-                  <th>الكمية</th>
-                  <th>السعر</th>
-                  <th>الحالة</th>
-                  <th>الإجراءات</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
+            <table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>الخدمة</th>
+            <th>الرابط</th>
+            <th>الكمية</th>
+            <th>السعر</th>
+            <th>الحالة</th>
+            <th>الإجراءات</th>
+        </tr>
+    </thead>
+    <tbody id="ordersTable">
+        <!-- الطلبات ستظهر هنا -->
+    </tbody>
+</table>
           </div>
         </div>
       </div>
@@ -1145,37 +1147,64 @@ function renderServices(servicesList) {
 
 async function loadOrders() {
     try {
+        console.log('🔍 جاري تحميل الطلبات...');
         const response = await fetchWithAuth('/api/orders');
-        if (!response) return;
+        
+        if (!response) {
+            console.error('❌ فشل في جلب الطلبات - لا يوجد response');
+            return;
+        }
+        
+        if (!response.ok) {
+            console.error(`❌ خطأ في السيرفر: ${response.status}`);
+            return;
+        }
         
         const ordersData = await response.json();
+        console.log('✅ الطلبات المحملة:', ordersData);
+        
         allOrdersData = ordersData;
         renderOrders(ordersData);
         
     } catch (error) {
-        console.error('خطأ في تحميل الطلبات:', error);
+        console.error('❌ خطأ في تحميل الطلبات:', error);
     }
 }
 
 function renderOrders(ordersList) {
     const tbody = document.getElementById('ordersTable');
-    if (!tbody) return;
+    if (!tbody) {
+        console.error('❌ عنصر ordersTable غير موجود في الصفحة');
+        return;
+    }
     
+    console.log('🎯 جاري عرض الطلبات:', ordersList);
     tbody.innerHTML = '';
     
+    // التحقق من صحة البيانات
     if (!Array.isArray(ordersList)) {
-        console.error('بيانات الطلبات ليست مصفوفة:', ordersList);
+        console.error('❌ بيانات الطلبات ليست مصفوفة:', ordersList);
         tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">خطأ في تحميل البيانات</td></tr>';
         return;
     }
     
     if (ordersList.length === 0) {
+        console.log('ℹ️ لا توجد طلبات لعرضها');
         tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">لا توجد طلبات</td></tr>';
         return;
     }
     
+    // عرض كل طلب
     ordersList.forEach(order => {
-        const service = allServices.find(s => String(s.id) === String(order.serviceId));
+        console.log('📦 معالجة الطلب:', order);
+        
+        // البحث عن الخدمة المرتبطة بالطلب
+        const service = allServices.find(s => {
+            const serviceId = String(s.id);
+            const orderServiceId = String(order.serviceId);
+            return serviceId === orderServiceId;
+        });
+        
         const serviceName = service ? service.name : `خدمة ${order.serviceId}`;
         
         const tr = document.createElement('tr');
@@ -1202,31 +1231,67 @@ function renderOrders(ordersList) {
         tbody.appendChild(tr);
     });
     
+    console.log(`✅ تم عرض ${ordersList.length} طلب بنجاح`);
+    
+    // إضافة أحداث لتغيير حالة الطلبات
+    setupOrderStatusEvents();
+}
+
+function setupOrderStatusEvents() {
     document.querySelectorAll('.order-status').forEach(select => {
         select.addEventListener('change', function() {
-            updateOrderStatus(this.dataset.orderId, this.value);
+            const orderId = this.dataset.orderId;
+            const newStatus = this.value;
+            console.log(`🔄 تغيير حالة الطلب ${orderId} إلى: ${newStatus}`);
+            updateOrderStatus(orderId, newStatus);
         });
     });
 }
 
 async function updateOrderStatus(orderId, newStatus) {
     try {
+        console.log(`🔄 جاري تحديث حالة الطلب ${orderId} إلى ${newStatus}`);
+        
         const response = await fetchWithAuth(`/api/orders/${orderId}`, {
             method: 'PUT',
             body: JSON.stringify({ status: newStatus })
         });
 
         if (response && response.ok) {
+            console.log('✅ تم تحديث حالة الطلب بنجاح');
             show('✅ تم تحديث حالة الطلب بنجاح', 'success');
-            loadOrders();
+            loadOrders(); // إعادة تحميل الطلبات لتحديث البيانات
         } else {
+            console.error('❌ فشل في تحديث حالة الطلب');
             show('❌ فشل في تحديث حالة الطلب', 'error');
         }
     } catch (error) {
-        console.error('خطأ في تحديث حالة الطلب:', error);
+        console.error('❌ خطأ في تحديث حالة الطلب:', error);
         show('❌ خطأ في تحديث حالة الطلب', 'error');
     }
 }
+
+// تأكد من تحميل الخدمات أولاً قبل الطلبات
+async function reloadAll() {
+    try {
+        console.log('🔄 جاري تحديث جميع البيانات...');
+        
+        // تحميل الخدمات أولاً لأن الطلبات تحتاجها
+        await loadServices();
+        
+        // ثم تحميل باقي البيانات
+        await Promise.all([
+            loadStats(),
+            loadOrders(),
+            loadLogs()
+        ]);
+        
+        console.log('✅ تم تحديث جميع البيانات بنجاح');
+    } catch (error) {
+        console.error('❌ خطأ في تحديث البيانات:', error);
+    }
+              }
+
 
 // ========== نظام السجلات ==========
 
