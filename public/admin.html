@@ -873,9 +873,10 @@ body.dark-mode .input-group-text {
 // =================================================================
 
 // ========== المتغيرات العامة ==========
-let allServices = [];     // تخزين جميع الخدمات
-let allOrdersData = [];   // تخزين جميع الطلبات
-let allServicesData = []; // تخزين بيانات الخدمات للعرض
+const body = document.body; // ⬅️ أضفنا هذا
+let allServices = [];
+let allOrdersData = [];
+let allServicesData = [];
 
 // خريطة حالات الطلبات
 const statusMap = {
@@ -891,7 +892,6 @@ const statusMap = {
  * تهيئة نظام الثيم (الوضع الفاتح/الداكن)
  */
 function initializeTheme() {
-    const body = document.body;
     const savedTheme = localStorage.getItem('theme') || 'light';
 
     body.classList.remove('light-mode', 'dark-mode');
@@ -902,9 +902,14 @@ function initializeTheme() {
 /**
  * تبديل وضع الثيم
  */
-function setupThemeToggle() {
-    const body = document.body;
+
+  function setupThemeToggle() {
     const themeSidebarToggle = document.querySelector('.theme-sidebar-toggle');
+
+    if (!themeSidebarToggle) {
+        console.warn('زر تبديل الثيم غير موجود');
+        return;
+    }
 
     themeSidebarToggle.addEventListener('click', (e) => {
         e.preventDefault();
@@ -917,22 +922,32 @@ function setupThemeToggle() {
         updateThemeIcon();
     });
 
-    // إزالة زر تبديل الوضع من الهيدر
-    document.querySelector('.header-controls').innerHTML = '';
-}
+    // إزالة زر تبديل الوضع من الهيدر إذا موجود
+    const headerControls = document.querySelector('.header-controls');
+    if (headerControls) {
+        headerControls.innerHTML = '';
+    }
+  }
+
 
 /**
  * تحديث أيقونة الثيم في الشريط الجانبي
  */
 function updateThemeIcon() {
-    const isDark = body.classList.contains('dark-mode');
     const themeSidebarToggle = document.querySelector('.theme-sidebar-toggle');
+    if (!themeSidebarToggle) return;
+    
+    const isDark = body.classList.contains('dark-mode');
     const icon = themeSidebarToggle.querySelector('i');
     const text = themeSidebarToggle.querySelector('span');
     
-    icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-    text.textContent = isDark ? 'الوضع الفاتح' : 'الوضع الداكن';
-}
+    if (icon) {
+        icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+    }
+    if (text) {
+        text.textContent = isDark ? 'الوضع الفاتح' : 'الوضع الداكن';
+    }
+
 
 /**
  * تهيئة القائمة الجانبية
@@ -1028,17 +1043,36 @@ function initializeAuth() {
  * طلب مع المصادقة
  */
 async function fetchWithAuth(url, options = {}) {
-    options.headers = { ...window.headers, ...(options.headers || {}) };
-    const response = await fetch(url, options);
+    const token = localStorage.getItem('authToken');
     
-    if (response.status === 401) {
-        alert("انتهت صلاحية الجلسة. يرجى تسجيل الدخول.");
-        localStorage.removeItem('authToken');
+    // إذا مافيش token، اذهب لتسجيل الدخول
+    if (!token) {
         window.location.href = '/login.html';
         return null;
     }
     
-    return response;
+    options.headers = { 
+        'Content-Type': 'application/json', 
+        'x-auth-token': token,
+        ...(options.headers || {})
+    };
+    
+    try {
+        const response = await fetch(url, options);
+        
+        if (response.status === 401) {
+            // Token منتهي أو غير صالح
+            localStorage.removeItem('authToken');
+            alert("انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.");
+            window.location.href = '/login.html';
+            return null;
+        }
+        
+        return response;
+    } catch (error) {
+        console.error('خطأ في الاتصال:', error);
+        return null;
+    }
 }
 
 /**
@@ -1055,8 +1089,11 @@ async function logout() {
 /**
  * عرض إشعار للمستخدم
  */
-function showNotification(msg, type = 'success') {
+
+  function showNotification(msg, type = 'success') {
     const notificationContainer = document.getElementById('notification-container');
+    if (!notificationContainer) return;
+    
     const notification = document.createElement('div');
     
     notification.className = `notification ${type}`;
@@ -1085,6 +1122,7 @@ function showNotification(msg, type = 'success') {
 function show(msg, type = 'success') {
     showNotification(msg, type);
 }
+  
 
 // ========== نظام الإحصائيات ==========
 
@@ -1167,14 +1205,12 @@ function renderServices(servicesList) {
 
 // ========== نظام الطلبات ==========
 
-/**
- * تحميل جميع الطلبات
- */
-async function loadOrders() {
+  async function loadOrders() {
     try {
+        console.log('جاري تحميل الطلبات...');
         const response = await fetchWithAuth('/api/orders');
         if (!response) {
-            console.error('فشل في جلب الطلبات');
+            console.error('فشل في جلب الطلبات - لا يوجد رد');
             return;
         }
         
@@ -1194,7 +1230,10 @@ async function loadOrders() {
  */
 function renderOrders(ordersList) {
     const tbody = document.getElementById('ordersTable');
-    if (!tbody) return;
+    if (!tbody) {
+        console.error('جدول الطلبات غير موجود');
+        return;
+    }
     
     tbody.innerHTML = '';
     
@@ -1242,6 +1281,12 @@ function renderOrders(ordersList) {
     // إضافة أحداث لتغيير حالة الطلبات
     setupOrderStatusEvents();
 }
+  
+/**
+ * تحميل جميع الطلبات
+ */
+async function loadOrders() {
+
 
 /**
  * إعداد أحداث تغيير حالة الطلبات
@@ -1582,26 +1627,33 @@ document.getElementById('exportOrders').onclick = () => {
  * تهيئة التطبيق بالكامل
  */
 function initializeApp() {
-    // تهيئة الواجهة
-    initializeTheme();
-    setupThemeToggle();
-    initializeSidebar();
+    console.log('جاري تهيئة التطبيق...');
     
-    // تهيئة النظام
-    initializeAuth();
-    initializeServiceForm();
-    initializeSearch();
-    
-    // إعداد الأحداث
-    document.getElementById('logoutBtn').onclick = logout;
-    
-    // تحميل البيانات الأولية
-    reloadAll();
+    try {
+        // تهيئة الواجهة
+        initializeTheme();
+        setupThemeToggle();
+        
+        // تهيئة النظام
+        initializeAuth();
+        
+        // إعداد الأحداث
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.onclick = logout;
+        }
+        
+        // تحميل البيانات الأولية
+        reloadAll();
+        
+        console.log('تم تهيئة التطبيق بنجاح');
+    } catch (error) {
+        console.error('خطأ في تهيئة التطبيق:', error);
+    }
 }
 
 // بدء تشغيل التطبيق عندما يتم تحميل الصفحة
 document.addEventListener('DOMContentLoaded', initializeApp);
-
 </script>
 </body>
 </html>
