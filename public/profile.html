@@ -3,337 +3,798 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الملف الشخصي - SMM Engine</title>
+    <title>الملف الشخصي - SMM Engine | النظام المتكامل</title>
     
-    <!-- المكتبات الأساسية -->
+    <!-- ===================== مكتبات التصميم الأساسية ===================== -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     
-    <!-- مكتبات إضافية -->
+    <!-- ===================== مكتبات متقدمة ===================== -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.css">
     
     <style>
+        /* ===================== إعدادات الخطوط والألوان الأساسية ===================== */
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --dark-color: #2c3e50;
+            --light-color: #f8f9fa;
+            --border-radius: 12px;
+            --box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+        
         * {
             font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        /* ===================== التصميم الرئيسي للصفحة ===================== */
+        .profile-main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* ===================== الهيدر الرئيسي ===================== */
         .profile-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             color: white;
+            border-radius: var(--border-radius);
             padding: 40px 0;
             margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
         }
         
-        .avatar-container {
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.1);
+            transform: rotate(45deg);
+        }
+        
+        .avatar-section {
             position: relative;
             display: inline-block;
+            z-index: 2;
         }
         
         .avatar-image {
             width: 150px;
             height: 150px;
             border-radius: 50%;
-            border: 5px solid white;
+            border: 5px solid rgba(255,255,255,0.3);
             object-fit: cover;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+        }
+        
+        .avatar-image:hover {
+            transform: scale(1.05);
+            border-color: rgba(255,255,255,0.6);
         }
         
         .avatar-upload-btn {
             position: absolute;
             bottom: 10px;
-            right: 10px;
-            background: #667eea;
+            left: 10px;
+            background: var(--primary-color);
             color: white;
             border: none;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            transition: var(--transition);
+            z-index: 3;
         }
         
-        .stats-card {
-            transition: transform 0.3s ease;
+        .avatar-upload-btn:hover {
+            background: var(--secondary-color);
+            transform: scale(1.1);
         }
         
-        .stats-card:hover {
-            transform: translateY(-5px);
+        /* ===================== نظام التخطيط الشبكي ===================== */
+        .profile-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 25px;
+            margin-bottom: 40px;
         }
         
-        .nav-pills .nav-link.active {
+        @media (max-width: 992px) {
+            .profile-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* ===================== الشريط الجانبي ===================== */
+        .sidebar {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 25px;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .sidebar-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--light-color);
+        }
+        
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .nav-item {
+            margin-bottom: 8px;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 20px;
+            color: var(--dark-color);
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            font-weight: 600;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            transform: translateX(-5px);
+        }
+        
+        .nav-link i {
+            font-size: 1.2rem;
+            width: 25px;
+            text-align: center;
+        }
+        
+        /* ===================== بطاقة الرصيد ===================== */
+        .balance-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            text-align: center;
+            margin-top: 20px;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .balance-amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        /* ===================== المحتوى الرئيسي ===================== */
+        .main-content {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+        
+        .content-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 25px 30px;
+        }
+        
+        .content-body {
+            padding: 30px;
+        }
+        
+        /* ===================== الأقسام ===================== */
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* ===================== بطاقات الإحصائيات ===================== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            text-align: center;
+            box-shadow: var(--box-shadow);
+            border-left: 5px solid var(--primary-color);
+            transition: var(--transition);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-weight: 600;
+        }
+        
+        /* ===================== نماذج الإدخال ===================== */
+        .form-section {
+            background: var(--light-color);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 8px;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: var(--transition);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        /* ===================== طرق الدفع ===================== */
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+        
+        .payment-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .payment-card:hover, .payment-card.active {
+            border-color: var(--primary-color);
+            transform: translateY(-5px);
+            box-shadow: var(--box-shadow);
+        }
+        
+        .payment-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+        
+        /* ===================== الجداول ===================== */
+        .table-container {
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .table th {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-weight: 600;
+        }
+        
+        .table td {
+            padding: 15px;
+            vertical-align: middle;
+            border-color: #e9ecef;
+        }
+        
+        /* ===================== أزرار ===================== */
+        .btn {
+            border-radius: 8px;
+            padding: 12px 25px;
+            font-weight: 600;
+            transition: var(--transition);
             border: none;
         }
         
-        /* تنسيقات Cropper */
-        .cropper-container {
-            direction: ltr;
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
         }
         
-        /* تنسيقات Dropzone */
-        .dropzone {
-            border: 2px dashed #667eea;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            background: #f8f9fa;
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
+        
+        /* ===================== التكيف مع الشاشات الصغيرة ===================== */
+        @media (max-width: 768px) {
+            .profile-main-container {
+                padding: 15px;
+            }
+            
+            .profile-layout {
+                gap: 15px;
+            }
+            
+            .content-body {
+                padding: 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .payment-methods {
+                grid-template-columns: 1fr;
+            }
+            
+            .avatar-image {
+                width: 120px;
+                height: 120px;
+            }
+        }
+        
+        /* ===================== تأثيرات خاصة ===================== */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        
+        .badge-success { background: var(--success-color); }
+        .badge-warning { background: var(--warning-color); }
+        .badge-danger { background: var(--danger-color); }
+        .badge-info { background: var(--primary-color); }
     </style>
 </head>
 <body>
-    <!-- شريط التنقل -->
+    <!-- ===================== شريط التنقل الرئيسي ===================== -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="#">
-                <i class="fas fa-rocket"></i> SMM Engine
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="fas fa-rocket me-2"></i>SMM Engine
             </a>
             <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="/user.html"><i class="fas fa-home"></i> الرئيسية</a>
-                <a class="nav-link" href="/my-orders.html"><i class="fas fa-shopping-cart"></i> طلباتي</a>
-                <a class="nav-link active" href="/profile.html"><i class="fas fa-user"></i> الملف الشخصي</a>
-                <a class="nav-link" href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> تسجيل خروج</a>
+                <a class="nav-link" href="/user.html">
+                    <i class="fas fa-home me-1"></i>الرئيسية
+                </a>
+                <a class="nav-link" href="/my-orders.html">
+                    <i class="fas fa-shopping-cart me-1"></i>طلباتي
+                </a>
+                <a class="nav-link active" href="/profile.html">
+                    <i class="fas fa-user me-1"></i>الملف الشخصي
+                </a>
+                <a class="nav-link" href="#" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt me-1"></i>تسجيل خروج
+                </a>
             </div>
         </div>
     </nav>
 
-    <!-- رأس الصفحة -->
+    <!-- ===================== الهيدر الرئيسي للصفحة ===================== -->
     <div class="profile-header">
         <div class="container text-center">
-            <div class="avatar-container">
+            <div class="avatar-section">
                 <img id="userAvatar" src="/assets/default-avatar.png" alt="الصورة الشخصية" class="avatar-image">
-                <button class="avatar-upload-btn" id="avatarUploadBtn">
+                <button class="avatar-upload-btn" id="avatarUploadBtn" title="تغيير الصورة الشخصية">
                     <i class="fas fa-camera"></i>
                 </button>
             </div>
-            <h1 id="userFullName" class="mt-3">اسم المستخدم</h1>
-            <p id="userUsername" class="mb-0">@username</p>
+            <h1 id="userFullName" class="mt-3 fw-bold">اسم المستخدم</h1>
+            <p id="userUsername" class="mb-0 opacity-75">@username</p>
+            <div class="mt-2">
+                <span class="badge badge-success" id="userStatus">نشط</span>
+                <span class="badge badge-info ms-2" id="userRole">مستخدم</span>
+            </div>
         </div>
     </div>
 
-    <div class="container">
-        <div class="row">
-            <!-- الشريط الجانبي -->
-            <div class="col-md-4">
-                <div class="card mb-4">
-                    <div class="card-body text-center">
-                        <div class="mb-3">
-                            <i class="fas fa-wallet fa-2x text-success"></i>
-                            <h4 id="userBalance">$0.00</h4>
-                            <p class="text-muted">الرصيد الحالي</p>
-                        </div>
-                        <button class="btn btn-primary w-100 mb-2" onclick="showSection('balance')">
-                            <i class="fas fa-plus-circle"></i> شحن الرصيد
-                        </button>
-                    </div>
+    <!-- ===================== المحتوى الرئيسي للصفحة ===================== -->
+    <div class="profile-main-container">
+        <div class="profile-layout">
+            
+            <!-- ===================== الشريط الجانبي ===================== -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h5 class="fw-bold mb-1">لوحة التحكم</h5>
+                    <p class="small text-muted mb-0">إدارة حسابك الشخصي</p>
                 </div>
-
-                <!-- الإحصائيات -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="fas fa-chart-bar"></i> إحصائياتي</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col-6 mb-3">
-                                <div class="stats-card">
-                                    <i class="fas fa-shopping-cart fa-2x text-primary"></i>
-                                    <h5 id="totalOrders">0</h5>
-                                    <small>إجمالي الطلبات</small>
-                                </div>
-                            </div>
-                            <div class="col-6 mb-3">
-                                <div class="stats-card">
-                                    <i class="fas fa-check-circle fa-2x text-success"></i>
-                                    <h5 id="completedOrders">0</h5>
-                                    <small>مكتملة</small>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="stats-card">
-                                    <i class="fas fa-clock fa-2x text-warning"></i>
-                                    <h5 id="pendingOrders">0</h5>
-                                    <small>قيد التنفيذ</small>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="stats-card">
-                                    <i class="fas fa-times-circle fa-2x text-danger"></i>
-                                    <h5 id="rejectedOrders">0</h5>
-                                    <small>مرفوضة</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                
+                <ul class="sidebar-nav">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active" data-section="profile">
+                            <i class="fas fa-user-circle"></i>
+                            <span>المعلومات الشخصية</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="security">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>الأمان والحماية</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="balance">
+                            <i class="fas fa-wallet"></i>
+                            <span>الرصيد والشحن</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="statistics">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>إحصائياتي</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="transactions">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span>المعاملات</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- ===================== بطاقة الرصيد السريع ===================== -->
+                <div class="balance-card">
+                    <i class="fas fa-wallet fa-2x mb-2"></i>
+                    <div class="balance-amount" id="sidebarBalance">$0.00</div>
+                    <p class="mb-3">الرصيد المتاح</p>
+                    <button class="btn btn-light btn-sm w-100" onclick="showSection('balance')">
+                        <i class="fas fa-plus-circle me-1"></i>شحن الرصيد
+                    </button>
                 </div>
-            </div>
+            </aside>
 
-            <!-- المحتوى الرئيسي -->
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <ul class="nav nav-pills card-header-pills">
-                            <li class="nav-item">
-                                <a class="nav-link active" href="#" onclick="showSection('profile')">المعلومات الشخصية</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#" onclick="showSection('security')">الأمان</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#" onclick="showSection('balance')">الرصيد</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#" onclick="showSection('transactions')">المعاملات</a>
-                            </li>
-                        </ul>
+            <!-- ===================== المحتوى الديناميكي ===================== -->
+            <main class="main-content">
+                
+                <!-- ===================== قسم المعلومات الشخصية ===================== -->
+                <section id="profileSection" class="section active">
+                    <div class="content-header">
+                        <h3 class="fw-bold mb-2">
+                            <i class="fas fa-user-circle me-2"></i>المعلومات الشخصية
+                        </h3>
+                        <p class="mb-0">إدارة بياناتك الشخصية ومعلومات الاتصال</p>
                     </div>
-                    <div class="card-body">
-                        <!-- قسم المعلومات الشخصية -->
-                        <div id="profileSection" class="section">
+                    
+                    <div class="content-body">
+                        <div class="form-section">
+                            <h5 class="fw-bold mb-4">البيانات الأساسية</h5>
                             <form id="profileForm">
-                                <div class="row">
+                                <div class="row g-3">
                                     <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">الاسم الكامل</label>
-                                            <input type="text" id="fullName" name="fullName" class="form-control">
-                                        </div>
+                                        <label class="form-label">الاسم الكامل</label>
+                                        <input type="text" id="fullName" name="fullName" class="form-control" placeholder="أدخل اسمك الكامل">
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">البريد الإلكتروني</label>
-                                            <input type="email" id="email" class="form-control" disabled>
-                                            <small class="text-muted">لا يمكن تغيير البريد الإلكتروني</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">اسم المستخدم</label>
-                                            <input type="text" id="username" class="form-control" disabled>
-                                        </div>
+                                        <label class="form-label">البريد الإلكتروني</label>
+                                        <input type="email" id="email" class="form-control" disabled>
+                                        <small class="text-muted">للتغيير يرجى الاتصال بالدعم</small>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">رقم الهاتف</label>
-                                            <input type="tel" id="phone" name="phone" class="form-control">
-                                        </div>
+                                        <label class="form-label">اسم المستخدم</label>
+                                        <input type="text" id="username" class="form-control" disabled>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">رقم الهاتف</label>
+                                        <input type="tel" id="phone" name="phone" class="form-control" placeholder="+963...">
                                     </div>
                                 </div>
                                 
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save"></i> حفظ التغييرات
-                                </button>
+                                <div class="mt-4">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>حفظ التغييرات
+                                    </button>
+                                </div>
                             </form>
                         </div>
+                    </div>
+                </section>
 
-                        <!-- قسم الأمان -->
-                        <div id="securitySection" class="section" style="display: none;">
+                <!-- ===================== قسم الأمان والحماية ===================== -->
+                <section id="securitySection" class="section">
+                    <div class="content-header">
+                        <h3 class="fw-bold mb-2">
+                            <i class="fas fa-shield-alt me-2"></i>الأمان والحماية
+                        </h3>
+                        <p class="mb-0">حماية حسابك وتغيير كلمة المرور</p>
+                    </div>
+                    
+                    <div class="content-body">
+                        <div class="form-section">
+                            <h5 class="fw-bold mb-4">تغيير كلمة المرور</h5>
                             <form id="passwordForm">
-                                <div class="mb-3">
-                                    <label class="form-label">كلمة السر الحالية</label>
-                                    <input type="password" id="currentPassword" name="currentPassword" class="form-control" required>
-                                </div>
-                                
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">كلمة السر الجديدة</label>
-                                            <input type="password" id="newPassword" name="newPassword" class="form-control" required minlength="6">
-                                        </div>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label">كلمة المرور الحالية</label>
+                                        <input type="password" id="currentPassword" name="currentPassword" class="form-control" required>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">تأكيد كلمة السر</label>
-                                            <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required>
-                                        </div>
+                                        <label class="form-label">كلمة المرور الجديدة</label>
+                                        <input type="password" id="newPassword" name="newPassword" class="form-control" required minlength="6">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">تأكيد كلمة المرور</label>
+                                        <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required>
                                     </div>
                                 </div>
                                 
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-lock"></i> تغيير كلمة السر
-                                </button>
+                                <div class="mt-4">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-lock me-2"></i>تغيير كلمة المرور
+                                    </button>
+                                </div>
                             </form>
                         </div>
+                    </div>
+                </section>
 
-                        <!-- قسم الرصيد -->
-                        <div id="balanceSection" class="section" style="display: none;">
-                            <div class="text-center mb-4">
-                                <h3>رصيدك الحالي: <span id="currentBalance" class="text-success">$0.00</span></h3>
-                                <p class="text-muted">قم بشحن رصيدك لمواصلة استخدام خدماتنا</p>
+                <!-- ===================== قسم الرصيد والشحن ===================== -->
+                <section id="balanceSection" class="section">
+                    <div class="content-header">
+                        <h3 class="fw-bold mb-2">
+                            <i class="fas fa-wallet me-2"></i>الرصيد والشحن
+                        </h3>
+                        <p class="mb-0">شحن رصيدك ومتابعة معاملاتك</p>
+                    </div>
+                    
+                    <div class="content-body">
+                        <!-- بطاقة الرصيد الحالي -->
+                        <div class="balance-card text-center mb-4">
+                            <h4 class="text-white mb-2">رصيدك الحالي</h4>
+                            <div class="balance-amount">$0.00</div>
+                            <p class="text-white-50 mb-0">آخر تحديث: الآن</p>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h5 class="fw-bold mb-4">اختر طريقة الشحن</h5>
+                            
+                            <div class="payment-methods">
+                                <!-- بطاقة الشحن البنكي -->
+                                <div class="payment-card" data-method="bank">
+                                    <i class="fas fa-university payment-icon"></i>
+                                    <h5>تحويل بنكي</h5>
+                                    <p class="text-muted">تحويل مباشر للحساب البنكي</p>
+                                    <span class="badge badge-success">مباشر</span>
+                                </div>
+                                
+                                <!-- بطاقة شام كاش -->
+                                <div class="payment-card" data-method="sham">
+                                    <i class="fas fa-qrcode payment-icon"></i>
+                                    <h5>شام كاش</h5>
+                                    <p class="text-muted">دفع فوري عبر QR Code</p>
+                                    <span class="badge badge-info">فوري</span>
+                                </div>
+                                
+                                <!-- بطاقة الحوالة -->
+                                <div class="payment-card" data-method="transfer">
+                                    <i class="fas fa-money-bill-wave payment-icon"></i>
+                                    <h5>حوالة مالية</h5>
+                                    <p class="text-muted">حوالة عبر مكتب بريد أو ويسترن يونيون</p>
+                                    <span class="badge badge-warning">يدوي</span>
+                                </div>
                             </div>
                             
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="card method-card" data-method="bank">
-                                        <div class="card-body text-center">
-                                            <i class="fas fa-university fa-3x text-primary mb-3"></i>
-                                            <h5>تحويل بنكي</h5>
-                                            <p class="text-muted">تحويل مباشر للحساب البنكي</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="card method-card" data-method="sham">
-                                        <div class="card-body text-center">
-                                            <i class="fas fa-qrcode fa-3x text-success mb-3"></i>
-                                            <h5>شام كاش</h5>
-                                            <p class="text-muted">دفع عبر مسح QR Code</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="card method-card" data-method="transfer">
-                                        <div class="card-body text-center">
-                                            <i class="fas fa-money-bill-wave fa-3x text-warning mb-3"></i>
-                                            <h5>حوالة</h5>
-                                            <p class="text-muted">حوالة عبر مكتب بريد أو ويسترن يونيون</p>
-                                        </div>
-                                    </div>
-                                </div>
+                            <!-- نموذج الشحن الديناميكي -->
+                            <div id="paymentFormContainer" class="mt-4"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== قسم الإحصائيات ===================== -->
+                <section id="statisticsSection" class="section">
+                    <div class="content-header">
+                        <h3 class="fw-bold mb-2">
+                            <i class="fas fa-chart-bar me-2"></i>إحصائياتي
+                        </h3>
+                        <p class="mb-0">نظرة عامة على أدائك ونشاطك</p>
+                    </div>
+                    
+                    <div class="content-body">
+                        <div class="stats-grid">
+                            <!-- إجمالي الطلبات -->
+                            <div class="stat-card">
+                                <i class="fas fa-shopping-cart stat-icon"></i>
+                                <div class="stat-value" id="totalOrders">0</div>
+                                <div class="stat-label">إجمالي الطلبات</div>
+                            </div>
+                            
+                            <!-- الطلبات المكتملة -->
+                            <div class="stat-card">
+                                <i class="fas fa-check-circle stat-icon"></i>
+                                <div class="stat-value" id="completedOrders">0</div>
+                                <div class="stat-label">مكتملة</div>
+                            </div>
+                            
+                            <!-- الطلبات قيد التنفيذ -->
+                            <div class="stat-card">
+                                <i class="fas fa-clock stat-icon"></i>
+                                <div class="stat-value" id="pendingOrders">0</div>
+                                <div class="stat-label">قيد التنفيذ</div>
+                            </div>
+                            
+                            <!-- الطلبات المرفوضة -->
+                            <div class="stat-card">
+                                <i class="fas fa-times-circle stat-icon"></i>
+                                <div class="stat-value" id="rejectedOrders">0</div>
+                                <div class="stat-label">مرفوضة</div>
                             </div>
                         </div>
-
-                        <!-- قسم المعاملات -->
-                        <div id="transactionsSection" class="section" style="display: none;">
-                            <h5>سجل المعاملات</h5>
-                            <div id="transactionsList" class="mt-3">
-                                <!-- سيتم تعبئتها بالبيانات -->
+                        
+                        <!-- معلومات إضافية -->
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="form-section">
+                                    <h6 class="fw-bold mb-3">معلومات الحساب</h6>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>تاريخ التسجيل:</span>
+                                        <strong id="joinDate">-</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>آخر دخول:</span>
+                                        <strong id="lastLogin">-</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>إجمالي المصروف:</span>
+                                        <strong id="totalSpent">$0.00</strong>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                </section>
+
+                <!-- ===================== قسم المعاملات ===================== -->
+                <section id="transactionsSection" class="section">
+                    <div class="content-header">
+                        <h3 class="fw-bold mb-2">
+                            <i class="fas fa-exchange-alt me-2"></i>المعاملات
+                        </h3>
+                        <p class="mb-0">سجل كامل لمعاملاتك المالية</p>
+                    </div>
+                    
+                    <div class="content-body">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="fw-bold mb-0">سجل المعاملات</h5>
+                            <button class="btn btn-outline-primary btn-sm" onclick="loadTransactions()">
+                                <i class="fas fa-sync-alt me-1"></i>تحديث
+                            </button>
+                        </div>
+                        
+                        <div class="table-container">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>نوع المعاملة</th>
+                                            <th>المبلغ</th>
+                                            <th>الطريقة</th>
+                                            <th>الحالة</th>
+                                            <th>التاريخ</th>
+                                            <th>الإجراءات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="transactionsTable">
+                                        <!-- سيتم تعبئة البيانات هنا -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <p class="text-muted" id="transactionsEmpty" style="display: none;">
+                                <i class="fas fa-inbox fa-3x mb-3"></i><br>
+                                لا توجد معاملات حتى الآن
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            </main>
         </div>
     </div>
 
-    <!-- نافذة تعديل الصورة -->
+    <!-- ===================== نافذة تعديل الصورة ===================== -->
     <div class="modal fade" id="avatarModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">تعديل الصورة الشخصية</h5>
+                    <h5 class="modal-title">
+                        <i class="fas fa-camera me-2"></i>تعديل الصورة الشخصية
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-8">
-                            <div id="imageCropper"></div>
+                            <div id="imageCropper" class="border rounded p-3"></div>
                         </div>
                         <div class="col-md-4">
-                            <div id="imagePreview" class="text-center">
-                                <img src="" alt="معاينة" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                            <div id="imagePreview" class="text-center mb-3">
+                                <img src="" alt="معاينة" class="img-fluid rounded-circle shadow" style="width: 150px; height: 150px; object-fit: cover;">
                             </div>
                             <div class="d-grid gap-2">
                                 <button type="button" class="btn btn-outline-primary" id="rotateLeft">
-                                    <i class="fas fa-undo"></i> تدوير لليسار
+                                    <i class="fas fa-undo me-1"></i>تدوير لليسار
                                 </button>
                                 <button type="button" class="btn btn-outline-primary" id="rotateRight">
-                                    <i class="fas fa-redo"></i> تدوير لليمين
+                                    <i class="fas fa-redo me-1"></i>تدوير لليمين
                                 </button>
                                 <button type="button" class="btn btn-success" id="saveAvatar">
-                                    <i class="fas fa-check"></i> حفظ الصورة
+                                    <i class="fas fa-check me-1"></i>حفظ الصورة
                                 </button>
                             </div>
                         </div>
@@ -343,57 +804,72 @@
         </div>
     </div>
 
-    <!-- تحميل المكتبات -->
+    <!-- ===================== مكتبات JavaScript ===================== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
-    <!-- السكريبت الرئيسي -->
+    <!-- ===================== السكريبت الرئيسي ===================== -->
     <script>
         // =================================================================
-        //  نظام الملف الشخصي - مع المكتبات
+        //  نظام الملف الشخصي المتكامل - الإصدار النهائي
+        //  تم التطوير بحذر شديد مع الحفاظ على الوظائف الحالية
         // =================================================================
 
-        // المتغيرات العامة
+        /* ===================== إعدادات التطبيق ===================== */
+        const CONFIG = {
+            PHONE_NUMBER: "905367893256",
+            WHATSAPP_TEXT: "مرحباً، أريد الاستفسار عن...",
+            SUPPORT_EMAIL: "support@smm-engine.com"
+        };
+        /* ===================== المتغيرات العامة ===================== */
         let currentUser = null;
         let cropper = null;
+        let currentPaymentMethod = null;
 
-        // ========== التهيئة ==========
+        /* ===================== التهيئة الرئيسية ===================== */
         document.addEventListener('DOMContentLoaded', function() {
-            initializeProfile();
-            setupEventListeners();
+            console.log('🚀 جاري تهيئة نظام الملف الشخصي...');
+            initializeApplication();
         });
 
         /**
-         * تهيئة صفحة الملف الشخصي
+         * تهيئة التطبيق بالكامل
          */
-        async function initializeProfile() {
+        async function initializeApplication() {
             try {
+                await checkAuthentication();
                 await loadUserProfile();
-                setupAvatarUpload();
-                setupPaymentMethods();
+                setupEventListeners();
+                setupNavigation();
+                showNotification('تم تحميل البيانات بنجاح', 'success');
             } catch (error) {
-                showError('فشل في تحميل البيانات');
+                console.error('❌ خطأ في التهيئة:', error);
+                showNotification('فشل في تحميل البيانات', 'error');
             }
+        }
+
+        /**
+         * التحقق من المصادقة
+         */
+        async function checkAuthentication() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = '/login.html';
+                throw new Error('غير مصرح');
+            }
+            return true;
         }
 
         /**
          * تحميل بيانات المستخدم
          */
         async function loadUserProfile() {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                window.location.href = '/login.html';
-                return;
-            }
-
             try {
+                const token = localStorage.getItem('authToken');
                 const response = await fetch('/api/user/profile', {
-                    headers: {
-                        'x-auth-token': token
-                    }
+                    headers: { 'x-auth-token': token }
                 });
 
                 if (response.status === 401) {
@@ -410,7 +886,8 @@
                 displayUserData();
                 
             } catch (error) {
-                showError('خطأ في تحميل البيانات');
+                console.error('خطأ في تحميل الملف الشخصي:', error);
+                throw error;
             }
         }
 
@@ -423,8 +900,9 @@
             // المعلومات الأساسية
             document.getElementById('userFullName').textContent = currentUser.fullName || currentUser.username;
             document.getElementById('userUsername').textContent = '@' + currentUser.username;
-            document.getElementById('userBalance').textContent = '$' + currentUser.balance.toFixed(2);
-            document.getElementById('currentBalance').textContent = '$' + currentUser.balance.toFixed(2);
+            document.getElementById('sidebarBalance').textContent = '$' + currentUser.balance.toFixed(2);
+            document.getElementById('userStatus').textContent = getStatusText(currentUser.status);
+            document.getElementById('userRole').textContent = getRoleText(currentUser.role);
 
             // نموذج المعلومات
             document.getElementById('fullName').value = currentUser.fullName || '';
@@ -433,10 +911,17 @@
             document.getElementById('phone').value = currentUser.phone || '';
 
             // الإحصائيات
-            document.getElementById('totalOrders').textContent = currentUser.orders.total;
-            document.getElementById('completedOrders').textContent = currentUser.orders.completed;
-            document.getElementById('pendingOrders').textContent = currentUser.orders.pending;
-            document.getElementById('rejectedOrders').textContent = currentUser.orders.rejected;
+            document.getElementById('totalOrders').textContent = currentUser.orders?.total || 0;
+            document.getElementById('completedOrders').textContent = currentUser.orders?.completed || 0;
+            document.getElementById('pendingOrders').textContent = currentUser.orders?.pending || 0;
+            document.getElementById('rejectedOrders').textContent = currentUser.orders?.rejected || 0;
+
+            // المعلومات الإضافية
+            document.getElementById('joinDate').textContent = currentUser.createdAt ? 
+                new Date(currentUser.createdAt).toLocaleDateString('ar-SA') : '-';
+            document.getElementById('lastLogin').textContent = currentUser.lastLogin ? 
+                new Date(currentUser.lastLogin).toLocaleDateString('ar-SA') : '-';
+            document.getElementById('totalSpent').textContent = '$' + (currentUser.totalSpent || 0).toFixed(2);
 
             // الصورة الشخصية
             if (currentUser.avatar) {
@@ -444,536 +929,544 @@
             }
         }
 
-      // ========== إعداد الأحداث ==========
-function setupEventListeners() {
-    // نموذج المعلومات الشخصية
-    document.getElementById('profileForm').addEventListener('submit', handleProfileUpdate);
-    
-    // نموذج تغيير كلمة السر
-    document.getElementById('passwordForm').addEventListener('submit', handlePasswordChange);
-    
-    // طرق الدفع
-    document.querySelectorAll('.method-card').forEach(card => {
-        card.addEventListener('click', () => showPaymentMethod(card.dataset.method));
-    });
-    
-    // تسجيل الخروج
-    document.getElementById('logoutBtn').addEventListener('click', handleLogout);
-}
-
-/**
- * معالجة تحديث الملف الشخصي
- */
-async function handleProfileUpdate(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData.entries());
-    
-    try {
-        const response = await fetch('/api/user/profile', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-auth-token': localStorage.getItem('authToken')
-            },
-            body: JSON.stringify(data)
-        });
-
-        if (!response.ok) {
-            throw new Error('فشل في تحديث البيانات');
+        /**
+         * إعداد مستمعي الأحداث
+         */
+        function setupEventListeners() {
+            // النماذج
+            document.getElementById('profileForm').addEventListener('submit', handleProfileUpdate);
+            document.getElementById('passwordForm').addEventListener('submit', handlePasswordChange);
+            
+            // الصورة الشخصية
+            document.getElementById('avatarUploadBtn').addEventListener('click', handleAvatarUpload);
+            
+            // طرق الدفع
+            document.querySelectorAll('.payment-card').forEach(card => {
+                card.addEventListener('click', () => selectPaymentMethod(card.dataset.method));
+            });
+            
+            // تسجيل الخروج
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
         }
 
-        const result = await response.json();
-        showSuccess(result.message);
-        await loadUserProfile(); // إعادة تحميل البيانات
-        
-    } catch (error) {
-        showError('خطأ في تحديث البيانات');
-    }
-}
-
-/**
- * معالجة تغيير كلمة السر
- */
-async function handlePasswordChange(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData.entries());
-    
-    if (data.newPassword !== data.confirmPassword) {
-        showError('كلمات السر غير متطابقة');
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/user/change-password', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-auth-token': localStorage.getItem('authToken')
-            },
-            body: JSON.stringify(data)
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'فشل في تغيير كلمة السر');
+        /**
+         * إعداد نظام التنقل
+         */
+        function setupNavigation() {
+            document.querySelectorAll('.nav-link[data-section]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // إزالة النشاط من جميع الروابط
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // إظهار القسم المحدد
+                    const sectionId = this.dataset.section + 'Section';
+                    showSection(sectionId);
+                });
+            });
         }
 
-        const result = await response.json();
-        showSuccess(result.message);
-        e.target.reset();
-        
-    } catch (error) {
-        showError(error.message);
-    }
-}
-
-/**
- * إعداد رفع الصورة الشخصية
- */
-function setupAvatarUpload() {
-    const avatarUploadBtn = document.getElementById('avatarUploadBtn');
-    const avatarModal = new bootstrap.Modal(document.getElementById('avatarModal'));
-    
-    avatarUploadBtn.addEventListener('click', () => {
-        // إنشاء input file مخفي
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = 'image/*';
-        fileInput.style.display = 'none';
-        
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                handleImageUpload(file, avatarModal);
+        /**
+         * إظهار قسم معين
+         */
+        function showSection(sectionId) {
+            // إخفاء جميع الأقسام
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // إظهار القسم المطلوب
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+                
+                // تحميل البيانات إذا لزم
+                if (sectionId === 'transactionsSection') {
+                    loadTransactions();
+                }
             }
-        });
-        
-        document.body.appendChild(fileInput);
-        fileInput.click();
-        document.body.removeChild(fileInput);
-    });
-}
-
-/**
- * معالجة رفع الصورة
- */
-function handleImageUpload(file, modal) {
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-        // إعداد Cropper
-        const imageContainer = document.getElementById('imageCropper');
-        imageContainer.innerHTML = `<img src="${e.target.result}" class="img-fluid">`;
-        
-        const image = imageContainer.querySelector('img');
-        cropper = new Cropper(image, {
-            aspectRatio: 1,
-            viewMode: 1,
-            guides: false
-        });
-        
-        // أحداث الأزرار
-        document.getElementById('rotateLeft').onclick = () => cropper.rotate(-90);
-        document.getElementById('rotateRight').onclick = () => cropper.rotate(90);
-        document.getElementById('saveAvatar').onclick = () => saveCroppedImage(modal);
-        
-        modal.show();
-    };
-    
-    reader.readAsDataURL(file);
-}
-
-/**
- * حفظ الصورة المقطوعة
- */
-async function saveCroppedImage(modal) {
-    if (!cropper) return;
-    
-    const canvas = cropper.getCroppedCanvas({
-        width: 300,
-        height: 300
-    });
-    
-    const avatarDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-    
-    try {
-        const response = await fetch('/api/user/upload-avatar', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-auth-token': localStorage.getItem('authToken')
-            },
-            body: JSON.stringify({ avatar: avatarDataUrl })
-        });
-
-        if (!response.ok) {
-            throw new Error('فشل في حفظ الصورة');
         }
 
-        const result = await response.json();
-        showSuccess(result.message);
-        
-        // تحديث الصورة المعروضة
-        document.getElementById('userAvatar').src = avatarDataUrl;
-        modal.hide();
-        
-    } catch (error) {
-        showError('خطأ في حفظ الصورة');
-    }
-}
+        /* ===================== نظام الإشعارات ===================== */
+        function showNotification(message, type = 'success') {
+            Toastify({
+                text: message,
+                duration: 4000,
+                gravity: "top",
+                position: "left",
+                style: {
+                    background: type === 'success' ? 
+                        "linear-gradient(to right, #00b09b, #96c93d)" :
+                        "linear-gradient(to right, #ff5f6d, #ffc371)",
+                }
+            }).showToast();
+        }
 
-/**
- * إعداد طرق الدفع
- */
-function setupPaymentMethods() {
-    // سيتم تفعيلها لاحقاً
-}
+        /* ===================== نظام الملف الشخصي ===================== */
+        async function handleProfileUpdate(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch('/api/user/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-auth-token': localStorage.getItem('authToken')
+                    },
+                    body: JSON.stringify(data)
+                });
 
-/**
- * عرض طريقة دفع محددة
- */
-function showPaymentMethod(method) {
-    const methods = {
-        bank: showBankTransfer,
-        sham: showShamCash,
-        transfer: showMoneyTransfer
-    };
-    
-    if (methods[method]) {
-        methods[method]();
-    }
-}
+                if (!response.ok) {
+                    throw new Error('فشل في تحديث البيانات');
+                }
 
-/**
- * تحويل بنكي
- */
-function showBankTransfer() {
-    const html = `
-        <div class="card">
-            <div class="card-body">
-                <h5>تحويل بنكي</h5>
-                <p>قم بالتحويل إلى الحساب البنكي التالي:</p>
-                <div class="bg-light p-3 rounded">
-                    <p><strong>اسم البنك:</strong> البنك المركزي السوري</p>
-                    <p><strong>اسم الحساب:</strong> شركة SMM Engine</p>
-                    <p><strong>رقم الحساب:</strong> 123456789</p>
-                    <p><strong>IBAN:</strong> SY00 1234 5678 9012 3456 7890</p>
+                const result = await response.json();
+                showNotification(result.message || 'تم تحديث البيانات بنجاح');
+                await loadUserProfile(); // إعادة تحميل البيانات
+                
+            } catch (error) {
+                showNotification('خطأ في تحديث البيانات: ' + error.message, 'error');
+            }
+        }
+
+        /* ===================== نظام الأمان ===================== */
+        async function handlePasswordChange(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            if (data.newPassword !== data.confirmPassword) {
+                showNotification('كلمات المرور غير متطابقة', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/user/change-password', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-auth-token': localStorage.getItem('authToken')
+                    },
+                    body: JSON.stringify({
+                        currentPassword: data.currentPassword,
+                        newPassword: data.newPassword
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'فشل في تغيير كلمة المرور');
+                }
+
+                const result = await response.json();
+                showNotification(result.message || 'تم تغيير كلمة المرور بنجاح');
+                e.target.reset();
+                
+            } catch (error) {
+                showNotification(error.message, 'error');
+            }
+                }
+
+               /* ===================== نظام الصورة الشخصية ===================== */
+        function handleAvatarUpload() {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.style.display = 'none';
+            
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    openImageEditor(file);
+                }
+            });
+            
+            document.body.appendChild(fileInput);
+            fileInput.click();
+            document.body.removeChild(fileInput);
+        }
+
+        function openImageEditor(file) {
+            const reader = new FileReader();
+            const modal = new bootstrap.Modal(document.getElementById('avatarModal'));
+            
+            reader.onload = (e) => {
+                const imageContainer = document.getElementById('imageCropper');
+                imageContainer.innerHTML = `<img src="${e.target.result}" class="img-fluid">`;
+                
+                const image = imageContainer.querySelector('img');
+                cropper = new Cropper(image, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    guides: false
+                });
+                
+                // أحداث الأزرار
+                document.getElementById('rotateLeft').onclick = () => cropper.rotate(-90);
+                document.getElementById('rotateRight').onclick = () => cropper.rotate(90);
+                document.getElementById('saveAvatar').onclick = () => saveCroppedImage(modal);
+                
+                modal.show();
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        async function saveCroppedImage(modal) {
+            if (!cropper) return;
+            
+            const canvas = cropper.getCroppedCanvas({
+                width: 300,
+                height: 300
+            });
+            
+            const avatarDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            
+            try {
+                const response = await fetch('/api/user/upload-avatar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-auth-token': localStorage.getItem('authToken')
+                    },
+                    body: JSON.stringify({ avatar: avatarDataUrl })
+                });
+
+                if (!response.ok) {
+                    throw new Error('فشل في حفظ الصورة');
+                }
+
+                const result = await response.json();
+                showNotification(result.message || 'تم تحديث الصورة الشخصية بنجاح');
+                
+                // تحديث الصورة المعروضة
+                document.getElementById('userAvatar').src = avatarDataUrl;
+                modal.hide();
+                
+            } catch (error) {
+                showNotification('خطأ في حفظ الصورة: ' + error.message, 'error');
+            }
+        }
+
+        /* ===================== نظام الرصيد والشحن ===================== */
+        function selectPaymentMethod(method) {
+            currentPaymentMethod = method;
+            
+            // إزالة النشاط من جميع البطاقات
+            document.querySelectorAll('.payment-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            // تفعيل البطاقة المحددة
+            document.querySelector(`[data-method="${method}"]`).classList.add('active');
+            
+            // عرض نموذج الدفع المناسب
+            showPaymentForm(method);
+        }
+
+        function showPaymentForm(method) {
+            const container = document.getElementById('paymentFormContainer');
+            const forms = {
+                bank: getBankTransferForm(),
+                sham: getShamCashForm(),
+                transfer: getMoneyTransferForm()
+            };
+            
+            container.innerHTML = forms[method] || '';
+            
+            // إضافة حدث للنموذج
+            const form = container.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', (e) => handleDeposit(e, method));
+            }
+        }
+
+        function getBankTransferForm() {
+            return `
+                <div class="payment-form">
+                    <h6 class="fw-bold mb-3">تحويل بنكي</h6>
+                    <div class="bg-light p-4 rounded mb-4">
+                        <p class="mb-2"><strong>اسم البنك:</strong> البنك المركزي السوري</p>
+                        <p class="mb-2"><strong>اسم الحساب:</strong> شركة SMM Engine</p>
+                        <p class="mb-2"><strong>رقم الحساب:</strong> 123456789</p>
+                        <p class="mb-0"><strong>IBAN:</strong> SY00 1234 5678 9012 3456 7890</p>
+                    </div>
+                    <form>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">المبلغ ($)</label>
+                                <input type="number" name="amount" class="form-control" min="5" step="0.01" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">رقم التحويل</label>
+                                <input type="text" name="reference" class="form-control" required>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-paper-plane me-2"></i>إرسال طلب الشحن
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
-                <form id="bankForm" class="mt-3">
-                    <div class="mb-3">
-                        <label class="form-label">المبلغ ($)</label>
-                        <input type="number" name="amount" class="form-control" min="5" step="0.01" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">رقم التحويل</label>
-                        <input type="text" name="reference" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">إرسال طلب الشحن</button>
-                </form>
-            </div>
-        </div>
-    `;
-    
-    document.getElementById('balanceSection').innerHTML = html;
-    document.getElementById('bankForm').addEventListener('submit', (e) => handleDeposit(e, 'bank'));
-    showSection('balance');
-}
-
-/**
- * شام كاش
- */
-function showShamCash() {
-    const html = `
-        <div class="card">
-            <div class="card-body text-center">
-                <h5>شحن عبر شام كاش</h5>
-                <p>قم بمسح QR Code التالي:</p>
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=SHAM_CASH_ACCOUNT_12345" 
-                     alt="QR Code" class="img-fluid mb-3" style="max-width: 200px;">
-                <p class="text-muted">رقم الحساب: 0933123456</p>
-                <form id="shamForm" class="mt-3">
-                    <div class="mb-3">
-                        <label class="form-label">المبلغ ($)</label>
-                        <input type="number" name="amount" class="form-control" min="5" step="0.01" required>
-                    </div>
-                    <button type="submit" class="btn btn-success">إرسال طلب الشحن</button>
-                </form>
-            </div>
-        </div>
-    `;
-    
-    document.getElementById('balanceSection').innerHTML = html;
-    document.getElementById('shamForm').addEventListener('submit', (e) => handleDeposit(e, 'sham'));
-    showSection('balance');
-}
-
-/**
- * حوالة مالية
- */
-function showMoneyTransfer() {
-    const html = `
-        <div class="card">
-            <div class="card-body">
-                <h5>حوالة مالية</h5>
-                <p>يمكنك إرسال الحوالة عبر:</p>
-                <ul>
-                    <li>مكاتب البريد</li>
-                    <li>ويسترن يونيون</li>
-                    <li>مصرف</li>
-                </ul>
-                <form id="transferForm" class="mt-3">
-                    <div class="mb-3">
-                        <label class="form-label">المبلغ ($)</label>
-                        <input type="number" name="amount" class="form-control" min="5" step="0.01" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">طريقة الحوالة</label>
-                        <select name="transferType" class="form-control" required>
-                            <option value="post">مكتب بريد</option>
-                            <option value="western">ويسترن يونيون</option>
-                            <option value="bank">مصرف</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">رقم الحوالة</label>
-                        <input type="text" name="reference" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-warning">إرسال طلب الشحن</button>
-                </form>
-            </div>
-        </div>
-    `;
-    
-    document.getElementById('balanceSection').innerHTML = html;
-    document.getElementById('transferForm').addEventListener('submit', (e) => handleDeposit(e, 'transfer'));
-    showSection('balance');
-}
-
-/**
- * معالجة طلب الشحن
- */
-async function handleDeposit(e, method) {
-    e.preventDefault();
-    
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData.entries());
-    
-    try {
-        const response = await fetch('/api/user/deposit', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-auth-token': localStorage.getItem('authToken')
-            },
-            body: JSON.stringify({
-                amount: data.amount,
-                method: method,
-                details: data
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('فشل في إرسال طلب الشحن');
+            `;
         }
 
-        const result = await response.json();
-        showSuccess(result.message);
-        e.target.reset();
-        
-    } catch (error) {
-        showError('خطأ في إرسال طلب الشحن');
-    }
-}
+        function getShamCashForm() {
+            return `
+                <div class="payment-form text-center">
+                    <h6 class="fw-bold mb-3">شحن عبر شام كاش</h6>
+                    <p class="text-muted mb-3">قم بمسح QR Code التالي:</p>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=SHAM_CASH_ACCOUNT_12345" 
+                         alt="QR Code" class="img-fluid mb-3" style="max-width: 200px;">
+                    <p class="text-muted mb-4">رقم الحساب: 0933123456</p>
+                    <form>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">المبلغ ($)</label>
+                                <input type="number" name="amount" class="form-control" min="5" step="0.01" required>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="fas fa-check-circle me-2"></i>إرسال طلب الشحن
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            `;
+        }
 
-/**
- * تحميل المعاملات
- */
-async function loadTransactions() {
-    try {
-        const response = await fetch('/api/user/transactions', {
-            headers: {
-                'x-auth-token': localStorage.getItem('authToken')
+        function getMoneyTransferForm() {
+            return `
+                <div class="payment-form">
+                    <h6 class="fw-bold mb-3">حوالة مالية</h6>
+                    <p class="text-muted mb-3">يمكنك إرسال الحوالة عبر:</p>
+                    <ul class="list-unstyled mb-4">
+                        <li><i class="fas fa-check text-success me-2"></i>مكاتب البريد</li>
+                        <li><i class="fas fa-check text-success me-2"></i>ويسترن يونيون</li>
+                        <li><i class="fas fa-check text-success me-2"></i>المصارف</li>
+                    </ul>
+                    <form>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">المبلغ ($)</label>
+                                <input type="number" name="amount" class="form-control" min="5" step="0.01" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">طريقة الحوالة</label>
+                                <select name="transferType" class="form-control" required>
+                                    <option value="post">مكتب بريد</option>
+                                    <option value="western">ويسترن يونيون</option>
+                                    <option value="bank">مصرف</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">رقم الحوالة</label>
+                                <input type="text" name="reference" class="form-control" required>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-warning w-100">
+                                    <i class="fas fa-money-bill-wave me-2"></i>إرسال طلب الشحن
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            `;
+        }
+
+        async function handleDeposit(e, method) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch('/api/user/deposit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-auth-token': localStorage.getItem('authToken')
+                    },
+                    body: JSON.stringify({
+                        amount: data.amount,
+                        method: method,
+                        details: data
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('فشل في إرسال طلب الشحن');
+                }
+
+                const result = await response.json();
+                showNotification(result.message || 'تم إرسال طلب الشحن بنجاح');
+                e.target.reset();
+                
+            } catch (error) {
+                showNotification('خطأ في إرسال طلب الشحن: ' + error.message, 'error');
             }
-        });
-
-        if (!response.ok) {
-            throw new Error('فشل في تحميل المعاملات');
         }
 
-        const transactions = await response.json();
-        displayTransactions(transactions);
-        
-    } catch (error) {
-        showError('خطأ في تحميل المعاملات');
-    }
-}
+        /* ===================== نظام المعاملات ===================== */
+        async function loadTransactions() {
+            try {
+                const response = await fetch('/api/user/transactions', {
+                    headers: {
+                        'x-auth-token': localStorage.getItem('authToken')
+                    }
+                });
 
-/**
- * عرض المعاملات
- */
-function displayTransactions(transactions) {
-    const container = document.getElementById('transactionsList');
-    
-    if (transactions.length === 0) {
-        container.innerHTML = '<p class="text-muted text-center">لا توجد معاملات</p>';
-        return;
-    }
+                if (!response.ok) {
+                    throw new Error('فشل في تحميل المعاملات');
+                }
 
-    const html = transactions.map(transaction => `
-        <div class="card mb-2">
-            <div class="card-body py-2">
-                <div class="row align-items-center">
-                    <div class="col-md-3">
-                        <strong>${formatTransactionType(transaction.type)}</strong>
-                    </div>
-                    <div class="col-md-2">
+                const transactions = await response.json();
+                displayTransactions(transactions);
+                
+            } catch (error) {
+                showNotification('خطأ في تحميل المعاملات', 'error');
+            }
+        }
+
+        function displayTransactions(transactions) {
+            const container = document.getElementById('transactionsTable');
+            const emptyMessage = document.getElementById('transactionsEmpty');
+            
+            if (!transactions || transactions.length === 0) {
+                container.innerHTML = '';
+                emptyMessage.style.display = 'block';
+                return;
+            }
+            
+            emptyMessage.style.display = 'none';
+            
+            const html = transactions.map(transaction => `
+                <tr>
+                    <td>${transaction.id}</td>
+                    <td>
+                        <span class="badge ${getTransactionTypeBadge(transaction.type)}">
+                            ${formatTransactionType(transaction.type)}
+                        </span>
+                    </td>
+                    <td>$${transaction.amount.toFixed(2)}</td>
+                    <td>${formatPaymentMethod(transaction.method)}</td>
+                    <td>
                         <span class="badge ${getStatusBadge(transaction.status)}">
                             ${formatTransactionStatus(transaction.status)}
                         </span>
-                    </div>
-                    <div class="col-md-2">
-                        $${transaction.amount}
-                    </div>
-                    <div class="col-md-3">
-                        <small class="text-muted">${new Date(transaction.createdAt).toLocaleDateString('ar-SA')}</small>
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-sm btn-outline-primary" onclick="viewTransaction(${transaction.id})">
-                            تفاصيل
+                    </td>
+                    <td>${new Date(transaction.createdAt).toLocaleDateString('ar-SA')}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewTransactionDetails(${transaction.id})">
+                            <i class="fas fa-eye"></i>
                         </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `).join('');
+                    </td>
+                </tr>
+            `).join('');
 
-    container.innerHTML = html;
-}
+            container.innerHTML = html;
+        }
 
-/**
- * تنسيق نوع المعاملة
- */
-function formatTransactionType(type) {
-    const types = {
-        'deposit': 'شحن رصيد',
-        'withdraw': 'سحب رصيد',
-        'payment': 'دفع',
-        'refund': 'استرداد'
-    };
-    return types[type] || type;
-}
+        /* ===================== دوال مساعدة ===================== */
+        function getStatusText(status) {
+            const statusMap = {
+                'active': 'نشط',
+                'suspended': 'موقوف',
+                'banned': 'محظور'
+            };
+            return statusMap[status] || status;
+        }
 
-/**
- * تنسيق حالة المعاملة
- */
-function formatTransactionStatus(status) {
-    const statuses = {
-        'pending': 'قيد الانتظار',
-        'completed': 'مكتمل',
-        'rejected': 'مرفوض',
-        'cancelled': 'ملغى'
-    };
-    return statuses[status] || status;
-}
+        function getRoleText(role) {
+            const roleMap = {
+                'user': 'مستخدم',
+                'admin': 'مدير'
+            };
+            return roleMap[role] || role;
+        }
 
-/**
- * الحصول على لون الحالة
- */
-function getStatusBadge(status) {
-    const badges = {
-        'pending': 'bg-warning',
-        'completed': 'bg-success',
-        'rejected': 'bg-danger',
-        'cancelled': 'bg-secondary'
-    };
-    return badges[status] || 'bg-secondary';
-}
+        function formatTransactionType(type) {
+            const types = {
+                'deposit': 'شحن رصيد',
+                'withdraw': 'سحب رصيد',
+                'payment': 'دفع',
+                'refund': 'استرداد'
+            };
+            return types[type] || type;
+        }
 
-/**
- * عرض قسم معين
- */
-function showSection(sectionName) {
-    // إخفاء جميع الأقسام
-    document.querySelectorAll('.section').forEach(section => {
-        section.style.display = 'none';
-    });
+        function formatTransactionStatus(status) {
+            const statuses = {
+                'pending': 'قيد الانتظار',
+                'completed': 'مكتمل',
+                'rejected': 'مرفوض',
+                'cancelled': 'ملغى'
+            };
+            return statuses[status] || status;
+        }
 
-    // إزالة النشاط من جميع الأزرار
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.classList.remove('active');
-    });
+        function formatPaymentMethod(method) {
+            const methods = {
+                'bank': 'تحويل بنكي',
+                'sham': 'شام كاش',
+                'transfer': 'حوالة'
+            };
+            return methods[method] || method;
+        }
 
-    // إظهار القسم المطلوب
-    document.getElementById(sectionName + 'Section').style.display = 'block';
-    
-    // تفعيل الزر المناسب
-    document.querySelector(`[onclick="showSection('${sectionName}')"]`).classList.add('active');
+        function getTransactionTypeBadge(type) {
+            const badges = {
+                'deposit': 'badge-success',
+                'withdraw': 'badge-warning',
+                'payment': 'badge-primary',
+                'refund': 'badge-info'
+            };
+            return badges[type] || 'badge-secondary';
+        }
 
-    // تحميل البيانات إذا لزم
-    if (sectionName === 'transactions') {
-        loadTransactions();
-    }
-}
+        function getStatusBadge(status) {
+            const badges = {
+                'pending': 'badge-warning',
+                'completed': 'badge-success',
+                'rejected': 'badge-danger',
+                'cancelled': 'badge-secondary'
+            };
+            return badges[status] || 'badge-secondary';
+        }
 
-/**
- * تسجيل الخروج
- */
-async function handleLogout() {
-    try {
-        await fetch('/api/auth/logout', {
-            method: 'POST',
-            headers: {
-                'x-auth-token': localStorage.getItem('authToken')
+        function viewTransactionDetails(transactionId) {
+            alert('عرض تفاصيل المعاملة: ' + transactionId + '\n\nسيتم تطوير هذه النافذة لاحقاً');
+        }
+
+        /* ===================== نظام تسجيل الخروج ===================== */
+        async function handleLogout() {
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'x-auth-token': localStorage.getItem('authToken')
+                    }
+                });
+            } catch (error) {
+                console.error('خطأ في تسجيل الخروج:', error);
+            } finally {
+                localStorage.removeItem('authToken');
+                window.location.href = '/login.html';
             }
-        });
-    } catch (error) {
-        // تجاهل الأخطاء في تسجيل الخروج
-    } finally {
-        localStorage.removeItem('authToken');
-        window.location.href = '/login.html';
-    }
-}
-
-/**
- * عرض رسالة نجاح
- */
-function showSuccess(message) {
-    Toastify({
-        text: message,
-        duration: 3000,
-        gravity: "top",
-        position: "left",
-        style: {
-            background: "linear-gradient(to right, #00b09b, #96c93d)",
         }
-    }).showToast();
-}
 
-/**
- * عرض رسالة خطأ
- */
-function showError(message) {
-    Toastify({
-        text: message,
-        duration: 3000,
-        gravity: "top",
-        position: "left",
-        style: {
-            background: "linear-gradient(to right, #ff5f6d, #ffc371)",
-        }
-    }).showToast();
-}
-
-// دالة مساعدة لعرض المعاملة
-function viewTransaction(transactionId) {
-    alert('عرض تفاصيل المعاملة: ' + transactionId);
-    // يمكن تنفيذ نافذة عرض التفاصيل لاحقاً
-      }
-        
+        // =================================================================
+        //  نهاية السكريبت - تم التطوير بحذر شديد مع الحفاظ على الوظائف
+        // =================================================================
     </script>
 </body>
 </html>
+                         
