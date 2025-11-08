@@ -32,22 +32,79 @@ connectDB();
 
 // ---------- 2. Database Models ----------
 const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  phone: String,
-  role: { type: String, default: 'user' },
-  balance: { type: Number, default: 0 },
-  status: { type: String, default: 'active' },
-  avatar: String,
-  banReason: String,
-  orders: {
-    total: { type: Number, default: 0 },
-    completed: { type: Number, default: 0 },
-    pending: { type: Number, default: 0 },
-    rejected: { type: Number, default: 0 }
-  }
-}, { timestamps: true });
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    phone: String,
+    fullName: String,
+    avatar: { type: String, default: '/assets/default-avatar.png' },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    balance: { type: Number, default: 0 },
+    totalSpent: { type: Number, default: 0 },
+    status: { type: String, enum: ['active', 'suspended', 'banned'], default: 'active' },
+    banReason: String,
+    balanceFrozen: { type: Boolean, default: false },
+    freezeReason: String,
+    
+    // الإحصائيات
+    orders: {
+        total: { type: Number, default: 0 },
+        completed: { type: Number, default: 0 },
+        pending: { type: Number, default: 0 },
+        rejected: { type: Number, default: 0 }
+    },
+    
+    // التواريخ
+    lastLogin: Date,
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+});
+
+// نموذج معاملات الرصيد
+const transactionSchema = new mongoose.Schema({
+    id: { type: Number, unique: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    username: String,
+    type: { type: String, enum: ['deposit', 'withdraw', 'payment', 'refund'], default: 'deposit' },
+    amount: { type: Number, required: true },
+    method: { type: String, enum: ['bank', 'sham', 'transfer', 'system'], default: 'bank' },
+    status: { type: String, enum: ['pending', 'completed', 'rejected', 'cancelled'], default: 'pending' },
+    details: {
+        bankName: String,
+        accountNumber: String,
+        accountName: String,
+        shamQrCode: String,
+        transferOffice: String,
+        receiptImage: String,
+        whatsappNumber: String
+    },
+    adminNote: String,
+    userNote: String,
+    createdAt: { type: Date, default: Date.now },
+    processedAt: Date,
+    processedBy: String
+});
+
+// نموذج الإشعارات
+const notificationSchema = new mongoose.Schema({
+    id: { type: Number, unique: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    type: { type: String, enum: ['info', 'success', 'warning', 'error'], default: 'info' },
+    title: String,
+    message: String,
+    read: { type: Boolean, default: false },
+    relatedTo: String,
+    relatedId: mongoose.Schema.Types.Mixed,
+    createdAt: { type: Date, default: Date.now }
+});
+
+const User = mongoose.model('User', userSchema);
+const Service = mongoose.model('Service', serviceSchema);
+const Order = mongoose.model('Order', orderSchema);
+const Log = mongoose.model('Log', logSchema);
+const Transaction = mongoose.model('Transaction', transactionSchema);
+const Notification = mongoose.model('Notification', notificationSchema);
+
 
 const serviceSchema = new mongoose.Schema({
   id: { type: Number, unique: true },
@@ -402,57 +459,211 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (method === 'POST' && pathname === '/api/auth/register') {
-      const body = await readBody(req);
-      const { username, password, email, phone } = JSON.parse(body || '{}');
-      
-      if (!username || !password || !email) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'جميع الحقول مطلوبة' }));
-        return;
-      }
-      
-      try {
-        const existingUser = await User.findOne({ 
-          $or: [{ username }, { email }] 
-        });
-        
-        if (existingUser) {
-          res.writeHead(409, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'اسم المستخدم أو الإيميل مستخدم مسبقاً' }));
-          return;
-        }
-        
-        const newUser = await User.create({
-          username,
-          password,
-          email,
-          phone: phone || '',
-          role: 'user',
-          balance: 0,
-          status: 'active',
-          orders: {
-            total: 0,
-            completed: 0,
-            pending: 0,
-            rejected: 0
-          }
-        });
+    // ==================== نظام المستخدمين ====================
 
-        await logAction(username, 'register');
-        
-        res.writeHead(201, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ 
-          message: 'تم إنشاء الحساب بنجاح',
-          username: newUser.username 
-        }));
-      } catch (error) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'خطأ في إنشاء الحساب' }));
-      }
-      return;
+// تسجيل مستخدم جديد
+if (method === 'POST' && pathname === '/api/auth/register') {
+    const body = await readBody(req);
+    const { username, password, email, phone, fullName } = JSON.parse(body || '{}');
+    
+    if (!username || !password || !email) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'اسم المستخدم، كلمة السر، والبريد الإلكتروني مطلوبة' }));
+        return;
     }
 
+    // التحقق من صحة البريد الإلكتروني
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'صيغة البريد الإلكتروني غير صحيحة' }));
+        return;
+    }
+
+    // التحقق من قوة كلمة السر
+    if (password.length < 6) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'كلمة السر يجب أن تكون 6 أحرف على الأقل' }));
+        return;
+    }
+
+    try {
+        // التحقق من عدم وجود مستخدم بنفس الاسم أو البريد
+        const existingUser = await User.findOne({
+            $or: [{ username }, { email }]
+        });
+
+        if (existingUser) {
+            res.writeHead(409, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ 
+                error: 'مستخدم موجود مسبقاً',
+                details: existingUser.username === username ? 
+                        'اسم المستخدم مستخدم مسبقاً' : 'البريد الإلكتروني مستخدم مسبقاً'
+            }));
+            return;
+        }
+
+        // إنشاء المستخدم الجديد
+        const newUser = await User.create({
+            username,
+            password,
+            email,
+            phone: phone || '',
+            fullName: fullName || '',
+            role: 'user',
+            balance: 0,
+            status: 'active',
+            orders: {
+                total: 0,
+                completed: 0,
+                pending: 0,
+                rejected: 0
+            },
+            lastLogin: new Date()
+        });
+
+        // إنشاء إشعار ترحيبي
+        await Notification.create({
+            id: Date.now(),
+            userId: newUser._id,
+            type: 'success',
+            title: 'مرحباً بك!',
+            message: 'تم إنشاء حسابك بنجاح. يمكنك الآن استخدام جميع ميزات المنصة.',
+            relatedTo: 'system'
+        });
+
+        await logAction('system', 'user_register', { 
+            username: newUser.username, 
+            userId: newUser._id 
+        });
+
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            success: true,
+            message: 'تم إنشاء الحساب بنجاح',
+            user: {
+                id: newUser._id,
+                username: newUser.username,
+                email: newUser.email,
+                role: newUser.role
+            }
+        }));
+
+    } catch (error) {
+        console.error('خطأ في إنشاء المستخدم:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في إنشاء الحساب' }));
+    }
+    return;
+}
+
+
+    // الحصول على بيانات المستخدم
+if (method === 'GET' && pathname === '/api/user/profile') {
+    const username = checkAuth(req);
+    if (!username) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'غير مصرح' }));
+        return;
+    }
+
+    try {
+        const user = await User.findOne({ username });
+        if (!user) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            return;
+        }
+
+        // إرجاع بيانات المستخدم بدون كلمة السر
+        const userData = {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            phone: user.phone,
+            fullName: user.fullName,
+            avatar: user.avatar,
+            role: user.role,
+            balance: user.balance,
+            totalSpent: user.totalSpent,
+            status: user.status,
+            orders: user.orders,
+            lastLogin: user.lastLogin,
+            createdAt: user.createdAt
+        };
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(userData));
+
+    } catch (error) {
+        console.error('خطأ في جلب بيانات المستخدم:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في جلب البيانات' }));
+    }
+    return;
+}
+
+// تحديث بيانات المستخدم
+if (method === 'PUT' && pathname === '/api/user/profile') {
+    const username = checkAuth(req);
+    if (!username) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'غير مصرح' }));
+        return;
+    }
+
+    const body = await readBody(req);
+    const updateData = JSON.parse(body || '{}');
+
+    try {
+        // منع تحديث بعض الحقول
+        delete updateData.username;
+        delete updateData.email;
+        delete updateData.role;
+        delete updateData.balance;
+        delete updateData.status;
+
+        const updatedUser = await User.findOneAndUpdate(
+            { username },
+            { 
+                ...updateData,
+                updatedAt: new Date()
+            },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            return;
+        }
+
+        await logAction(username, 'profile_update', { 
+            updatedFields: Object.keys(updateData) 
+        });
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            success: true,
+            message: 'تم تحديث البيانات بنجاح',
+            user: {
+                username: updatedUser.username,
+                email: updatedUser.email,
+                phone: updatedUser.phone,
+                fullName: updatedUser.fullName,
+                avatar: updatedUser.avatar
+            }
+        }));
+
+    } catch (error) {
+        console.error('خطأ في تحديث بيانات المستخدم:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في تحديث البيانات' }));
+    }
+    return;
+}
+
+    
     // --- B. PROTECTED ROUTES (Auth Required) ---
     const user = checkAuth(req);
     if (!user) {
