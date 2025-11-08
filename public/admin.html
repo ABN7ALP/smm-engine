@@ -867,536 +867,741 @@ body.dark-mode .input-group-text {
   <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   
-  <script>
+<script>
+// =================================================================
+//  لوحة تحكم SMM Engine - الإصدار الكامل مع MongoDB
+// =================================================================
 
-    // في بداية الـ script في admin.html أضف:
-let allServices = [];
+// ========== المتغيرات العامة ==========
+let allServices = [];     // تخزين جميع الخدمات
+let allOrdersData = [];   // تخزين جميع الطلبات
+let allServicesData = []; // تخزين بيانات الخدمات للعرض
 
-// دالة لتحميل الخدمات
-async function loadServices() {
-  try {
-    const response = await fetchWithAuth('/api/services');
-    if (response) {
-      allServices = await response.json();
-      console.log('Services loaded:', allServices);
-    }
-  } catch (error) {
-    console.error('Error loading services:', error);
-  }
+// خريطة حالات الطلبات
+const statusMap = {
+    pending: "⏳ قيد الانتظار",
+    processing: "⚙️ قيد التنفيذ", 
+    completed: "✅ مكتمل",
+    rejected: "❌ مرفوض"
+};
+
+// ========== نظام الواجهة ==========
+
+/**
+ * تهيئة نظام الثيم (الوضع الفاتح/الداكن)
+ */
+function initializeTheme() {
+    const body = document.body;
+    const savedTheme = localStorage.getItem('theme') || 'light';
+
+    body.classList.remove('light-mode', 'dark-mode');
+    body.classList.add(savedTheme + '-mode');
+    updateThemeIcon();
 }
 
-// استدعاء دالة تحميل الخدمات مع التحميل الأولي
-loadServices();
+/**
+ * تبديل وضع الثيم
+ */
+function setupThemeToggle() {
+    const body = document.body;
+    const themeSidebarToggle = document.querySelector('.theme-sidebar-toggle');
 
-    // ========== THEME TOGGLE ==========
-const body = document.body;
-const savedTheme = localStorage.getItem('theme') || 'light';
-
-body.classList.remove('light-mode', 'dark-mode');
-body.classList.add(savedTheme + '-mode');
-
-// نقل دالة تبديل الوضع إلى الشريط الجانبي
-const themeSidebarToggle = document.querySelector('.theme-sidebar-toggle');
-
-themeSidebarToggle.addEventListener('click', (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  
-  const isDark = body.classList.contains('dark-mode');
-  body.classList.remove('light-mode', 'dark-mode');
-  body.classList.add(isDark ? 'light-mode' : 'dark-mode');
-  localStorage.setItem('theme', isDark ? 'light' : 'dark');
-  updateThemeIcon();
-});
-
-// إزالة زر تبديل الوضع من الهيدر
-document.querySelector('.header-controls').innerHTML = '';
-
-// تحديث أيقونة الوضع في الشريط الجانبي
-function updateThemeIcon() {
-  const isDark = body.classList.contains('dark-mode');
-  const icon = themeSidebarToggle.querySelector('i');
-  const text = themeSidebarToggle.querySelector('span');
-  
-  icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-  text.textContent = isDark ? 'الوضع الفاتح' : 'الوضع الداكن';
-}
-
-// استدعاء الدالة لتهيئة الأيقونة عند التحميل
-updateThemeIcon();
-    
-    // ========== SIDEBAR NAVIGATION ==========
-const menuToggle = document.getElementById('menuToggle');
-const sidebar = document.querySelector('.sidebar');
-const navLinks = document.querySelectorAll('.nav-link');
-
-menuToggle.addEventListener('click', () => {
-  sidebar.classList.toggle('open');
-});
-
-// إغلاق القائمة الجانبية عند النقر خارجها
-document.addEventListener('click', (e) => {
-  const isClickInsideSidebar = sidebar.contains(e.target);
-  const isClickOnMenuToggle = menuToggle.contains(e.target);
-  
-  if (!isClickInsideSidebar && !isClickOnMenuToggle && sidebar.classList.contains('open')) {
-    sidebar.classList.remove('open');
-  }
-});
-
-// منع إغلاق القائمة عند النقر داخلها
-sidebar.addEventListener('click', (e) => {
-  e.stopPropagation();
-});
-
-    navLinks.forEach(link => {
-      link.addEventListener('click', (e) => {
-        if (link.id !== 'logoutBtn') {
-          e.preventDefault();
-          const section = link.dataset.section;
-          
-          // Remove active class from all links
-          navLinks.forEach(l => l.classList.remove('active'));
-          link.classList.add('active');
-
-          // Hide all sections
-          document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
-
-          
-          // Show selected section
-          if (section === 'dashboard') {
-            document.getElementById('dashboard-section').style.display = 'block';
-          } else if (section === 'services') {
-            document.getElementById('services-section').style.display = 'block';
-          } else if (section === 'orders') {
-            document.getElementById('orders-section').style.display = 'block';
-          } else if (section === 'add-service') {
-            document.getElementById('add-service-section').style.display = 'block';
-          } else if (section === 'logs') {
-            document.getElementById('logs-section').style.display = 'block';
-          }
-
-          // Close sidebar on mobile
-          if (window.innerWidth <= 768) {
-            sidebar.classList.remove('open');
-          }
-        }
-      });
+    themeSidebarToggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const isDark = body.classList.contains('dark-mode');
+        body.classList.remove('light-mode', 'dark-mode');
+        body.classList.add(isDark ? 'light-mode' : 'dark-mode');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        updateThemeIcon();
     });
 
-    // ========== AUTHENTICATION ==========
+    // إزالة زر تبديل الوضع من الهيدر
+    document.querySelector('.header-controls').innerHTML = '';
+}
+
+/**
+ * تحديث أيقونة الثيم في الشريط الجانبي
+ */
+function updateThemeIcon() {
+    const isDark = body.classList.contains('dark-mode');
+    const themeSidebarToggle = document.querySelector('.theme-sidebar-toggle');
+    const icon = themeSidebarToggle.querySelector('i');
+    const text = themeSidebarToggle.querySelector('span');
+    
+    icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+    text.textContent = isDark ? 'الوضع الفاتح' : 'الوضع الداكن';
+}
+
+/**
+ * تهيئة القائمة الجانبية
+ */
+function initializeSidebar() {
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.querySelector('.sidebar');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    // تبديل فتح/إغلاق القائمة
+    menuToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+    });
+
+    // إغلاق القائمة عند النقر خارجها
+    document.addEventListener('click', (e) => {
+        const isClickInsideSidebar = sidebar.contains(e.target);
+        const isClickOnMenuToggle = menuToggle.contains(e.target);
+        
+        if (!isClickInsideSidebar && !isClickOnMenuToggle && sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+        }
+    });
+
+    // منع إغلاق القائمة عند النقر داخلها
+    sidebar.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+
+    // إضافة أحداث التنقل للقائمة
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            if (link.id !== 'logoutBtn') {
+                e.preventDefault();
+                const section = link.dataset.section;
+                
+                // إزالة النشاط من جميع الروابط
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+
+                // إخفاء جميع الأقسام
+                document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+                
+                // إظهار القسم المحدد
+                showSection(section);
+
+                // إغلاق القائمة الجانبية على الجوال
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+    });
+}
+
+/**
+ * إظهار القسم المحدد
+ */
+function showSection(section) {
+    const sectionMap = {
+        'dashboard': 'dashboard-section',
+        'services': 'services-section',
+        'orders': 'orders-section',
+        'add-service': 'add-service-section',
+        'logs': 'logs-section'
+    };
+
+    const sectionId = sectionMap[section];
+    if (sectionId) {
+        document.getElementById(sectionId).style.display = 'block';
+    }
+}
+
+// ========== نظام المصادقة ==========
+
+/**
+ * التحقق من المصادقة وتهيئة الرأس
+ */
+function initializeAuth() {
     const token = localStorage.getItem('authToken');
-    if (!token) window.location.href = '/login.html';
-
-    const headers = { 'Content-Type': 'application/json', 'x-auth-token': token };
-    const alertBox = document.getElementById('alert-box');
-    const notificationContainer = document.getElementById('notification-container');
-
-    // ========== NOTIFICATION SYSTEM ==========
-    function showNotification(msg, type = 'success') {
-      const notification = document.createElement('div');
-      notification.className = `notification ${type}`;
-      notification.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span>
-            ${type === 'success' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-circle"></i>'}
-            ${msg}
-          </span>
-          <button style="background: none; border: none; color: inherit; cursor: pointer; font-size: 1.2rem;" onclick="this.parentElement.parentElement.remove()">×</button>
-        </div>
-      `;
-      notificationContainer.appendChild(notification);
-      
-      setTimeout(() => {
-        notification.remove();
-      }, 4000);
+    if (!token) {
+        window.location.href = '/login.html';
+        return;
     }
 
-    function show(msg, type = 'success') {
-      showNotification(msg, type);
-    }
+    window.headers = { 
+        'Content-Type': 'application/json', 
+        'x-auth-token': token 
+    };
+}
 
-    async function fetchWithAuth(url, options = {}) {
-      options.headers = { ...headers, ...(options.headers || {}) };
-      const r = await fetch(url, options);
-      if (r.status === 401) {
+/**
+ * طلب مع المصادقة
+ */
+async function fetchWithAuth(url, options = {}) {
+    options.headers = { ...window.headers, ...(options.headers || {}) };
+    const response = await fetch(url, options);
+    
+    if (response.status === 401) {
         alert("انتهت صلاحية الجلسة. يرجى تسجيل الدخول.");
         localStorage.removeItem('authToken');
         window.location.href = '/login.html';
         return null;
-      }
-      return r;
     }
+    
+    return response;
+}
 
-    document.getElementById('logoutBtn').onclick = async () => {
-      await fetchWithAuth('/api/auth/logout', { method: 'POST' });
-      localStorage.removeItem('authToken');
-      window.location.href = '/login.html';
-    };
+/**
+ * تسجيل الخروج
+ */
+async function logout() {
+    await fetchWithAuth('/api/auth/logout', { method: 'POST' });
+    localStorage.removeItem('authToken');
+    window.location.href = '/login.html';
+}
 
-    // ========== STATS ==========
-    async function loadStats() {
-      const r = await fetchWithAuth('/api/stats');
-      if (!r) return;
-      const s = await r.json();
-      document.getElementById('total-services').textContent = s.totalServices;
-      document.getElementById('total-orders').textContent = s.totalOrders;
-      document.getElementById('pending-orders').textContent = s.pendingOrders;
-      document.getElementById('avg-price').textContent = '$' + s.avgPrice;
+// ========== نظام الإشعارات ==========
+
+/**
+ * عرض إشعار للمستخدم
+ */
+function showNotification(msg, type = 'success') {
+    const notificationContainer = document.getElementById('notification-container');
+    const notification = document.createElement('div');
+    
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span>
+                ${type === 'success' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-circle"></i>'}
+                ${msg}
+            </span>
+            <button style="background: none; border: none; color: inherit; cursor: pointer; font-size: 1.2rem;" 
+                    onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
+    `;
+    
+    notificationContainer.appendChild(notification);
+    
+    // إزالة الإشعار تلقائياً بعد 4 ثواني
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 4000);
+}
+
+// دالة مختصرة لعرض الإشعارات
+function show(msg, type = 'success') {
+    showNotification(msg, type);
+}
+
+// ========== نظام الإحصائيات ==========
+
+/**
+ * تحميل وعرض الإحصائيات
+ */
+async function loadStats() {
+    try {
+        const response = await fetchWithAuth('/api/stats');
+        if (!response) return;
+        
+        const stats = await response.json();
+        
+        // تحديث واجهة الإحصائيات
+        document.getElementById('total-services').textContent = stats.totalServices;
+        document.getElementById('total-orders').textContent = stats.totalOrders;
+        document.getElementById('pending-orders').textContent = stats.pendingOrders;
+        document.getElementById('avg-price').textContent = '$' + stats.avgPrice;
+        
+    } catch (error) {
+        console.error('خطأ في تحميل الإحصائيات:', error);
     }
+}
 
-    // ========== SERVICES ==========
-    let allServicesData = [];
-    async function loadServices() {
-      const r = await fetchWithAuth('/api/services');
-      if (!r) return;
-      allServicesData = await r.json();
-      renderServices(allServicesData);
+// ========== نظام الخدمات ==========
+
+/**
+ * تحميل جميع الخدمات
+ */
+async function loadServices() {
+    try {
+        const response = await fetchWithAuth('/api/services');
+        if (!response) return;
+        
+        allServicesData = await response.json();
+        allServices = allServicesData; // نسخ للاستخدام في الطلبات
+        renderServices(allServicesData);
+        
+    } catch (error) {
+        console.error('خطأ في تحميل الخدمات:', error);
     }
+}
 
-    function renderServices(list) {
-      const tbody = document.querySelector('#services-table tbody');
-      tbody.innerHTML = '';
-      list.forEach(s => {
+/**
+ * عرض الخدمات في الجدول
+ */
+function renderServices(servicesList) {
+    const tbody = document.querySelector('#services-table tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    if (!Array.isArray(servicesList) || servicesList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">لا توجد خدمات</td></tr>';
+        return;
+    }
+    
+    servicesList.forEach(service => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${s.id}</td>
-          <td>${s.name}</td>
-          <td>${s.category}</td>
-          <td>${s.type}</td>
-          <td>${s.type === 'fixed' ? '$' + (s.price || '') : '$' + (s.rate || '') + ' /1k'}</td>
-          <td>
+            <td>${service.id}</td>
+            <td>${service.name}</td>
+            <td>${service.category}</td>
+            <td>${service.type}</td>
+            <td>${service.type === 'fixed' ? '$' + (service.price || '') : '$' + (service.rate || '') + ' /1k'}</td>
             <td>
-  <div class="btn-action-group">
-    <button onclick="editService(${s.id})" class="btn btn-sm btn-primary">
-      <i class="fas fa-edit"></i>
-    </button>
-    <button onclick="deleteService(${s.id})" class="btn btn-sm btn-danger">
-      <i class="fas fa-trash"></i>
-    </button>
-  </div>
-  </td>
+                <div class="btn-action-group">
+                    <button onclick="editService(${service.id})" class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="deleteService(${service.id})" class="btn btn-sm btn-danger">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
         `;
         tbody.appendChild(tr);
-      });
-    }
-
-    // ========== ORDERS ==========
-const statusMap = {
-  pending: "⏳ قيد الانتظار",
-  processing: "⚙️ قيد التنفيذ", 
-  completed: "✅ مكتمل",
-  rejected: "❌ مرفوض"
-};
-let allOrdersData = [];
-let allServices = []; // ⬅️ نضيف هذا
-
-
-    async function loadOrders() {
-  try {
-    const r = await fetchWithAuth('/api/orders');
-    if (!r) {
-      console.error('Failed to fetch orders');
-      return;
-    }
-    
-    const ordersData = await r.json();
-    console.log('Orders loaded:', ordersData); // للتdebug
-    
-    // تحميل الخدمات إذا ما كانت محملة
-    if (!allServices || allServices.length === 0) {
-      const servicesRes = await fetchWithAuth('/api/services');
-      if (servicesRes) {
-        allServices = await servicesRes.json();
-      }
-    }
-    
-    renderOrders(ordersData);
-  } catch (error) {
-    console.error('Error loading orders:', error);
-  }
-    }
-
-    function renderOrders(list) {
-  const tbody = document.getElementById('ordersTable');
-  if (!tbody) return;
-  
-  tbody.innerHTML = '';
-  
-  // التأكد أن list عبارة عن array
-  if (!Array.isArray(list)) {
-    console.error('Orders data is not an array:', list);
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">خطأ في تحميل البيانات</td></tr>';
-    return;
-  }
-  
-  if (list.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">لا توجد طلبات</td></tr>';
-    return;
-  }
-  
-  list.forEach(order => {
-    // البحث في allServices بدل svcMap
-    const service = allServices.find(s => String(s.id) === String(order.serviceId));
-    const serviceName = service ? service.name : `خدمة ${order.serviceId}`;
-    
-    const statusText = statusMap[order.status] || order.status;
-    
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${order.id || 'N/A'}</td>
-      <td>${serviceName}</td>
-      <td>
-        <a href="${order.link}" target="_blank" class="text-truncate d-inline-block" style="max-width: 150px;">
-          ${order.link}
-        </a>
-      </td>
-      <td>${order.quantity || '—'}</td>
-      <td>$${order.price ? order.price.toFixed(2) : '0.00'}</td>
-      <td>
-        <select class="form-select form-select-sm order-status" data-order-id="${order.id}">
-          <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>⏳ قيد الانتظار</option>
-          <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>⚙️ قيد التنفيذ</option>
-          <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>✅ مكتمل</option>
-          <option value="rejected" ${order.status === 'rejected' ? 'selected' : ''}>❌ مرفوض</option>
-        </select>
-      </td>
-      <td>${new Date(order.createdAt).toLocaleString('ar-SA')}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-  
-  // إضافة events لتغيير الحالة
-  document.querySelectorAll('.order-status').forEach(select => {
-    select.addEventListener('change', function() {
-      updateOrderStatus(this.dataset.orderId, this.value);
     });
-  });
+}
+
+// ========== نظام الطلبات ==========
+
+/**
+ * تحميل جميع الطلبات
+ */
+async function loadOrders() {
+    try {
+        const response = await fetchWithAuth('/api/orders');
+        if (!response) {
+            console.error('فشل في جلب الطلبات');
+            return;
+        }
+        
+        const ordersData = await response.json();
+        console.log('الطلبات المحملة:', ordersData);
+        
+        allOrdersData = ordersData;
+        renderOrders(ordersData);
+        
+    } catch (error) {
+        console.error('خطأ في تحميل الطلبات:', error);
     }
+}
 
-
-    async function updateOrderStatus(orderId, newStatus) {
-  try {
-    const response = await fetchWithAuth(`/api/orders/${orderId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ status: newStatus })
-    });
-
-    if (response && response.ok) {
-      showAlert('✅ تم تحديث حالة الطلب بنجاح', 'success');
-      loadOrders(); // إعادة تحميل الطلبات
-    } else {
-      showAlert('❌ فشل في تحديث حالة الطلب', 'error');
-    }
-  } catch (error) {
-    console.error('Error updating order:', error);
-    showAlert('❌ خطأ في تحديث حالة الطلب', 'error');
-  }
+/**
+ * عرض الطلبات في الجدول
+ */
+function renderOrders(ordersList) {
+    const tbody = document.getElementById('ordersTable');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    // التحقق من صحة البيانات
+    if (!Array.isArray(ordersList)) {
+        console.error('بيانات الطلبات ليست مصفوفة:', ordersList);
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">خطأ في تحميل البيانات</td></tr>';
+        return;
     }
     
-
-    // ========== LOGS ==========
-    async function loadLogs() {
-      const r = await fetchWithAuth('/api/logs');
-      if (!r) return;
-      const logs = await r.json();
-      const box = document.getElementById('logsBox');
-      box.innerHTML = logs.slice(0, 50).map(l => `
-        <div>
-          <small style="color: #6c757d;"><i class="fas fa-clock"></i> [${new Date(l.time).toLocaleString()}]</small>
-          <strong>${l.user}</strong> ${l.action}
-          <span style="color: #17a2b8;">${JSON.stringify(l.meta)}</span>
-        </div>
-      `).join('');
+    if (ordersList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">لا توجد طلبات</td></tr>';
+        return;
     }
+    
+    // عرض كل طلب
+    ordersList.forEach(order => {
+        const service = allServices.find(s => String(s.id) === String(order.serviceId));
+        const serviceName = service ? service.name : `خدمة ${order.serviceId}`;
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${order.id || 'N/A'}</td>
+            <td>${serviceName}</td>
+            <td>
+                <a href="${order.link}" target="_blank" class="text-truncate d-inline-block" style="max-width: 150px;">
+                    ${order.link}
+                </a>
+            </td>
+            <td>${order.quantity || '—'}</td>
+            <td>$${order.price ? order.price.toFixed(2) : '0.00'}</td>
+            <td>
+                <select class="form-select form-select-sm order-status" data-order-id="${order.id}">
+                    <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>⏳ قيد الانتظار</option>
+                    <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>⚙️ قيد التنفيذ</option>
+                    <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>✅ مكتمل</option>
+                    <option value="rejected" ${order.status === 'rejected' ? 'selected' : ''}>❌ مرفوض</option>
+                </select>
+            </td>
+            <td>${new Date(order.createdAt).toLocaleString('ar-SA')}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
+    // إضافة أحداث لتغيير حالة الطلبات
+    setupOrderStatusEvents();
+}
 
-    // ========== SERVICE FORM ==========
+/**
+ * إعداد أحداث تغيير حالة الطلبات
+ */
+function setupOrderStatusEvents() {
+    document.querySelectorAll('.order-status').forEach(select => {
+        select.addEventListener('change', function() {
+            updateOrderStatus(this.dataset.orderId, this.value);
+        });
+    });
+}
+
+/**
+ * تحديث حالة الطلب
+ */
+async function updateOrderStatus(orderId, newStatus) {
+    try {
+        const response = await fetchWithAuth(`/api/orders/${orderId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ status: newStatus })
+        });
+
+        if (response && response.ok) {
+            show('✅ تم تحديث حالة الطلب بنجاح', 'success');
+            loadOrders(); // إعادة تحميل الطلبات
+        } else {
+            show('❌ فشل في تحديث حالة الطلب', 'error');
+        }
+    } catch (error) {
+        console.error('خطأ في تحديث حالة الطلب:', error);
+        show('❌ خطأ في تحديث حالة الطلب', 'error');
+    }
+}
+
+// ========== نظام السجلات ==========
+
+/**
+ * تحميل وعرض سجلات النظام
+ */
+async function loadLogs() {
+    try {
+        const response = await fetchWithAuth('/api/logs');
+        if (!response) return;
+        
+        const logs = await response.json();
+        const logsBox = document.getElementById('logsBox');
+        
+        logsBox.innerHTML = logs.slice(0, 50).map(log => `
+            <div class="log-entry">
+                <small style="color: #6c757d;">
+                    <i class="fas fa-clock"></i> [${new Date(log.createdAt).toLocaleString()}]
+                </small>
+                <strong>${log.user}</strong> ${log.action}
+                <span style="color: #17a2b8;">${JSON.stringify(log.meta)}</span>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        console.error('خطأ في تحميل السجلات:', error);
+    }
+}
+
+// ========== نظام إدارة الخدمات ==========
+
+/**
+ * تهيئة نموذج إضافة/تعديل الخدمة
+ */
+function initializeServiceForm() {
     const form = document.getElementById('serviceForm');
     const typeSelect = document.getElementById('typeSelect');
 
-    typeSelect.addEventListener('change', () => {
-      if (typeSelect.value === 'fixed') {
+    // تغيير نوع الخدمة
+    typeSelect.addEventListener('change', handleServiceTypeChange);
+
+    // زر مسح النموذج
+    document.getElementById('clearFormBtn').addEventListener('click', clearServiceForm);
+
+    // إرسال النموذج
+    form.addEventListener('submit', handleServiceSubmit);
+}
+
+/**
+ * التعامل مع تغيير نوع الخدمة
+ */
+function handleServiceTypeChange() {
+    const typeSelect = document.getElementById('typeSelect');
+    
+    if (typeSelect.value === 'fixed') {
         document.getElementById('priceContainer').innerHTML = `
-          <label class="form-label">السعر الإجمالي</label>
-          <input name="price" type="number" step="0.01" class="form-control" placeholder="السعر الإجمالي" required>
+            <label class="form-label">السعر الإجمالي</label>
+            <input name="price" type="number" step="0.01" class="form-control" placeholder="السعر الإجمالي" required>
         `;
         document.getElementById('qtyContainer').style.display = 'none';
-        document.querySelector('[name=min]')?.removeAttribute('required');
-        document.querySelector('[name=max]')?.removeAttribute('required');
-      } else {
+    } else {
         document.getElementById('priceContainer').innerHTML = `
-          <label class="form-label">السعر لكل 1000</label>
-          <input name="rate" type="number" step="0.01" class="form-control" placeholder="السعر لكل 1000" required>
+            <label class="form-label">السعر لكل 1000</label>
+            <input name="rate" type="number" step="0.01" class="form-control" placeholder="السعر لكل 1000" required>
         `;
         document.getElementById('qtyContainer').style.display = 'grid';
-        document.querySelector('[name=min]')?.setAttribute('required', 'required');
-        document.querySelector('[name=max]')?.setAttribute('required', 'required');
-      }
-    });
+    }
+}
 
-    document.getElementById('clearFormBtn').addEventListener('click', () => {
-      form.reset();
-      document.getElementById('serviceIdInput').value = '';
-      typeSelect.dispatchEvent(new Event('change'));
-    });
+/**
+ * مسح نموذج الخدمة
+ */
+function clearServiceForm() {
+    const form = document.getElementById('serviceForm');
+    form.reset();
+    document.getElementById('serviceIdInput').value = '';
+    
+    const typeSelect = document.getElementById('typeSelect');
+    typeSelect.dispatchEvent(new Event('change'));
+}
 
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      const data = Object.fromEntries(new FormData(form).entries());
-      const id = data.id;
+/**
+ * التعامل مع إرسال نموذج الخدمة
+ */
+async function handleServiceSubmit(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    const serviceId = data.id;
 
-      if (data.type === 'fixed') {
+    // تنظيف البيانات حسب نوع الخدمة
+    if (data.type === 'fixed') {
         delete data.rate;
         delete data.min;
         delete data.max;
-      } else {
+    } else {
         delete data.price;
-      }
+    }
 
-      if (id) {
-        delete data.id;
-        const res = await fetchWithAuth('/api/services/' + id, { method: 'PUT', body: JSON.stringify(data) });
-        if (res && res.ok) {
-          show('✅ تم تعديل الخدمة');
-          form.reset();
-          document.getElementById('serviceIdInput').value = '';
-          reloadAll();
+    try {
+        let response;
+        
+        if (serviceId) {
+            // تحديث خدمة موجودة
+            delete data.id;
+            response = await fetchWithAuth(`/api/services/${serviceId}`, {
+                method: 'PUT',
+                body: JSON.stringify(data)
+            });
         } else {
-          show('❌ فشل تعديل الخدمة', 'error');
+            // إضافة خدمة جديدة
+            response = await fetchWithAuth('/api/services', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
         }
-      } else {
-        const res = await fetchWithAuth('/api/services', { method: 'POST', body: JSON.stringify(data) });
-        if (res && res.ok) {
-          show('✅ تم إضافة الخدمة');
-          form.reset();
-          reloadAll();
+
+        if (response && response.ok) {
+            show(serviceId ? '✅ تم تعديل الخدمة' : '✅ تم إضافة الخدمة');
+            clearServiceForm();
+            reloadAll();
         } else {
-          show('❌ فشل إضافة الخدمة', 'error');
+            show(serviceId ? '❌ فشل تعديل الخدمة' : '❌ فشل إضافة الخدمة', 'error');
         }
-      }
-    });
+    } catch (error) {
+        console.error('خطأ في حفظ الخدمة:', error);
+        show('❌ خطأ في حفظ الخدمة', 'error');
+    }
+}
 
-    // ========== EDIT / DELETE SERVICE ==========
-    window.editService = async function (id) {
-      const s = allServicesData.find(x => x.id === id);
-      if (!s) return;
-      document.querySelector('[name=name]').value = s.name || '';
-      document.querySelector('[name=category]').value = s.category || '';
-      document.getElementById('serviceIdInput').value = s.id;
-      typeSelect.value = s.type;
-      typeSelect.dispatchEvent(new Event('change'));
-      if (s.type === 'fixed') {
-        document.querySelector('[name=price]').value = s.price || '';
-      } else {
-        document.querySelector('[name=rate]').value = s.rate || '';
-        document.querySelector('[name=min]').value = s.min || '';
-        document.querySelector('[name=max]').value = s.max || '';
-      }
-      
-      // Navigate to add-service section
-      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-      document.querySelector('[data-section="add-service"]').classList.add('active');
-      document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
-      document.getElementById('add-service-section').style.display = 'block';
-      
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    window.deleteService = async function (id) {
-      if (!confirm('⚠️ تأكيد حذف الخدمة؟ سيتم حذفها نهائياً.')) return;
-      const res = await fetchWithAuth('/api/services/' + id, { method: 'DELETE' });
-      if (res && res.ok) {
-        show('✅ تم حذف الخدمة');
-        reloadAll();
-      } else {
-        show('❌ فشل حذف الخدمة', 'error');
-      }
-    };
-
-    // ========== SEARCH FUNCTIONALITY ==========
-    document.getElementById('searchServices').addEventListener('input', (e) => {
-      const query = e.target.value.toLowerCase();
-      const filtered = allServicesData.filter(s =>
-        s.name.toLowerCase().includes(query) ||
-        s.category.toLowerCase().includes(query)
-      );
-      renderServices(filtered);
-    });
-
-    document.getElementById('searchOrders').addEventListener('input', async (e) => {
-      const query = e.target.value.toLowerCase();
-      const servicesRes = await fetchWithAuth('/api/services');
-      if (!servicesRes) return;
-      const services = await servicesRes.json();
-      const svcMap = {};
-      services.forEach(s => svcMap[s.id] = s);
-      const filtered = allOrdersData.filter(o =>
-        String(o.id).includes(query) ||
-        o.link.toLowerCase().includes(query) ||
-        (svcMap[o.serviceId] && svcMap[o.serviceId].name.toLowerCase().includes(query))
-      );
-      renderOrders(filtered, svcMap);
-    });
-
-    document.getElementById('refreshBtn').onclick = async () => {
-  const btn = document.getElementById('refreshBtn');
-  const originalHTML = btn.innerHTML;
-  
-  // إضافة مؤثر التحميل
-  btn.innerHTML = '<i class="fas fa-spinner"></i> جاري التحديث...';
-  btn.classList.add('btn-loading');
-  btn.disabled = true;
-  
-  try {
-    await reloadAll();
-    show('✅ تم تحديث البيانات');
-  } catch (error) {
-    show('❌ فشل في تحديث البيانات', 'error');
-  } finally {
-    // إعادة الحالة الأصلية
-    btn.innerHTML = originalHTML;
-    btn.classList.remove('btn-loading');
-    btn.disabled = false;
-  }
+/**
+ * تحرير خدمة موجودة
+ */
+window.editService = async function(serviceId) {
+    const service = allServicesData.find(s => s.id === serviceId);
+    if (!service) return;
+    
+    // تعبئة النموذج ببيانات الخدمة
+    document.querySelector('[name=name]').value = service.name || '';
+    document.querySelector('[name=category]').value = service.category || '';
+    document.getElementById('serviceIdInput').value = service.id;
+    
+    const typeSelect = document.getElementById('typeSelect');
+    typeSelect.value = service.type;
+    typeSelect.dispatchEvent(new Event('change'));
+    
+    if (service.type === 'fixed') {
+        document.querySelector('[name=price]').value = service.price || '';
+    } else {
+        document.querySelector('[name=rate]').value = service.rate || '';
+        document.querySelector('[name=min]').value = service.min || '';
+        document.querySelector('[name=max]').value = service.max || '';
+    }
+    
+    // الانتقال لقسم إضافة الخدمة
+    navigateToSection('add-service');
 };
 
-    // ========== RELOAD ALL ==========
-    async function reloadAll() {
-      await Promise.all([loadStats(), loadServices(), loadOrders(), loadLogs()]);
+/**
+ * حذف خدمة
+ */
+window.deleteService = async function(serviceId) {
+    if (!confirm('⚠️ تأكيد حذف الخدمة؟ سيتم حذفها نهائياً.')) return;
+    
+    try {
+        const response = await fetchWithAuth(`/api/services/${serviceId}`, { 
+            method: 'DELETE' 
+        });
+        
+        if (response && response.ok) {
+            show('✅ تم حذف الخدمة');
+            reloadAll();
+        } else {
+            show('❌ فشل حذف الخدمة', 'error');
+        }
+    } catch (error) {
+        console.error('خطأ في حذف الخدمة:', error);
+        show('❌ خطأ في حذف الخدمة', 'error');
     }
+};
 
-    // ========== EXPORT CSV ==========
-    async function downloadCSV(endpoint, filename) {
-      const r = await fetchWithAuth(endpoint);
-      if (!r || !r.ok) {
-        show('❌ فشل تحميل الملف', 'error');
-        return;
-      }
-      const text = await r.text();
-      const blob = new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8;" });
+/**
+ * التنقل لقسم معين
+ */
+function navigateToSection(section) {
+    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+    document.querySelector(`[data-section="${section}"]`).classList.add('active');
+    
+    document.querySelectorAll('.section').forEach(section => section.style.display = 'none');
+    document.getElementById(`${section}-section`).style.display = 'block';
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
+// ========== نظام البحث ==========
+
+/**
+ * إعداد نظام البحث
+ */
+function initializeSearch() {
+    // بحث الخدمات
+    document.getElementById('searchServices').addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        const filtered = allServicesData.filter(service =>
+            service.name.toLowerCase().includes(query) ||
+            service.category.toLowerCase().includes(query)
+        );
+        renderServices(filtered);
+    });
+
+    // بحث الطلبات
+    document.getElementById('searchOrders').addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        const filtered = allOrdersData.filter(order =>
+            String(order.id).includes(query) ||
+            order.link.toLowerCase().includes(query) ||
+            (allServices.find(s => s.id == order.serviceId)?.name.toLowerCase().includes(query))
+        );
+        renderOrders(filtered);
+    });
+}
+
+// ========== نظام التحديث ==========
+
+/**
+ * تحديث جميع البيانات
+ */
+async function reloadAll() {
+    await Promise.all([
+        loadStats(),
+        loadServices(), 
+        loadOrders(),
+        loadLogs()
+    ]);
+}
+
+/**
+ * زر تحديث البيانات
+ */
+document.getElementById('refreshBtn').onclick = async function() {
+    const btn = this;
+    const originalHTML = btn.innerHTML;
+    
+    // إضافة تأثير التحميل
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحديث...';
+    btn.disabled = true;
+    
+    try {
+        await reloadAll();
+        show('✅ تم تحديث البيانات');
+    } catch (error) {
+        console.error('خطأ في تحديث البيانات:', error);
+        show('❌ فشل في تحديث البيانات', 'error');
+    } finally {
+        // إعادة الحالة الأصلية
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
     }
+};
 
-    document.getElementById('exportServices').onclick = () => {
-      downloadCSV('/api/export/services.csv', 'الخدمات.csv');
-    };
-    document.getElementById('exportOrders').onclick = () => {
-      downloadCSV('/api/export/orders.csv', 'الطلبات.csv');
-    };
+// ========== نظام التصدير ==========
 
-    // ========== INITIAL LOAD ==========
+/**
+ * تحميل ملف CSV
+ */
+async function downloadCSV(endpoint, filename) {
+    try {
+        const response = await fetchWithAuth(endpoint);
+        if (!response || !response.ok) {
+            show('❌ فشل تحميل الملف', 'error');
+            return;
+        }
+        
+        const text = await response.text();
+        const blob = new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8;" });
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        
+    } catch (error) {
+        console.error('خطأ في تحميل الملف:', error);
+        show('❌ خطأ في تحميل الملف', 'error');
+    }
+}
+
+// إعداد أزرار التصدير
+document.getElementById('exportServices').onclick = () => {
+    downloadCSV('/api/export/services.csv', 'الخدمات.csv');
+};
+
+document.getElementById('exportOrders').onclick = () => {
+    downloadCSV('/api/export/orders.csv', 'الطلبات.csv');
+};
+
+// ========== التهيئة الرئيسية ==========
+
+/**
+ * تهيئة التطبيق بالكامل
+ */
+function initializeApp() {
+    // تهيئة الواجهة
+    initializeTheme();
+    setupThemeToggle();
+    initializeSidebar();
+    
+    // تهيئة النظام
+    initializeAuth();
+    initializeServiceForm();
+    initializeSearch();
+    
+    // إعداد الأحداث
+    document.getElementById('logoutBtn').onclick = logout;
+    
+    // تحميل البيانات الأولية
     reloadAll();
-  </script>
+}
+
+// بدء تشغيل التطبيق عندما يتم تحميل الصفحة
+document.addEventListener('DOMContentLoaded', initializeApp);
+
+</script>
 </body>
 </html>
