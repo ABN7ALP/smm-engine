@@ -288,6 +288,58 @@
       cursor: not-allowed;
     }
 
+    /* تنسيقات التسجيل */
+    .register-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .register-container {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    body.dark-mode .register-container {
+      background: #2a2a2a;
+      color: #e0e0e0;
+    }
+
+    .register-header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .register-header h3 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    body.dark-mode .register-header h3 {
+      color: #e0e0e0;
+    }
+
+    .register-header p {
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    body.dark-mode .register-header p {
+      color: #aaa;
+    }
+
     /* Responsive */
     @media (max-width: 480px) {
       .login-container {
@@ -300,6 +352,11 @@
 
       .login-header .logo {
         font-size: 2.5rem;
+      }
+
+      .register-container {
+        padding: 20px;
+        margin: 10px;
       }
     }
   </style>
@@ -368,24 +425,13 @@
         </button>
       </form>
 
-      // ⬇️ أضف كود التسجيل الجديد هنا
-document.getElementById('registerLink').addEventListener('click', function(e) {
-    e.preventDefault();
-    
-    const registerHTML = `
-    <div class="register-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;">
-        <div class="register-container" style="background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
-            <div class="register-header" style="text-align: center; margin-bottom: 25px;">
-                <h3 style="color: #333; margin-bottom: 10px;">إنشاء حساب جديد</h3>
-                <p style="color: #666; font-size: 0.9rem;">انضم إلينا واستفد من جميع خدماتنا</p>
-            </div>
-            
-            <form id="registerForm">
-                <!-- ... كود النموذج الكامل ... -->
-            </form>
-        </div>
-    </div>
-    `;
+      <!-- رابط إنشاء حساب جديد -->
+      <div class="text-center mt-4">
+        <p class="text-muted mb-2">ليس لديك حساب؟</p>
+        <a href="#" id="registerLink" class="btn btn-outline-primary">
+          <i class="fas fa-user-plus me-2"></i>إنشاء حساب جديد
+        </a>
+      </div>
 
       <div class="login-footer">
         <p>© 2024 لوحة التحكم. جميع الحقوق محفوظة.</p>
@@ -402,15 +448,21 @@ document.getElementById('registerLink').addEventListener('click', function(e) {
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    // ========== THEME TOGGLE ==========
-    const themeToggleLogin = document.getElementById('themeToggleLogin');
+    // =================================================================
+    //  نظام تسجيل الدخول والتسجيل - الإصدار الكامل
+    // =================================================================
+
+    // ========== نظام الثيم (الوضع الفاتح/الداكن) ==========
     const body = document.body;
+    const themeToggleLogin = document.getElementById('themeToggleLogin');
     const savedTheme = localStorage.getItem('theme') || 'light';
 
+    // تطبيق الثيم المحفوظ
     body.classList.remove('light-mode', 'dark-mode');
     body.classList.add(savedTheme + '-mode');
     updateThemeIcon();
 
+    // تبديل الثيم
     themeToggleLogin.addEventListener('click', () => {
       const isDark = body.classList.contains('dark-mode');
       body.classList.remove('light-mode', 'dark-mode');
@@ -419,74 +471,235 @@ document.getElementById('registerLink').addEventListener('click', function(e) {
       updateThemeIcon();
     });
 
+    // تحديث أيقونة الثيم
     function updateThemeIcon() {
       const isDark = body.classList.contains('dark-mode');
       themeToggleLogin.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
     }
 
-    // ========== LOGIN FORM ==========
-    const form = document.getElementById('loginForm');
+    // ========== نظام تسجيل الدخول ==========
+    const loginForm = document.getElementById('loginForm');
     const alertBox = document.getElementById('alert-box');
-    const submitBtn = form.querySelector('button[type="submit"]');
+    const submitBtn = loginForm.querySelector('button[type="submit"]');
     const loadingSpan = submitBtn.querySelector('.loading');
     const btnText = submitBtn.querySelector('.btn-text');
 
-    function show(msg, type = 'error') {
+    /**
+     * عرض رسالة للمستخدم
+     */
+    function showAlert(message, type = 'error') {
       const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
       const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+      
       alertBox.innerHTML = `
         <div class="alert ${alertClass}" role="alert">
-          <i class="fas ${icon}"></i> ${msg}
+          <i class="fas ${icon}"></i> ${message}
         </div>
       `;
+      
+      // إزالة الرسالة بعد 4 ثواني
       setTimeout(() => {
         alertBox.innerHTML = '';
       }, 4000);
     }
 
-    form.addEventListener('submit', async (e) => {
+    /**
+     * معالجة تسجيل الدخول
+     */
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      // Disable button and show loading
+      // تعطيل الزر وإظهار التحميل
       submitBtn.disabled = true;
       loadingSpan.style.display = 'inline';
       btnText.style.display = 'none';
 
-      const fd = new FormData(form);
-      const data = Object.fromEntries(fd.entries());
+      const formData = new FormData(loginForm);
+      const data = Object.fromEntries(formData.entries());
 
       try {
-        const res = await fetch('/api/auth/login', {
+        const response = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
 
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({ error: 'خطأ في تسجيل الدخول' }));
-          show(err.error || 'خطأ في تسجيل الدخول', 'error');
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'خطأ في تسجيل الدخول' }));
+          showAlert(errorData.error || 'خطأ في تسجيل الدخول', 'error');
+          
+          // إعادة تفعيل الزر
           submitBtn.disabled = false;
           loadingSpan.style.display = 'none';
           btnText.style.display = 'inline';
           return;
         }
 
-        const j = await res.json();
-        localStorage.setItem('authToken', j.token);
-        show('✅ تم تسجيل الدخول بنجاح', 'success');
+        const result = await response.json();
+        showAlert('✅ تم تسجيل الدخول بنجاح', 'success');
+        
+        // حفظ التوكن والتوجيه
+        localStorage.setItem('authToken', result.token);
         
         setTimeout(() => {
-          window.location.href = '/admin.html';
+          // التوجيه حسب صلاحيات المستخدم
+          if (result.role === 'admin') {
+            window.location.href = '/admin.html';
+          } else {
+            window.location.href = '/user.html';
+          }
         }, 1000);
-      } catch (err) {
-        show('تعذر الاتصال بالخادم', 'error');
+
+      } catch (error) {
+        showAlert('❌ تعذر الاتصال بالخادم', 'error');
         submitBtn.disabled = false;
         loadingSpan.style.display = 'none';
         btnText.style.display = 'inline';
       }
     });
 
-    // Focus on first input
+    // ========== نظام إنشاء الحساب ==========
+    document.getElementById('registerLink').addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const registerHTML = `
+      <div class="register-overlay">
+        <div class="register-container">
+          <div class="register-header">
+            <h3>إنشاء حساب جديد</h3>
+            <p>انضم إلينا واستفد من جميع خدماتنا</p>
+          </div>
+          
+          <form id="registerForm">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">اسم المستخدم *</label>
+                  <input type="text" name="username" class="form-control" placeholder="اختر اسم مستخدم فريد" required minlength="3">
+                  <div class="form-text">يجب أن يكون 3 أحرف على الأقل</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">الاسم الكامل</label>
+                  <input type="text" name="fullName" class="form-control" placeholder="الاسم الكامل (اختياري)">
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">البريد الإلكتروني *</label>
+              <input type="email" name="email" class="form-control" placeholder="example@email.com" required>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">كلمة السر *</label>
+                  <input type="password" name="password" class="form-control" placeholder="6 أحرف على الأقل" required minlength="6">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">تأكيد كلمة السر *</label>
+                  <input type="password" name="confirmPassword" class="form-control" placeholder="أعد إدخال كلمة السر" required>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">رقم الهاتف</label>
+              <input type="tel" name="phone" class="form-control" placeholder="+963..." pattern="[+][0-9]{10,}">
+              <div class="form-text">اختياري - سيستخدم للتواصل معك</div>
+            </div>
+            
+            <div class="form-check mb-4">
+              <input class="form-check-input" type="checkbox" id="agreeTerms" required>
+              <label class="form-check-label" for="agreeTerms" style="font-size: 0.9rem;">
+                أوافق على <a href="#" style="color: #667eea;">الشروط والأحكام</a> و <a href="#" style="color: #667eea;">سياسة الخصوصية</a>
+              </label>
+            </div>
+            
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary flex-fill" style="padding: 12px;">
+                <span class="btn-text">إنشاء الحساب</span>
+                <span class="loading" style="display: none;"><i class="fas fa-spinner fa-spin"></i></span>
+              </button>
+              <button type="button" id="cancelRegister" class="btn btn-secondary">إلغاء</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      `;
+      
+      document.body.insertAdjacentHTML('beforeend', registerHTML);
+      
+      // أحداث نموذج التسجيل
+      const registerForm = document.getElementById('registerForm');
+      const registerSubmitBtn = registerForm.querySelector('button[type="submit"]');
+      const registerBtnText = registerSubmitBtn.querySelector('.btn-text');
+      const registerLoading = registerSubmitBtn.querySelector('.loading');
+      
+      registerForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // إظهار التحميل
+        registerBtnText.style.display = 'none';
+        registerLoading.style.display = 'inline-block';
+        registerSubmitBtn.disabled = true;
+        
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+        
+        // التحقق من تطابق كلمات السر
+        if (data.password !== data.confirmPassword) {
+          alert('❌ كلمات السر غير متطابقة');
+          registerBtnText.style.display = 'inline-block';
+          registerLoading.style.display = 'none';
+          registerSubmitBtn.disabled = false;
+          return;
+        }
+        
+        // تنظيف البيانات قبل الإرسال
+        delete data.confirmPassword;
+        delete data.agreeTerms;
+        
+        try {
+          const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          
+          const result = await response.json();
+          
+          if (response.ok) {
+            alert('✅ ' + result.message);
+            document.querySelector('.register-overlay').remove();
+            
+            // تعبئة حقول الدخول تلقائياً
+            document.getElementById('username').value = data.username;
+            document.getElementById('password').value = data.password;
+            
+          } else {
+            alert('❌ ' + (result.error || 'حدث خطأ أثناء إنشاء الحساب'));
+          }
+        } catch (error) {
+          alert('❌ خطأ في الاتصال بالخادم');
+        } finally {
+          registerBtnText.style.display = 'inline-block';
+          registerLoading.style.display = 'none';
+          registerSubmitBtn.disabled = false;
+        }
+      });
+      
+      // زر الإلغاء
+      document.getElementById('cancelRegister').addEventListener('click', function() {
+        document.querySelector('.register-overlay').remove();
+      });
+    });
+
+    // تركيز على حقل اسم المستخدم عند التحميل
     document.getElementById('username').focus();
   </script>
 </body>
