@@ -1164,6 +1164,212 @@ if (method === 'POST' && pathname === '/api/user/deposit') {
       return;
     }
 
+
+    if (pathname.startsWith('/api/services/') && method === 'DELETE') {
+  try {
+    const id = parseInt(pathname.split('/').pop(), 10);
+    const deletedService = await Service.findOneAndDelete({ id });
+
+    if (deletedService) {
+      await logAction(username, 'service_delete', { id });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true }));
+    } else {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Service not found' }));
+    }
+  } catch (error) {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Failed to delete service' }));
+  }
+  return;
+}
+
+// ==================== مسارات إدارة المستخدمين للأدمن ====================
+
+// الحصول على جميع المستخدمين
+if (pathname === '/api/admin/users' && method === 'GET') {
+  try {
+    const users = await User.find({}).select('-password').sort({ createdAt: -1 });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(users));
+  } catch (error) {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'فشل في تحميل المستخدمين' }));
+  }
+  return;
+}
+
+// تحديث بيانات مستخدم
+if (pathname.startsWith('/api/admin/users/') && method === 'PUT') {
+  try {
+    const userId = pathname.split('/').pop();
+    const body = await readBody(req);
+    const data = JSON.parse(body || '{}');
+    
+    // منع تحديث بعض الحقول الحساسة
+    delete data.password;
+    delete data.role;
+    
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { ...data, updatedAt: new Date() },
+      { new: true }
+    ).select('-password');
+    
+    if (updatedUser) {
+      await logAction(username, 'user_update', { userId, changes: data });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(updatedUser));
+    } else {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+    }
+  } catch (error) {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'فشل في تحديث المستخدم' }));
+  }
+  return;
+}
+
+// حظر/فك حظر مستخدم
+if (pathname.startsWith('/api/admin/users/') && pathname.includes('/ban') && method === 'PUT') {
+  try {
+    const userId = pathname.split('/')[4];
+    const body = await readBody(req);
+    const { status, banReason } = JSON.parse(body || '{}');
+    
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { 
+        status: status,
+        banReason: banReason || '',
+        updatedAt: new Date()
+      },
+      { new: true }
+    ).select('-password');
+    
+    if (updatedUser) {
+      await logAction(username, 'user_ban', { userId, status, banReason });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(updatedUser));
+    } else {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+    }
+  } catch (error) {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'فشل في تحديث حالة المستخدم' }));
+  }
+  return;
+}
+
+// تجميد/فك تجميد رصيد
+if (pathname.startsWith('/api/admin/users/') && pathname.includes('/freeze') && method === 'PUT') {
+  try {
+    const userId = pathname.split('/')[4];
+    const body = await readBody(req);
+    const { balanceFrozen, freezeReason } = JSON.parse(body || '{}');
+    
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { 
+        balanceFrozen: balanceFrozen,
+        freezeReason: freezeReason || '',
+        updatedAt: new Date()
+      },
+      { new: true }
+    ).select('-password');
+    
+    if (updatedUser) {
+      await logAction(username, 'user_freeze', { userId, balanceFrozen, freezeReason });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(updatedUser));
+    } else {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+    }
+  } catch (error) {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'فشل في تجميد الرصيد' }));
+  }
+  return;
+}
+
+// تعديل رصيد المستخدم
+if (pathname.startsWith('/api/admin/users/') && pathname.includes('/balance') && method === 'PUT') {
+  try {
+    const userId = pathname.split('/')[4];
+    const body = await readBody(req);
+    const { balance, action, amount, note } = JSON.parse(body || '{}');
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+      return;
+    }
+    
+    let newBalance = user.balance;
+    if (action === 'add') {
+      newBalance += parseFloat(amount);
+    } else if (action === 'subtract') {
+      newBalance -= parseFloat(amount);
+    } else if (action === 'set') {
+      newBalance = parseFloat(balance);
+    }
+    
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { 
+        balance: newBalance,
+        updatedAt: new Date()
+      },
+      { new: true }
+    ).select('-password');
+    
+    if (updatedUser) {
+      // تسجيل المعاملة
+      const maxIdTransaction = await Transaction.findOne().sort('-id').exec();
+      const newId = (maxIdTransaction?.id || 0) + 1;
+      
+      await Transaction.create({
+        id: newId,
+        userId: userId,
+        username: user.username,
+        type: action === 'add' ? 'deposit' : 'withdraw',
+        amount: parseFloat(amount),
+        method: 'system',
+        status: 'completed',
+        details: {
+          adminNote: note || `تعديل رصيد بواسطة الأدمن: ${action} ${amount}`
+        },
+        adminNote: note || `تعديل يدوي بواسطة ${username}`,
+        processedAt: new Date(),
+        processedBy: username
+      });
+      
+      await logAction(username, 'user_balance_update', { 
+        userId, 
+        oldBalance: user.balance, 
+        newBalance, 
+        action,
+        amount 
+      });
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(updatedUser));
+    }
+  } catch (error) {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'فشل في تعديل الرصيد' }));
+  }
+  return;
+}
+
+// --- المسار غير موجود ---
+res.writeHead(404, { 'Content-Type': 'application/json' });
+res.end(JSON.stringify({ error: 'API Endpoint Not Found' }));
     // --- المسار غير موجود ---
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'API Endpoint Not Found' }));
