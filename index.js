@@ -135,7 +135,6 @@ const logSchema = new mongoose.Schema({
   meta: Object
 }, { timestamps: true });
 
-const User = mongoose.model('User', userSchema);
 const Service = mongoose.model('Service', serviceSchema);
 const Order = mongoose.model('Order', orderSchema);
 const Log = mongoose.model('Log', logSchema);
