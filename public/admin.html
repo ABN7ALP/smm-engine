@@ -1567,10 +1567,76 @@ function setupExportButtons() {
     }
 }
 
-// ========== التهيئة الرئيسية ==========
+// ========== نظام الأمان والتحسينات ==========
 
+/**
+ * التحقق من صحة الجلسة بشكل دوري
+ */
+function setupSessionValidation() {
+    setInterval(async () => {
+        try {
+            const response = await fetchWithAuth('/api/user/profile');
+            if (!response) {
+                // الجلسة منتهية
+                showNotification('انتهت الجلسة، يرجى تسجيل الدخول مرة أخرى', 'error');
+                setTimeout(() => {
+                    localStorage.removeItem('authToken');
+                    window.location.href = '/login.html';
+                }, 2000);
+            }
+        } catch (error) {
+            console.error('خطأ في التحقق من الجلسة:', error);
+        }
+    }, 5 * 60 * 1000); // كل 5 دقائق
+}
+
+/**
+ * تسجيل نشاط المستخدم
+ */
+function logUserActivity(action) {
+    console.log(`نشاط المستخدم: ${action} - ${new Date().toLocaleString()}`);
+}
+
+/**
+ * منع التحميل الزائد
+ */
+function setupRateLimiting() {
+    let lastRequestTime = 0;
+    const MIN_REQUEST_INTERVAL = 1000; // 1 ثانية بين الطلبات
+
+    window.fetchWithRateLimit = async function(url, options = {}) {
+        const now = Date.now();
+        if (now - lastRequestTime < MIN_REQUEST_INTERVAL) {
+            showNotification('الرجاء الانتظار قليلاً بين الطلبات', 'warning');
+            return null;
+        }
+        
+        lastRequestTime = now;
+        return await fetchWithAuth(url, options);
+    };
+}
+
+/**
+ * تحسين إدارة الذاكرة
+ */
+function setupMemoryManagement() {
+    // تنظيف البيانات المؤقتة عند إغلاق الصفحة
+    window.addEventListener('beforeunload', () => {
+        allServicesData = [];
+        allOrdersData = [];
+    });
+
+    // إعادة تحميل البيانات كل 30 دقيقة لمنع تقدم البيانات
+    setInterval(() => {
+        if (document.visibilityState === 'visible') {
+            reloadAll();
+        }
+    }, 30 * 60 * 1000);
+}
+
+// تحديث التهيئة الرئيسية
 function initializeApp() {
-    console.log('جاري تهيئة التطبيق...');
+    console.log('جاري تهيئة التطبيق الآمن...');
     
     try {
         initializeTheme();
@@ -1582,15 +1648,24 @@ function initializeApp() {
         setupRefreshButton();
         setupExportButtons();
         
+        // إضافة الأنظمة الجديدة
+        setupSessionValidation();
+        setupRateLimiting();
+        setupMemoryManagement();
+        
         document.getElementById('logoutBtn').onclick = logout;
+        
+        // تسجيل بدء الجلسة
+        logUserActivity('بدء الجلسة');
         
         reloadAll();
         
-        console.log('✅ تم تهيئة التطبيق بنجاح');
+        console.log('✅ تم تهيئة التطبيق الآمن بنجاح');
     } catch (error) {
         console.error('❌ خطأ في تهيئة التطبيق:', error);
+        showNotification('خطأ في تحميل التطبيق', 'error');
     }
-}
+          }
 
 // بدء تشغيل التطبيق
 document.addEventListener('DOMContentLoaded', initializeApp);
