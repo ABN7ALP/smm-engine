@@ -778,8 +778,236 @@ async function initialize() {
   }
 }
 
-// بدء تشغيل السكريبت عند تحميل الصفحة
-initialize();
+    // بدء تشغيل السكريبت عند تحميل الصفحة
+    initialize();
+
+    // =================================================================
+    //  نظام الأمان والتحسينات - الإضافة الجديدة
+    // =================================================================
+
+    // ========== نظام الأمان والتحسينات ==========
+
+    /**
+     * التحقق من صحة الجلسة
+     */
+    async function validateSession() {
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = '/login.html';
+                return false;
+            }
+
+            const response = await fetch('/api/user/profile', {
+                headers: { 'x-auth-token': token }
+            });
+
+            if (!response.ok) {
+                localStorage.removeItem('authToken');
+                window.location.href = '/login.html';
+                return false;
+            }
+
+            return true;
+        } catch (error) {
+            console.error('خطأ في التحقق من الجلسة:', error);
+            localStorage.removeItem('authToken');
+            window.location.href = '/login.html';
+            return false;
+        }
+    }
+
+    /**
+     * دالة إرسال الطلب الأصلية (للاستخدام من قبل النظام المحدود)
+     */
+    async function submitOrder(orderData) {
+        const { serviceId, link, quantity, price } = orderData;
+        
+        try {
+            const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ serviceId, link, quantity, price })
+            });
+            
+            if (!res.ok) {
+                const e = await res.json().catch(()=>({error:'خطأ'}));
+                throw new Error(e.error || 'فشل إنشاء الطلب');
+            }
+
+            return await res.json();
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    /**
+     * منع التحميل الزائد للطلبات
+     */
+    function setupRequestThrottling() {
+        let lastOrderRequest = 0;
+        const ORDER_REQUEST_INTERVAL = 3000; // 3 ثواني بين الطلبات
+
+        window.submitOrderWithThrottle = async function(orderData) {
+            const now = Date.now();
+            if (now - lastOrderRequest < ORDER_REQUEST_INTERVAL) {
+                orderStatusBox.innerHTML = `<div class="alert alert-warning">⏳ الرجاء الانتظار قليلاً قبل إرسال طلب جديد</div>`;
+                return null;
+            }
+            
+            lastOrderRequest = now;
+            return await submitOrder(orderData);
+        };
+    }
+
+    /**
+     * تحسين إدارة الذاكرة
+     */
+    function setupMemoryManagement() {
+        // تنظيف البيانات المؤقتة
+        let cleanupInterval = setInterval(() => {
+            if (allServices.length > 1000) {
+                allServices = allServices.slice(-500);
+                console.log('🔄 تم تنظيف الذاكرة المؤقتة');
+            }
+        }, 60 * 1000);
+
+        // تنظيف عند إغلاق الصفحة
+        window.addEventListener('beforeunload', () => {
+            clearInterval(cleanupInterval);
+            allServices = [];
+            servicesByCategory = {};
+        });
+    }
+
+    /**
+     * تسجيل نشاط المستخدم
+     */
+    function logUserActivity(action, details = {}) {
+        console.log(`👤 نشاط المستخدم: ${action}`, details);
+    }
+
+    // ========== تحديث دالة التأكيد لاستخدام النظام المحدود ==========
+
+    // حفظ الدالة الأصلية
+    const originalConfirmHandler = confirmOrderBtn.onclick;
+
+    // استبدالها بالدالة المحسنة
+    confirmOrderBtn.onclick = async function() {
+        const serviceId = serviceSelect.value;
+        const link = linkInput.value.trim();
+        const quantity = quantityInput.value ? Number(quantityInput.value) : null;
+
+        if (!serviceId || !link) {
+            orderStatusBox.innerHTML = `<div class="alert alert-warning">⚠️ الرجاء اختيار خدمة وإدخال رابط صحيح.</div>`;
+            return;
+        }
+
+        const service = allServices.find(s => String(s.id) === String(serviceId));
+        if (!service) { 
+            orderStatusBox.innerHTML = `<div class="alert alert-danger">❌ الخدمة غير صالحة.</div>`; 
+            return; 
+        }
+
+        const category = String(service.category).toLowerCase().trim();
+        const allowedKeywords = platformKeywords[category];
+        if (allowedKeywords && !allowedKeywords.some(keyword => link.includes(keyword))) {
+            orderStatusBox.innerHTML = `<div class="alert alert-danger">❌ الرابط الذي أدخلته لا ينتمي إلى منصة "${category}". الرجاء إدخال رابط صحيح.</div>`;
+            return;
+        }
+
+        if (service.type === 'quantity') {
+            if (!quantity || quantity <= 0) {
+                orderStatusBox.innerHTML = `<div class="alert alert-warning">⚠️ الرجاء إدخال كمية صحيحة.</div>`; 
+                return;
+            }
+            if (service.min && quantity < service.min) {
+                orderStatusBox.innerHTML = `<div class="alert alert-warning">⚠️ الكمية أقل من الحد الأدنى ${service.min}.</div>`; 
+                return;
+            }
+            if (service.max && quantity > service.max) {
+                orderStatusBox.innerHTML = `<div class="alert alert-warning">⚠️ الكمية أكبر من الحد الأقصى ${service.max}.</div>`; 
+                return;
+            }
+        }
+        
+        let price = 0;
+        if (service.type === 'fixed') price = parseFloat(service.price || 0);
+        else price = ((parseFloat(service.rate || 0) / 1000) * (quantity || 0));
+
+        orderStatusBox.innerHTML = `<div class="d-flex align-items-center"><div class="spinner-border me-3" role="status"></div> جاري إرسال الطلب...</div>`;
+
+        try {
+            // استخدام النظام المحدود بدلاً من المباشر
+            const order = await window.submitOrderWithThrottle({
+                serviceId, link, quantity, price
+            });
+
+            if (!order) {
+                // تم منع الطلب بسبب التحميل الزائد
+                return;
+            }
+
+            const msgText = `طلب جديد 🛒%0Aرقم الطلب: ${order.id}%0Aالخدمة: ${service.name}%0Aالرابط: ${order.link}%0Aالكمية: ${order.quantity||'—'}%0Aالتكلفة: $${order.price.toFixed(2)}`;
+            if (PHONE_NUMBER && PHONE_NUMBER.length > 5) {
+                window.open(`https://wa.me/${PHONE_NUMBER}?text=${msgText}`, '_blank');
+            }
+
+            orderStatusBox.innerHTML = `
+                <div class="alert alert-success">
+                ✅ تم إنشاء الطلب بنجاح. رقم الطلب: <strong>${order.id}</strong>  
+                <p class="mb-1">الحالة: <strong>${order.status}</strong></p>
+                <div class="mt-2">
+                    <button onclick="navigator.clipboard.writeText('${order.id}'); alert('تم نسخ رقم الطلب');" class="btn btn-sm btn-outline-secondary">نسخ رقم الطلب</button>
+                    <button onclick="document.getElementById('orderIdInput').value = '${order.id}'; trackOrder();" class="btn btn-sm btn-outline-primary">عرض حالة الطلب</button>
+                </div>
+                </div>
+            `;
+            resetOrderForm();
+            
+            // تسجيل النشاط
+            logUserActivity('إنشاء طلب جديد', { orderId: order.id, service: service.name });
+            
+        } catch (err) {
+            console.error(err);
+            orderStatusBox.innerHTML = `<div class="alert alert-danger">❌ ${err.message}.</div>`;
+        }
+    };
+
+    // ========== تحديث التهيئة الرئيسية ==========
+
+    // حفظ الدالة الأصلية
+    const originalInitialize = window.initialize;
+
+    // استبدالها بالدالة المحسنة
+    window.initialize = async function() {
+        // التحقق من الجلسة أولاً
+        const isValidSession = await validateSession();
+        if (!isValidSession) return;
+
+        try {
+            const response = await fetch('/api/services');
+            if (!response.ok) throw new Error('فشل تحميل الخدمات من الخادم.');
+            
+            allServices = await response.json();
+            populateCategories();
+            
+            // إعداد الأنظمة الأمنية
+            setupRequestThrottling();
+            setupMemoryManagement();
+            
+            logUserActivity('تهيئة التطبيق');
+            
+        } catch (err) {
+            console.error(err);
+            categoriesGrid.innerHTML = `<div class="alert alert-danger p-3">${err.message} حاول تحديث الصفحة.</div>`;
+        }
+    };
+
+    // إضافة تحقق من الجلسة بشكل دوري
+    setInterval(validateSession, 5 * 60 * 1000); // كل 5 دقائق
+
+    console.log('✅ نظام الأمان والتحسينات تم تحميله بنجاح');
         
 </script>
 </body>
