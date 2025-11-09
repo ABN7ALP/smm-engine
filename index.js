@@ -45,6 +45,30 @@ async function connectDB() {
 
 connectDB();
 
+/**
+ * إعادة تعيين كلمة سر الأدمن (تشغيل مرة واحدة فقط)
+ */
+async function resetAdminPassword() {
+  try {
+    const newPassword = "Admin123!"; // كلمة السر الجديدة القوية
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    
+    await User.findOneAndUpdate(
+      { username: 'admin' },
+      { 
+        password: hashedPassword,
+        lastPasswordChange: new Date()
+      }
+    );
+    
+    console.log('🔑 تم تحديث كلمة سر الأدمن:', newPassword);
+  } catch (error) {
+    console.log('❌ خطأ في تحديث كلمة السر:', error.message);
+  }
+}
+
+// استدعاء الدالة مرة واحدة ثم تعليقها
+// resetAdminPassword();
 // ==================== نماذج قاعدة البيانات ====================
 
 /**
