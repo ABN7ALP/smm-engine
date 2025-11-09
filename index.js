@@ -68,7 +68,7 @@ async function resetAdminPassword() {
 }
 
 // استدعاء الدالة مرة واحدة ثم تعليقها
-resetAdminPassword();
+//resetAdminPassword();
 // ==================== نماذج قاعدة البيانات ====================
 
 /**
