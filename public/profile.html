@@ -673,168 +673,484 @@
   </div>
 
   <script>
-    // =================================================================
-    //  نظام الملف الشخصي - النسخة المعدلة
-    // =================================================================
+    
+      
+      // =================================================================
+//  نظام الملف الشخصي - النسخة المعدلة (بيانات حقيقية)
+// =================================================================
 
-    // دوال التنقل
-    function showSection(sectionName) {
-      // إخفاء جميع الأقسام
-      document.querySelectorAll('.content-section').forEach(section => {
+let userData = {};
+const headers = {
+    'Content-Type': 'application/json',
+    'x-auth-token': localStorage.getItem('authToken')
+};
+
+// التحقق من صحة الجلسة
+if (!headers['x-auth-token']) {
+    window.location.href = '/login.html';
+}
+
+// دوال التنقل
+function showSection(sectionName) {
+    // إخفاء جميع الأقسام
+    document.querySelectorAll('.content-section').forEach(section => {
         section.classList.remove('active');
-      });
-      
-      // إظهار القسم المطلوب
-      const targetSection = document.getElementById(sectionName + '-section');
-      if (targetSection) {
+    });
+    
+    // إظهار القسم المطلوب
+    const targetSection = document.getElementById(sectionName + '-section');
+    if (targetSection) {
         targetSection.classList.add('active');
-      }
-      
-      // تحديث التبويبات النشطة
-      document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-      });
-      
-      document.querySelectorAll('.nav-link').forEach(link => {
-        link.classList.remove('active');
-      });
-      
-      // إضافة النشاط للعناصر المحددة
-      const activeTab = Array.from(document.querySelectorAll('.tab')).find(tab => 
-        tab.textContent.includes(getSectionTitle(sectionName))
-      );
-      if (activeTab) activeTab.classList.add('active');
-      
-      const activeNav = Array.from(document.querySelectorAll('.nav-link')).find(link => 
-        link.textContent.includes(getSectionTitle(sectionName))
-      );
-      if (activeNav) activeNav.classList.add('active');
     }
+    
+    // تحديث التبويبات النشطة
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    // إضافة النشاط للعناصر المحددة
+    const activeTab = Array.from(document.querySelectorAll('.tab')).find(tab => 
+        tab.textContent.includes(getSectionTitle(sectionName))
+    );
+    if (activeTab) activeTab.classList.add('active');
+    
+    const activeNav = Array.from(document.querySelectorAll('.nav-link')).find(link => 
+        link.textContent.includes(getSectionTitle(sectionName))
+    );
+    if (activeNav) activeNav.classList.add('active');
 
-    function getSectionTitle(sectionName) {
-      const titles = {
+    // تحميل بيانات إضافية حسب القسم
+    if (sectionName === 'transactions') {
+        loadTransactions();
+    }
+}
+
+function getSectionTitle(sectionName) {
+    const titles = {
         'overview': 'نظرة عامة',
         'edit-profile': 'الملف الشخصي',
         'security': 'الأمان',
         'deposit': 'شحن الرصيد',
         'transactions': 'المعاملات'
-      };
-      return titles[sectionName] || sectionName;
-    }
+    };
+    return titles[sectionName] || sectionName;
+}
 
-     // دوال العرض
-    function showAlert(message, type = 'success') {
-      const container = document.getElementById('alert-container');
-      const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
-      
-      container.innerHTML = `
+// دوال العرض
+function showAlert(message, type = 'success') {
+    const container = document.getElementById('alert-container');
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+    
+    container.innerHTML = `
         <div class="alert ${alertClass}">
-          <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle"></i>
-          ${message}
+            <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle"></i>
+            ${message}
         </div>
-      `;
-      
-      setTimeout(() => {
+    `;
+    
+    setTimeout(() => {
         container.innerHTML = '';
-      }, 5000);
-    }
+    }, 5000);
+}
 
-    // التهيئة
-    document.addEventListener('DOMContentLoaded', function() {
-      // تحميل بيانات المستخدم
-      loadUserData();
-      
-      // إعداد المستمعين للأحداث
-      setupEventListeners();
-    });
-
-    function setupEventListeners() {
-      // النماذج
-      document.getElementById('profileForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        showAlert('تم تحديث الملف الشخصي بنجاح', 'success');
-      });
-      
-      document.getElementById('securityForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        showAlert('تم تغيير كلمة السر بنجاح', 'success');
-      });
-      
-      document.getElementById('depositForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        showAlert('تم إرسال طلب الشحن بنجاح', 'success');
-      });
-      
-      // تسجيل الخروج
-      document.getElementById('logoutBtn').addEventListener('click', function() {
-        if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
-          window.location.href = '/login.html';
-        }
-      });
-    }
-
-    function loadUserData() {
-      // بيانات وهمية للعرض
-      const userData = {
-        fullName: 'محمد أحمد',
-        username: 'mohammed',
-        email: 'mohammed@example.com',
-        phone: '+966 50 123 4567',
-        balance: 150.00,
-        totalOrders: 24,
-        completedOrders: 18,
-        joinDate: '2024-01-15',
-        status: 'نشط'
-      };
-      
-      // تعبئة البيانات
-      document.getElementById('userFullName').textContent = userData.fullName;
-      document.getElementById('userUsername').textContent = '@' + userData.username;
-      document.getElementById('userBalance').textContent = '$' + userData.balance.toFixed(2);
-      document.getElementById('totalOrders').textContent = userData.totalOrders;
-      document.getElementById('completedOrders').textContent = userData.completedOrders;
-      document.getElementById('userStatus').textContent = userData.status;
-      
-      document.getElementById('overviewUsername').value = userData.username;
-      document.getElementById('overviewEmail').value = userData.email;
-      document.getElementById('overviewPhone').value = userData.phone;
-      document.getElementById('overviewJoinDate').value = userData.joinDate;
-      
-      document.getElementById('profileUsername').value = userData.username;
-      document.getElementById('profileEmail').value = userData.email;
-      document.querySelector('[name="fullName"]').value = userData.fullName;
-      document.querySelector('[name="phone"]').value = userData.phone;
-      
-      // تحميل المعاملات الوهمية
-      loadSampleTransactions();
-    }
-
-    function loadSampleTransactions() {
-      const transactions = [
-        { type: 'deposit', title: 'شحن رصيد', amount: 50.00, date: '2024-03-20', status: 'مكتمل' },
-        { type: 'payment', title: 'دفع طلب', amount: -25.00, date: '2024-03-18', status: 'مكتمل' },
-        { type: 'deposit', title: 'شحن رصيد', amount: 100.00, date: '2024-03-15', status: 'مكتمل' },
-        { type: 'payment', title: 'دفع طلب', amount: -15.00, date: '2024-03-12', status: 'مكتمل' }
-      ];
-      
-      const container = document.getElementById('transactionsList');
-      container.innerHTML = transactions.map(transaction => `
-        <div class="transaction-item">
-          <div class="transaction-icon">
-            <i class="fas fa-${transaction.type === 'deposit' ? 'plus' : 'minus'}"></i>
-          </div>
-          <div class="transaction-details">
-            <div class="transaction-title">${transaction.title}</div>
-            <div class="transaction-meta">${transaction.date} • ${transaction.status}</div>
-          </div>
-          <div class="transaction-amount">
-            ${transaction.amount > 0 ? '+' : ''}$${transaction.amount.toFixed(2)}
-          </div>
+function showLoading(message = 'جاري التحميل...') {
+    const container = document.getElementById('alert-container');
+    container.innerHTML = `
+        <div class="alert alert-info">
+            <i class="fas fa-spinner fa-spin"></i>
+            ${message}
         </div>
-      `).join('');
+    `;
+}
+
+function hideLoading() {
+    const container = document.getElementById('alert-container');
+    const loadingAlert = container.querySelector('.alert-info');
+    if (loadingAlert) {
+        loadingAlert.remove();
+    }
+}
+
+// التهيئة
+document.addEventListener('DOMContentLoaded', function() {
+    // تحميل بيانات المستخدم الحقيقية
+    loadUserData();
+    
+    // إعداد المستمعين للأحداث
+    setupEventListeners();
+});
+
+function setupEventListeners() {
+    // تحديث الملف الشخصي
+    document.getElementById('profileForm').addEventListener('submit', handleProfileUpdate);
+    
+    // تغيير كلمة السر
+    document.getElementById('securityForm').addEventListener('submit', handlePasswordChange);
+    
+    // شحن الرصيد
+    document.getElementById('depositForm').addEventListener('submit', handleDeposit);
+    
+    // تسجيل الخروج
+    document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+}
+
+// تحميل بيانات المستخدم الحقيقية
+async function loadUserData() {
+    try {
+        showLoading('جاري تحميل البيانات...');
+        
+        const response = await fetch('/api/user/profile', { 
+            headers: headers 
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                handleSessionExpired();
+                return;
+            }
+            throw new Error('فشل تحميل البيانات');
+        }
+
+        userData = await response.json();
+        displayUserData(userData);
+        hideLoading();
+        
+    } catch (error) {
+        hideLoading();
+        showAlert('❌ ' + error.message, 'error');
+        console.error('خطأ في تحميل البيانات:', error);
+    }
+}
+
+// عرض بيانات المستخدم الحقيقية
+function displayUserData(data) {
+    // المعلومات الأساسية
+    document.getElementById('userFullName').textContent = data.fullName || data.username;
+    document.getElementById('userUsername').textContent = '@' + data.username;
+    document.getElementById('userBalance').textContent = '$' + (data.balance || 0).toFixed(2);
+    document.getElementById('totalOrders').textContent = data.orders?.total || 0;
+    document.getElementById('completedOrders').textContent = data.orders?.completed || 0;
+    
+    // حالة الحساب
+    const statusElement = document.getElementById('userStatus');
+    if (data.status === 'active') {
+        statusElement.className = 'profile-status';
+        statusElement.textContent = 'نشط';
+        statusElement.style.background = 'var(--success)';
+    } else if (data.status === 'suspended') {
+        statusElement.className = 'profile-status';
+        statusElement.textContent = 'موقوف';
+        statusElement.style.background = 'var(--warning)';
+    } else {
+        statusElement.className = 'profile-status';
+        statusElement.textContent = 'محظور';
+        statusElement.style.background = 'var(--danger)';
     }
 
-    console.log('✅ نظام الملف الشخصي جاهز للعمل');
+    // الصورة الشخصية
+    if (data.avatar && data.avatar !== '/assets/default-avatar.png') {
+        document.getElementById('userAvatar').src = data.avatar;
+    }
+
+    // قسم النظرة العامة
+    document.getElementById('overviewUsername').value = data.username;
+    document.getElementById('overviewEmail').value = data.email;
+    document.getElementById('overviewPhone').value = data.phone || 'غير مضبوط';
+    
+    if (data.createdAt) {
+        const joinDate = new Date(data.createdAt).toLocaleDateString('ar-SA');
+        document.getElementById('overviewJoinDate').value = joinDate;
+    }
+
+    // قسم تعديل الملف
+    document.getElementById('profileUsername').value = data.username;
+    document.getElementById('profileEmail').value = data.email;
+    document.querySelector('[name="fullName"]').value = data.fullName || '';
+    document.querySelector('[name="phone"]').value = data.phone || '';
+}
+
+// تحديث الملف الشخصي
+async function handleProfileUpdate(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+    submitBtn.disabled = true;
+
+    try {
+        const response = await fetch('/api/user/profile', {
+            method: 'PUT',
+            headers: headers,
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            showAlert('✅ تم تحديث الملف الشخصي بنجاح', 'success');
+            loadUserData(); // إعادة تحميل البيانات
+        } else {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'فشل تحديث البيانات');
+        }
+    } catch (error) {
+        showAlert('❌ ' + error.message, 'error');
+    } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+// تغيير كلمة السر
+async function handlePasswordChange(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    
+    if (data.newPassword !== data.confirmPassword) {
+        showAlert('❌ كلمات السر غير متطابقة', 'error');
+        return;
+    }
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التغيير...';
+    submitBtn.disabled = true;
+
+    try {
+        const response = await fetch('/api/user/change-password', {
+            method: 'PUT',
+            headers: headers,
+            body: JSON.stringify({
+                currentPassword: data.currentPassword,
+                newPassword: data.newPassword
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert('✅ ' + result.message, 'success');
+            e.target.reset();
+        } else {
+            throw new Error(result.error || 'فشل تغيير كلمة السر');
+        }
+    } catch (error) {
+        showAlert('❌ ' + error.message, 'error');
+    } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+// شحن الرصيد
+async function handleDeposit(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    
+    if (!data.amount || data.amount <= 0) {
+        showAlert('❌ الرجاء إدخال مبلغ صحيح', 'error');
+        return;
+    }
+
+    if (!data.method) {
+        showAlert('❌ الرجاء اختيار طريقة الدفع', 'error');
+        return;
+    }
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+    submitBtn.disabled = true;
+
+    try {
+        const response = await fetch('/api/user/deposit', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert('✅ ' + result.message, 'success');
+            e.target.reset();
+            loadUserData(); // تحديث الرصيد
+            loadTransactions(); // تحديث المعاملات
+        } else {
+            throw new Error(result.error || 'فشل طلب الشحن');
+        }
+    } catch (error) {
+        showAlert('❌ ' + error.message, 'error');
+    } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+// تحميل المعاملات الحقيقية
+async function loadTransactions() {
+    try {
+        const response = await fetch('/api/user/transactions', { 
+            headers: headers 
+        });
+        
+        if (response.ok) {
+            const transactions = await response.json();
+            displayTransactions(transactions);
+        } else {
+            throw new Error('فشل تحميل المعاملات');
+        }
+    } catch (error) {
+        console.error('خطأ في تحميل المعاملات:', error);
+        document.getElementById('transactionsList').innerHTML = `
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>فشل تحميل المعاملات</p>
+            </div>
+        `;
+    }
+}
+
+// عرض المعاملات الحقيقية
+function displayTransactions(transactions) {
+    const container = document.getElementById('transactionsList');
+    
+    if (!transactions || transactions.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-receipt fa-2x mb-3 opacity-50"></i>
+                <h5>لا توجد معاملات</h5>
+                <p class="mb-0">لم تقم بأي معاملات حتى الآن</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = transactions.map(transaction => `
+        <div class="transaction-item">
+            <div class="transaction-icon">
+                <i class="fas fa-${getTransactionIcon(transaction.type)}"></i>
+            </div>
+            <div class="transaction-details">
+                <div class="transaction-title">${getTransactionType(transaction.type)}</div>
+                <div class="transaction-meta">
+                    ${new Date(transaction.createdAt).toLocaleString('ar-SA')} • 
+                    ${getStatusText(transaction.status)}
+                </div>
+                ${transaction.userNote ? `
+                    <div class="transaction-note">${transaction.userNote}</div>
+                ` : ''}
+            </div>
+            <div class="transaction-amount ${transaction.type === 'deposit' ? 'positive' : 'negative'}">
+                ${transaction.type === 'deposit' ? '+' : '-'}$${Math.abs(transaction.amount).toFixed(2)}
+            </div>
+        </div>
+    `).join('');
+
+    // إضافة ستايل للألوان
+    const style = document.createElement('style');
+    style.textContent = `
+        .transaction-amount.positive { color: var(--success); }
+        .transaction-amount.negative { color: var(--danger); }
+        .transaction-note { 
+            font-size: 0.75rem; 
+            color: var(--text-muted); 
+            margin-top: 4px; 
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// دوال مساعدة للمعاملات
+function getTransactionIcon(type) {
+    const icons = {
+        'deposit': 'plus-circle',
+        'withdraw': 'minus-circle',
+        'payment': 'shopping-cart',
+        'refund': 'undo'
+    };
+    return icons[type] || 'exchange-alt';
+}
+
+function getTransactionType(type) {
+    const types = {
+        'deposit': 'شحن رصيد',
+        'withdraw': 'سحب رصيد',
+        'payment': 'دفع',
+        'refund': 'استرجاع'
+    };
+    return types[type] || type;
+}
+
+function getStatusText(status) {
+    const texts = {
+        'pending': 'قيد الانتظار',
+        'completed': 'مكتمل',
+        'rejected': 'مرفوض',
+        'cancelled': 'ملغي'
+    };
+    return texts[status] || status;
+}
+
+// تسجيل الخروج
+async function handleLogout(e) {
+    e.preventDefault();
+    
+    if (!confirm('هل أنت متأكد من تسجيل الخروج؟')) {
+        return;
+    }
+
+    try {
+        await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: headers
+        });
+    } catch (error) {
+        console.error('خطأ في تسجيل الخروج:', error);
+    } finally {
+        localStorage.removeItem('authToken');
+        window.location.href = '/login.html';
+    }
+}
+
+// التعامل مع انتهاء الجلسة
+function handleSessionExpired() {
+    showAlert('❌ انتهت الجلسة، يرجى تسجيل الدخول مرة أخرى', 'error');
+    setTimeout(() => {
+        localStorage.removeItem('authToken');
+        window.location.href = '/login.html';
+    }, 2000);
+}
+
+// التحقق من الجلسة بشكل دوري
+setInterval(async () => {
+    try {
+        const response = await fetch('/api/user/profile', { 
+            headers: headers 
+        });
+        if (!response.ok) {
+            handleSessionExpired();
+        }
+    } catch (error) {
+        console.error('خطأ في التحقق من الجلسة:', error);
+    }
+}, 5 * 60 * 1000);
+
+console.log('✅ نظام الملف الشخصي جاهز للعمل - بيانات حقيقية');
+      
   </script>
 </body>
 </html>
