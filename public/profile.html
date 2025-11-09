@@ -1,296 +1,840 @@
-<!doctype html>
-
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>الملف الشخصي — لوحة التحكم</title>
-  <!-- Fonts & icons -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-jQk6f+Z6Y..." crossorigin="anonymous" referrerpolicy="no-referrer" />  <style>
-    /* ====== Reset & base ====== */
-    :root{
-      --bg: #0f1724; /* deep navy */
-      --card: #0b1220;
-      --muted: #98a0b3;
-      --accent: #00b4d8; /* cyan accent */
-      --accent-2: #6c7ae0; /* secondary */
-      --glass: rgba(255,255,255,0.04);
-      --success: #28c76f;
-      --danger: #ff6b6b;
-      --radius: 14px;
-      --fw-regular: 400;
-      --fw-medium: 600;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial; background: linear-gradient(180deg,#061223 0%, #071427 60%);color:#e6eef8}
-    img{max-width:100%;display:block}
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>الملف الشخصي - SMM Engine</title>
+  
+  <!-- المكتبات -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    /* ====== Layout ====== */
-    .container{max-width:1100px;margin:40px auto;padding:24px}
-    .grid{display:grid;gap:18px}
-    .grid-3{grid-template-columns:320px 1fr 320px}
-    @media (max-width:1000px){.grid-3{grid-template-columns:1fr;}}
-
-    /* ====== Sidebar Card ====== */
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:var(--radius);padding:20px;box-shadow:0 6px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
-    .profile-header{display:flex;gap:16px;align-items:center}
-    .avatar{width:92px;height:92px;border-radius:18px;overflow:hidden;border:2px solid rgba(255,255,255,0.06);flex-shrink:0}
-    .avatar img{width:100%;height:100%;object-fit:cover}
-    .user-meta h2{margin:0;font-size:20px;font-weight:800}
-    .user-meta p{margin:6px 0 0;color:var(--muted);font-size:13px}
-    .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:600;font-size:12px}
-
-    /* ====== Stats ====== */
-    .stats{display:flex;gap:12px;margin-top:18px}
-    .stat{flex:1;background:var(--glass);padding:12px;border-radius:12px;text-align:center}
-    .stat h3{margin:0;font-size:18px}
-    .stat p{margin:6px 0 0;color:var(--muted);font-size:12px}
-
-    /* ====== Main content ====== */
-    .panel-title{display:flex;justify-content:space-between;align-items:center}
-    .panel-title h3{margin:0;font-size:18px}
-    .panel{padding:18px}
-    .tabs{display:flex;gap:8px;margin:16px 0}
-    .tab{background:transparent;border-radius:10px;padding:10px 12px;font-weight:600;color:var(--muted);cursor:pointer}
-    .tab.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#061427;box-shadow:0 6px 24px rgba(92,132,255,0.12)}
-
-    /* ====== Forms ====== */
-    form .row{display:flex;gap:12px;flex-wrap:wrap}
-    .form-control{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:12px 14px;border-radius:10px;color:#e6eef8;min-width:0}
-    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
-    .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#061427}
-    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
-    .small{font-size:13px;color:var(--muted)}
-
-    /* ====== Right column (activity) ====== */
-    .transactions .item{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:12px;border-radius:10px;margin-bottom:12px;border:1px solid rgba(255,255,255,0.03)}
-    .transactions .item .row{display:flex;justify-content:space-between;align-items:center}
-    .muted{color:var(--muted)}
-
-    /* ====== Utilities ====== */
-    .divider{height:1px;background:linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);margin:14px 0;border-radius:2px}
-    .text-right{text-align:right}
-
-    /* ====== Small screens adjustments ====== */
-    @media (max-width:600px){
-      .avatar{width:72px;height:72px}
-      .grid{padding:0 8px}
+  <style>
+    :root {
+      --accent: #00b4d8;
+      --accent-2: #6c7ae0;
+      --card: #1e293b;
+      --bg-dark: #0f172a;
+      --bg-darker: #020617;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
     }
 
-    /* ====== Accessibility focus ====== */
-    .tab:focus, .btn:focus, .form-control:focus{outline:3px solid rgba(0,180,216,0.12);outline-offset:2px}
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
 
-  </style></head>
-<body>  <div class="container">
-    <div class="grid grid-3">
-      <!-- LEFT: profile summary -->
-      <aside class="card">
-        <div class="profile-header">
-          <div class="avatar" id="avatarPreview">
-            <img src="/assets/images/default-avatar.jpg" alt="صورة المستخدم" id="userAvatar">
-          </div>
-          <div class="user-meta">
-            <h2 id="userFullName">اسم المستخدم</h2>
-            <p id="userUsername">@username</p>
-            <div style="margin-top:8px">
-              <span class="badge" id="userStatus">نشط</span>
-            </div>
-          </div>
-        </div><div class="stats" aria-hidden="false">
-      <div class="stat" title="الرصيد">
-        <h3 id="userBalance">0.00 TL</h3>
-        <p>الرصيد</p>
-      </div>
-      <div class="stat" title="الطلبات">
-        <h3 id="totalOrders">0</h3>
-        <p>الطلبات</p>
-      </div>
-      <div class="stat" title="مكتمل">
-        <h3 id="completedOrders">0</h3>
-        <p>مكتمل</p>
-      </div>
-    </div>
+    body {
+      background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
 
-    <div class="divider"></div>
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      display: grid;
+      grid-template-columns: 300px 1fr 280px;
+      gap: 24px;
+      align-items: start;
+    }
 
-    <div>
-      <label class="small">رفع صورة الحساب</label>
-      <input type="file" id="avatarUpload" accept="image/*" class="form-control">
-    </div>
+    /* البطاقات العامة */
+    .card {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+    }
 
-    <div class="divider"></div>
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: between;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
 
-    <div>
-      <button class="btn btn-primary" id="editProfileBtn">تعديل الملف</button>
-      <button class="btn btn-ghost" id="logoutBtn">تسجيل الخروج</button>
-    </div>
-  </aside>
+    .card-header h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text);
+    }
 
-  <!-- MIDDLE: main panels -->
-  <main>
-    <div class="card panel">
-      <div class="panel-title">
-        <h3>لوحة الملف الشخصي</h3>
-        <div class="small muted">مرحبًا — عدّل بياناتك بأمان. كل التغييرات تُحفظ على السيرفر.</div>
-      </div>
+    .card-header i {
+      color: var(--accent);
+      margin-left: 8px;
+    }
 
-      <div class="tabs" role="tablist" aria-label="تبويبات الملف">
-        <div class="tab active" role="tab" tabindex="0" data-tab="account">الحساب</div>
-        <div class="tab" role="tab" tabindex="0" data-tab="security">الأمان</div>
-        <div class="tab" role="tab" tabindex="0" data-tab="payments">الشحن</div>
-      </div>
+    /* بطاقة الملف الشخصي */
+    .profile-card {
+      position: sticky;
+      top: 40px;
+    }
 
-      <section id="account-tab" class="tab-pane" style="display:block">
-        <form id="profileForm" autocomplete="off">
-          <div class="row">
-            <div style="flex:1">
-              <label>الاسم الكامل</label>
-              <input name="fullName" type="text" class="form-control" placeholder="ادخل اسمك الكامل" required>
-            </div>
-            <div style="width:220px">
-              <label>الهاتف</label>
-              <input name="phone" type="text" class="form-control" placeholder="05xxxxxxxx" required>
-            </div>
-          </div>
+    .profile-avatar {
+      text-align: center;
+      margin-bottom: 24px;
+    }
 
-          <div style="margin-top:12px">
-            <label>البريد الإلكتروني</label>
-            <input name="email" type="email" class="form-control" placeholder="you@example.com">
-          </div>
+    .avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 3px solid var(--accent);
+      object-fit: cover;
+      margin-bottom: 16px;
+    }
 
-          <div style="display:flex;gap:12px;margin-top:14px;align-items:center">
-            <button class="btn btn-primary" type="submit"><span class="btn-text">حفظ التعديلات</span></button>
-            <button class="btn btn-ghost" type="button" id="cancelEdit">إلغاء</button>
-          </div>
-        </form>
-      </section>
+    .profile-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
 
-      <section id="security-tab" class="tab-pane" style="display:none">
-        <form id="changePasswordForm" autocomplete="off">
-          <div style="margin-bottom:12px">
-            <label>كلمة السر الحالية</label>
-            <input name="currentPassword" type="password" class="form-control" required>
-          </div>
-          <div class="row">
-            <div style="flex:1">
-              <label>كلمة السر الجديدة</label>
-              <input name="newPassword" type="password" class="form-control" required>
-            </div>
-            <div style="width:220px">
-              <label>تأكيد كلمة السر</label>
-              <input name="confirmPassword" type="password" class="form-control" required>
-            </div>
-          </div>
-          <div style="display:flex;gap:12px;margin-top:14px;align-items:center">
-            <button class="btn btn-primary" type="submit"><span class="btn-text">تغيير كلمة السر</span></button>
-            <button class="btn btn-ghost" type="button" id="resetPwd">إعادة تعيين</button>
-          </div>
-        </form>
-      </section>
+    .profile-username {
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
 
-      <section id="payments-tab" class="tab-pane" style="display:none">
-        <form id="depositForm" autocomplete="off">
-          <div style="margin-bottom:12px">
-            <label>المبلغ (TL)</label>
-            <input name="amount" type="number" min="1" class="form-control" placeholder="مثال: 150" required>
-          </div>
-          <div style="margin-bottom:12px">
-            <label>طريقة الدفع</label>
-            <select name="method" class="form-control">
-              <option value="bank">حوالة بنكية</option>
-              <option value="card">بطاقة ائتمان</option>
-              <option value="cash">نقداً</option>
-            </select>
-          </div>
-          <div style="display:flex;gap:12px;margin-top:14px;align-items:center">
-            <button class="btn btn-primary" type="submit"><span class="btn-text">أرسل طلب الشحن</span></button>
-            <button class="btn btn-ghost" type="button" id="viewPaymentDetails">تفاصيل الحساب</button>
-          </div>
-        </form>
-      </section>
+    .profile-status {
+      display: inline-flex;
+      align-items: center;
+      background: var(--success);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
 
-    </div>
+    .profile-stats {
+      display: grid;
+      gap: 16px;
+      margin: 24px 0;
+    }
 
-    <div class="card" style="margin-top:16px">
-      <div class="panel-title"><h3>ملخص النشاط</h3><div class="small muted">آخر العمليات</div></div>
-      <div class="divider"></div>
-      <div id="transactionsList" class="transactions">
-        <!-- items injected by JS -->
-        <div class="muted">لا توجد معاملات حالياً</div>
-      </div>
-    </div>
-  </main>
+    .stat-item {
+      display: flex;
+      justify-content: between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
 
-  <!-- RIGHT: quick actions & details -->
-  <aside class="card">
-    <h4 style="margin-top:0">تفاصيل الحساب</h4>
-    <div class="small muted">تاريخ التسجيل: <span id="memberSince">--</span></div>
-    <div class="divider"></div>
+    .stat-item:last-child {
+      border-bottom: none;
+    }
 
-    <div style="margin-bottom:12px">
-      <label class="small">حالة الحساب</label>
-      <div><span class="badge" id="planBadge">مجاني</span></div>
-    </div>
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
 
-    <div class="divider"></div>
+    .stat-value {
+      font-weight: 600;
+      color: var(--accent);
+    }
 
-    <div>
-      <h5 style="margin:0 0 8px 0">روابط سريعة</h5>
-      <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
-        <a class="btn btn-ghost" href="/orders">الطلبات</a>
-        <a class="btn btn-ghost" href="/settings">الإعدادات</a>
-        <a class="btn btn-ghost" href="/support">الدعم</a>
-      </div>
-    </div>
-  </aside>
+    /* القائمة الجانبية */
+    .side-nav {
+      position: sticky;
+      top: 40px;
+    }
 
-</div>
+    .nav-section {
+      margin-bottom: 24px;
+    }
 
-  </div>  <!-- Inline JS: minimal controls - keep your existing JS here if needed -->  <script>
-    (function(){
-      'use strict';
-      // Tabs
-      const tabs = Array.from(document.querySelectorAll('.tab'));
-      function activate(name){
-        tabs.forEach(t=> t.classList.toggle('active', t.getAttribute('data-tab')===name));
-        document.querySelectorAll('.tab-pane').forEach(p=> p.style.display = 'none');
-        const el = document.getElementById(name + '-tab');
-        if(el) el.style.display = 'block';
+    .nav-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      margin-bottom: 4px;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      background: rgba(0, 180, 216, 0.1);
+      color: var(--accent);
+    }
+
+    .nav-link i {
+      margin-left: 12px;
+      width: 20px;
+      text-align: center;
+    }
+
+    /* المحتوى الرئيسي */
+    .main-content {
+      min-height: 600px;
+    }
+
+    .content-section {
+      display: none;
+    }
+
+    .content-section.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* النماذج */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.1);
+    }
+
+    .form-control:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* الأزرار */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn i {
+      margin-left: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 180, 216, 0.3);
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    /* قائمة المعاملات */
+    .transaction-list {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .transaction-item {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .transaction-item:hover {
+      border-color: var(--accent);
+      transform: translateX(-2px);
+    }
+
+    .transaction-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 16px;
+      background: rgba(0, 180, 216, 0.1);
+      color: var(--accent);
+    }
+
+    .transaction-details {
+      flex: 1;
+    }
+
+    .transaction-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .transaction-meta {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .transaction-amount {
+      font-weight: 700;
+      color: var(--success);
+    }
+
+    /* التبويبات */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+    }
+
+    .tab {
+      padding: 12px 24px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+
+    .tab:hover {
+      background: rgba(0, 180, 216, 0.1);
+      color: var(--accent);
+    }
+
+    .tab.active {
+      background: rgba(0, 180, 216, 0.1);
+      color: var(--accent);
+    }
+
+    /* التنبيهات */
+    .alert {
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid transparent;
+    }
+
+    .alert-success {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: var(--success);
+      color: var(--success);
+    }
+
+    .alert-error {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    /* الاستجابة للشاشات الصغيرة */
+    @media (max-width: 1200px) {
+      .container {
+        grid-template-columns: 280px 1fr;
       }
-      tabs.forEach(t=> t.addEventListener('click', ()=> activate(t.getAttribute('data-tab'))));
-      tabs.forEach(t=> t.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') activate(t.getAttribute('data-tab')); }));
-
-      // Avatar preview
-      const avatarInput = document.getElementById('avatarUpload');
-      const avatarImg = document.getElementById('userAvatar');
-      if(avatarInput){
-        avatarInput.addEventListener('change', (e)=>{
-          const file = e.target.files && e.target.files[0];
-          if(!file) return;
-          if(file.size > 5*1024*1024){ alert('حجم الصورة أكبر من 5MB'); return; }
-          const url = URL.createObjectURL(file);
-          avatarImg.src = url;
-        })
+      
+      .side-nav {
+        display: none;
       }
+    }
 
-      // Simple graceful form handlers (no server calls here) - keep your server logic intact
-      document.getElementById('profileForm').addEventListener('submit', function(e){ e.preventDefault(); alert('طلب حفظ التعديلات (تمت محاكاة الارسال)'); });
-      document.getElementById('changePasswordForm').addEventListener('submit', function(e){ e.preventDefault(); alert('طلب تغيير كلمة السر (محاكاة)'); });
-      document.getElementById('depositForm').addEventListener('submit', function(e){ e.preventDefault(); alert('طلب شحن (محاكاة)'); });
-
-      // Replace these simulated loads with your real API response handling
-      // Example: populate user details if you have a global user object
-      if(window.__USERDATA){
-        document.getElementById('userFullName').textContent = window.__USERDATA.fullName || 'اسم المستخدم';
-        document.getElementById('userUsername').textContent = '@' + (window.__USERDATA.username || 'user');
-        if(window.__USERDATA.avatar) document.getElementById('userAvatar').src = window.__USERDATA.avatar;
-        if(window.__USERDATA.balance) document.getElementById('userBalance').textContent = (Number(window.__USERDATA.balance).toFixed(2)) + ' TL';
-        if(window.__USERDATA.createdAt) document.getElementById('memberSince').textContent = new Date(window.__USERDATA.createdAt).toLocaleDateString('ar-SA');
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+        padding: 20px 16px;
       }
+      
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .profile-card {
+        position: static;
+      }
+      
+      .tabs {
+        flex-direction: column;
+      }
+      
+      .tab {
+        text-align: right;
+      }
+    }
 
-    })();
-  </script></body>
+    /* شريط التمرير المخصص */
+    .transaction-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .transaction-list::-webkit-scrollbar-track {
+      background: var(--border);
+      border-radius: 3px;
+    }
+
+    .transaction-list::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- العمود الأيسر: الملف الشخصي -->
+    <div class="card profile-card">
+      <div class="profile-avatar">
+        <img src="/assets/default-avatar.png" alt="الصورة الشخصية" class="avatar" id="userAvatar">
+        <div class="profile-name" id="userFullName">محمد أحمد</div>
+        <div class="profile-username" id="userUsername">@mohammed</div>
+        <div class="profile-status" id="userStatus">نشط</div>
+      </div>
+
+      <div class="profile-stats">
+        <div class="stat-item">
+          <span class="stat-label">الرصيد</span>
+          <span class="stat-value" id="userBalance">$150.00</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">الطلبات</span>
+          <span class="stat-value" id="totalOrders">24</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">مكتملة</span>
+          <span class="stat-value" id="completedOrders">18</span>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-block" onclick="showSection('edit-profile')">
+        <i class="fas fa-edit"></i>
+        تعديل الملف
+      </button>
+    </div>
+
+    <!-- العمود الأوسط: المحتوى الرئيسي -->
+    <div class="main-content">
+      <!-- التبويبات -->
+      <div class="tabs">
+        <button class="tab active" onclick="showSection('overview')">نظرة عامة</button>
+        <button class="tab" onclick="showSection('edit-profile')">الملف الشخصي</button>
+        <button class="tab" onclick="showSection('security')">الأمان</button>
+        <button class="tab" onclick="showSection('deposit')">شحن الرصيد</button>
+        <button class="tab" onclick="showSection('transactions')">المعاملات</button>
+      </div>
+
+      <!-- التنبيهات -->
+      <div id="alert-container"></div>
+
+      <!-- قسم النظرة العامة -->
+      <div class="content-section active" id="overview-section">
+        <div class="card">
+          <div class="card-header">
+            <i class="fas fa-chart-line"></i>
+            <h2>نظرة عامة</h2>
+          </div>
+          
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">اسم المستخدم</label>
+              <input type="text" class="form-control" id="overviewUsername" disabled>
+            </div>
+            <div class="form-group">
+              <label class="form-label">البريد الإلكتروني</label>
+              <input type="email" class="form-control" id="overviewEmail" disabled>
+            </div>
+            <div class="form-group">
+              <label class="form-label">رقم الهاتف</label>
+              <input type="tel" class="form-control" id="overviewPhone" disabled>
+            </div>
+            <div class="form-group">
+              <label class="form-label">تاريخ الإنضمام</label>
+              <input type="text" class="form-control" id="overviewJoinDate" disabled>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- قسم تعديل الملف -->
+      <div class="content-section" id="edit-profile-section">
+        <div class="card">
+          <div class="card-header">
+            <i class="fas fa-user-edit"></i>
+            <h2>تعديل الملف الشخصي</h2>
+          </div>
+          
+          <form id="profileForm">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">الاسم الكامل</label>
+                <input type="text" name="fullName" class="form-control" placeholder="أدخل اسمك الكامل">
+              </div>
+              <div class="form-group">
+                <label class="form-label">البريد الإلكتروني</label>
+                <input type="email" class="form-control" id="profileEmail" disabled>
+              </div>
+              <div class="form-group">
+                <label class="form-label">رقم الهاتف</label>
+                <input type="tel" name="phone" class="form-control" placeholder="+966 5X XXX XXXX">
+              </div>
+              <div class="form-group">
+                <label class="form-label">اسم المستخدم</label>
+                <input type="text" class="form-control" id="profileUsername" disabled>
+              </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i>
+              حفظ التغييرات
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- قسم الأمان -->
+      <div class="content-section" id="security-section">
+        <div class="card">
+          <div class="card-header">
+            <i class="fas fa-shield-alt"></i>
+            <h2>الأمان</h2>
+          </div>
+          
+          <form id="securityForm">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">كلمة السر الحالية</label>
+                <input type="password" name="currentPassword" class="form-control" placeholder="أدخل كلمة السر الحالية">
+              </div>
+              <div class="form-group">
+                <label class="form-label">كلمة السر الجديدة</label>
+                <input type="password" name="newPassword" class="form-control" placeholder="كلمة السر الجديدة">
+              </div>
+              <div class="form-group">
+                <label class="form-label">تأكيد كلمة السر</label>
+                <input type="password" name="confirmPassword" class="form-control" placeholder="أعد إدخال كلمة السر الجديدة">
+              </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-key"></i>
+              تغيير كلمة السر
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- قسم شحن الرصيد -->
+      <div class="content-section" id="deposit-section">
+        <div class="card">
+          <div class="card-header">
+            <i class="fas fa-wallet"></i>
+            <h2>شحن الرصيد</h2>
+          </div>
+          
+          <form id="depositForm">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">المبلغ ($)</label>
+                <input type="number" name="amount" class="form-control" placeholder="0.00" min="1" step="0.01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">طريقة الدفع</label>
+                <select name="method" class="form-control">
+                  <option value="">اختر طريقة الدفع</option>
+                  <option value="bank">تحويل بنكي</option>
+                  <option value="sham">شام</option>
+                  <option value="transfer">حوالة مالية</option>
+                </select>
+              </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-paper-plane"></i>
+              طلب الشحن
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- قسم المعاملات -->
+      <div class="content-section" id="transactions-section">
+        <div class="card">
+          <div class="card-header">
+            <i class="fas fa-exchange-alt"></i>
+            <h2>المعاملات</h2>
+          </div>
+          
+          <div class="transaction-list" id="transactionsList">
+            <!-- سيتم تعبئة المعاملات هنا -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- العمود الأيمن: القائمة الجانبية -->
+    <div class="side-nav">
+      <div class="card">
+        <div class="nav-section">
+          <div class="nav-title">الحساب</div>
+          <a href="#" class="nav-link active" onclick="showSection('overview')">
+            <i class="fas fa-home"></i>
+            نظرة عامة
+          </a>
+          <a href="#" class="nav-link" onclick="showSection('edit-profile')">
+            <i class="fas fa-user-cog"></i>
+            إعدادات الملف
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-title">المالية</div>
+          <a href="#" class="nav-link" onclick="showSection('deposit')">
+            <i class="fas fa-plus-circle"></i>
+            شحن الرصيد
+          </a>
+          <a href="#" class="nav-link" onclick="showSection('transactions')">
+            <i class="fas fa-history"></i>
+            سجل المعاملات
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-title">الأمان</div>
+          <a href="#" class="nav-link" onclick="showSection('security')">
+            <i class="fas fa-shield-alt"></i>
+            كلمة السر
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <a href="/user.html" class="nav-link">
+            <i class="fas fa-arrow-right"></i>
+            العودة للرئيسية
+          </a>
+          <a href="#" class="nav-link text-danger" id="logoutBtn">
+            <i class="fas fa-sign-out-alt"></i>
+            تسجيل الخروج
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =================================================================
+    //  نظام الملف الشخصي - النسخة المعدلة
+    // =================================================================
+
+    // دوال التنقل
+    function showSection(sectionName) {
+      // إخفاء جميع الأقسام
+      document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+      });
+      
+      // إظهار القسم المطلوب
+      const targetSection = document.getElementById(sectionName + '-section');
+      if (targetSection) {
+        targetSection.classList.add('active');
+      }
+      
+      // تحديث التبويبات النشطة
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+      });
+      
+      // إضافة النشاط للعناصر المحددة
+      const activeTab = Array.from(document.querySelectorAll('.tab')).find(tab => 
+        tab.textContent.includes(getSectionTitle(sectionName))
+      );
+      if (activeTab) activeTab.classList.add('active');
+      
+      const activeNav = Array.from(document.querySelectorAll('.nav-link')).find(link => 
+        link.textContent.includes(getSectionTitle(sectionName))
+      );
+      if (activeNav) activeNav.classList.add('active');
+    }
+
+    function getSectionTitle(sectionName) {
+      const titles = {
+        'overview': 'نظرة عامة',
+        'edit-profile': 'الملف الشخصي',
+        'security': 'الأمان',
+        'deposit': 'شحن الرصيد',
+        'transactions': 'المعاملات'
+      };
+      return titles[sectionName] || sectionName;
+    }
+
+     // دوال العرض
+    function showAlert(message, type = 'success') {
+      const container = document.getElementById('alert-container');
+      const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+      
+      container.innerHTML = `
+        <div class="alert ${alertClass}">
+          <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle"></i>
+          ${message}
+        </div>
+      `;
+      
+      setTimeout(() => {
+        container.innerHTML = '';
+      }, 5000);
+    }
+
+    // التهيئة
+    document.addEventListener('DOMContentLoaded', function() {
+      // تحميل بيانات المستخدم
+      loadUserData();
+      
+      // إعداد المستمعين للأحداث
+      setupEventListeners();
+    });
+
+    function setupEventListeners() {
+      // النماذج
+      document.getElementById('profileForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        showAlert('تم تحديث الملف الشخصي بنجاح', 'success');
+      });
+      
+      document.getElementById('securityForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        showAlert('تم تغيير كلمة السر بنجاح', 'success');
+      });
+      
+      document.getElementById('depositForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        showAlert('تم إرسال طلب الشحن بنجاح', 'success');
+      });
+      
+      // تسجيل الخروج
+      document.getElementById('logoutBtn').addEventListener('click', function() {
+        if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
+          window.location.href = '/login.html';
+        }
+      });
+    }
+
+    function loadUserData() {
+      // بيانات وهمية للعرض
+      const userData = {
+        fullName: 'محمد أحمد',
+        username: 'mohammed',
+        email: 'mohammed@example.com',
+        phone: '+966 50 123 4567',
+        balance: 150.00,
+        totalOrders: 24,
+        completedOrders: 18,
+        joinDate: '2024-01-15',
+        status: 'نشط'
+      };
+      
+      // تعبئة البيانات
+      document.getElementById('userFullName').textContent = userData.fullName;
+      document.getElementById('userUsername').textContent = '@' + userData.username;
+      document.getElementById('userBalance').textContent = '$' + userData.balance.toFixed(2);
+      document.getElementById('totalOrders').textContent = userData.totalOrders;
+      document.getElementById('completedOrders').textContent = userData.completedOrders;
+      document.getElementById('userStatus').textContent = userData.status;
+      
+      document.getElementById('overviewUsername').value = userData.username;
+      document.getElementById('overviewEmail').value = userData.email;
+      document.getElementById('overviewPhone').value = userData.phone;
+      document.getElementById('overviewJoinDate').value = userData.joinDate;
+      
+      document.getElementById('profileUsername').value = userData.username;
+      document.getElementById('profileEmail').value = userData.email;
+      document.querySelector('[name="fullName"]').value = userData.fullName;
+      document.querySelector('[name="phone"]').value = userData.phone;
+      
+      // تحميل المعاملات الوهمية
+      loadSampleTransactions();
+    }
+
+    function loadSampleTransactions() {
+      const transactions = [
+        { type: 'deposit', title: 'شحن رصيد', amount: 50.00, date: '2024-03-20', status: 'مكتمل' },
+        { type: 'payment', title: 'دفع طلب', amount: -25.00, date: '2024-03-18', status: 'مكتمل' },
+        { type: 'deposit', title: 'شحن رصيد', amount: 100.00, date: '2024-03-15', status: 'مكتمل' },
+        { type: 'payment', title: 'دفع طلب', amount: -15.00, date: '2024-03-12', status: 'مكتمل' }
+      ];
+      
+      const container = document.getElementById('transactionsList');
+      container.innerHTML = transactions.map(transaction => `
+        <div class="transaction-item">
+          <div class="transaction-icon">
+            <i class="fas fa-${transaction.type === 'deposit' ? 'plus' : 'minus'}"></i>
+          </div>
+          <div class="transaction-details">
+            <div class="transaction-title">${transaction.title}</div>
+            <div class="transaction-meta">${transaction.date} • ${transaction.status}</div>
+          </div>
+          <div class="transaction-amount">
+            ${transaction.amount > 0 ? '+' : ''}$${transaction.amount.toFixed(2)}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    console.log('✅ نظام الملف الشخصي جاهز للعمل');
+  </script>
+</body>
 </html>
