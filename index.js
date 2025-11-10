@@ -1409,6 +1409,217 @@ if (pathname.startsWith('/api/user/notifications/') && method === 'PUT') {
     return;
 }
 
+
+    // ==================== نظام إدارة المستخدمين (للأدمن فقط) ====================
+
+// الحصول على جميع المستخدمين
+if (pathname === '/api/admin/users' && method === 'GET') {
+    if (!isAdmin) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Access denied' }));
+        return;
+    }
+
+    try {
+        const users = await User.find({})
+            .select('-password') // استبعاد كلمة السر
+            .sort({ createdAt: -1 });
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(users));
+    } catch (error) {
+        console.error('خطأ في جلب المستخدمين:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to load users' }));
+    }
+    return;
+}
+
+// الحصول على مستخدم معين
+if (pathname.startsWith('/api/admin/users/') && method === 'GET') {
+    if (!isAdmin) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Access denied' }));
+        return;
+    }
+
+    try {
+        const userId = pathname.split('/').pop();
+        const user = await User.findById(userId).select('-password');
+        
+        if (user) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(user));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'User not found' }));
+        }
+    } catch (error) {
+        console.error('خطأ في جلب المستخدم:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to load user' }));
+    }
+    return;
+}
+
+// تحديث بيانات المستخدم
+if (pathname.startsWith('/api/admin/users/') && method === 'PUT') {
+    if (!isAdmin) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Access denied' }));
+        return;
+    }
+
+    try {
+        const userId = pathname.split('/').pop();
+        const body = await readBody(req);
+        const updateData = JSON.parse(body || '{}');
+        
+        // إذا كانت هناك كلمة سر جديدة، قم بتشفيرها
+        if (updateData.newPassword) {
+            updateData.password = await bcrypt.hash(updateData.newPassword, SALT_ROUNDS);
+            delete updateData.newPassword;
+        }
+        
+        // تحديث البيانات
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { 
+                ...updateData,
+                updatedAt: new Date()
+            },
+            { new: true }
+        ).select('-password');
+
+        if (updatedUser) {
+            await logAction(username, 'admin_user_update', { 
+                userId: userId,
+                updatedFields: Object.keys(updateData)
+            }, clientIP);
+            
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(updatedUser));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'User not found' }));
+        }
+    } catch (error) {
+        console.error('خطأ في تحديث المستخدم:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to update user' }));
+    }
+    return;
+}
+
+// تجميد/فك تجميد الرصيد
+if (pathname.startsWith('/api/admin/users/') && pathname.includes('/freeze') && method === 'PUT') {
+    if (!isAdmin) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Access denied' }));
+        return;
+    }
+
+    try {
+        const userId = pathname.split('/')[4]; // /api/admin/users/{id}/freeze
+        const body = await readBody(req);
+        const { freeze, reason } = JSON.parse(body || '{}');
+        
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { 
+                balanceFrozen: freeze,
+                freezeReason: reason || '',
+                updatedAt: new Date()
+            },
+            { new: true }
+        ).select('-password');
+
+        if (updatedUser) {
+            await logAction(username, freeze ? 'admin_freeze_balance' : 'admin_unfreeze_balance', { 
+                userId: userId,
+                reason: reason
+            }, clientIP);
+            
+            // إرسال إشعار للمستخدم
+            await Notification.create({
+                id: Date.now(),
+                userId: userId,
+                type: freeze ? 'warning' : 'info',
+                title: freeze ? 'تم تجميد رصيدك' : 'تم فك تجميد رصيدك',
+                message: reason || (freeze ? 'تم تجميد رصيدك من قبل الإدارة' : 'تم فك تجميد رصيدك من قبل الإدارة'),
+                relatedTo: 'balance',
+                relatedId: userId
+            });
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(updatedUser));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'User not found' }));
+        }
+    } catch (error) {
+        console.error('خطأ في تجميد/فك تجميد الرصيد:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to update balance status' }));
+    }
+    return;
+}
+
+// تغيير حالة الحساب
+if (pathname.startsWith('/api/admin/users/') && pathname.includes('/status') && method === 'PUT') {
+    if (!isAdmin) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Access denied' }));
+        return;
+    }
+
+    try {
+        const userId = pathname.split('/')[4]; // /api/admin/users/{id}/status
+        const body = await readBody(req);
+        const { status, reason } = JSON.parse(body || '{}');
+        
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { 
+                status: status,
+                banReason: status === 'banned' ? reason : '',
+                updatedAt: new Date()
+            },
+            { new: true }
+        ).select('-password');
+
+        if (updatedUser) {
+            await logAction(username, 'admin_user_status_change', { 
+                userId: userId,
+                newStatus: status,
+                reason: reason
+            }, clientIP);
+            
+            // إرسال إشعار للمستخدم
+            await Notification.create({
+                id: Date.now(),
+                userId: userId,
+                type: status === 'banned' ? 'error' : 'success',
+                title: status === 'banned' ? 'تم حظر حسابك' : 'تم فك حظر حسابك',
+                message: reason || (status === 'banned' ? 'تم حظر حسابك من قبل الإدارة' : 'تم فك حظر حسابك من قبل الإدارة'),
+                relatedTo: 'account',
+                relatedId: userId
+            });
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(updatedUser));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'User not found' }));
+        }
+    } catch (error) {
+        console.error('خطأ في تغيير حالة الحساب:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to update user status' }));
+    }
+    return;
+}
+    
     // --- المسار غير موجود ---
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'API Endpoint Not Found' }));
