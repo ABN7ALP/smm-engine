@@ -18,12 +18,100 @@
 
     
 <!-- في user.html - أضف هذا في مكان واضح -->
-<div class="text-center mt-4">
-  <a href="/profile.html" class="btn btn-outline-primary">
-    <i class="fas fa-user me-2"></i>الملف الشخصي
-  </a>
-</div>
+<header class="user-header">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center py-3">
+            <!-- الشعار -->
+            <div class="logo">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-chart-line text-primary"></i>
+                    SMM Engine
+                </h1>
+            </div>
+            
+            <!-- شريط المستخدم -->
+            <div class="user-controls">
+                <!-- زر إضافة رصيد -->
+                <button class="btn btn-success btn-sm me-2" onclick="showDepositModal()">
+                    <i class="fas fa-plus-circle"></i>
+                    <span class="balance-amount" id="headerBalance">$0.00</span>
+                </button>
+                
+                <!-- زر الإشعارات -->
+                <button class="btn btn-outline-secondary btn-sm me-2 position-relative" onclick="showNotifications()">
+                    <i class="fas fa-bell"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">
+                        0
+                    </span>
+                </button>
+                
+                <!-- ملف المستخدم -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle d-flex align-items-center" 
+                            type="button" data-bs-toggle="dropdown">
+                        <img src="/assets/default-avatar.png" 
+                             alt="الصورة الشخصية" 
+                             class="rounded-circle me-2" 
+                             width="32" 
+                             height="32"
+                             id="headerAvatar">
+                        <span class="d-none d-md-inline" id="headerUsername">مستخدم</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="/profile.html">
+                                <i class="fas fa-user me-2"></i>الملف الشخصي
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="showDepositModal()">
+                                <i class="fas fa-wallet me-2"></i>شحن الرصيد
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="#" onclick="logout()">
+                                <i class="fas fa-sign-out-alt me-2"></i>تسجيل الخروج
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
 
+<!-- نافذة شحن الرصيد -->
+<div class="modal fade" id="depositModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-wallet me-2"></i>شحن الرصيد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quickDepositForm">
+                    <div class="mb-3">
+                        <label class="form-label">المبلغ ($)</label>
+                        <input type="number" name="amount" class="form-control" placeholder="0.00" min="1" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">طريقة الدفع</label>
+                        <select name="method" class="form-select" required>
+                            <option value="">اختر طريقة الدفع</option>
+                            <option value="bank">تحويل بنكي</option>
+                            <option value="sham">شام</option>
+                            <option value="transfer">حوالة مالية</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-paper-plane me-2"></i>طلب الشحن
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
     
     <!--الخطوة 1: اختيار الفئة -->
     <div id="step1" class="step">
@@ -1012,6 +1100,108 @@ async function initialize() {
             categoriesGrid.innerHTML = `<div class="alert alert-danger p-3">${err.message} حاول تحديث الصفحة.</div>`;
         }
     };
+
+  // تحميل بيانات المستخدم للهيدر
+async function loadUserHeader() {
+    try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            // إذا لم يكن مسجل دخول، إظهار زر الدخول
+            showLoginButton();
+            return;
+        }
+
+        const response = await fetch('/api/user/profile', {
+            headers: { 'x-auth-token': token }
+        });
+
+        if (response.ok) {
+            const userData = await response.json();
+            updateHeader(userData);
+        } else {
+            showLoginButton();
+        }
+    } catch (error) {
+        console.error('خطأ في تحميل بيانات الهيدر:', error);
+        showLoginButton();
+    }
+}
+
+// تحديث الهيدر ببيانات المستخدم
+function updateHeader(userData) {
+    document.getElementById('headerUsername').textContent = userData.username;
+    document.getElementById('headerBalance').textContent = `$${userData.balance.toFixed(2)}`;
+    
+    if (userData.avatar && userData.avatar !== '/assets/default-avatar.png') {
+        document.getElementById('headerAvatar').src = userData.avatar;
+    }
+}
+
+// إظهار زر الدخول للزوار
+function showLoginButton() {
+    document.querySelector('.user-controls').innerHTML = `
+        <a href="/login.html" class="btn btn-primary">
+            <i class="fas fa-sign-in-alt me-2"></i>تسجيل الدخول
+        </a>
+    `;
+}
+
+// نافذة شحن الرصيد السريع
+function showDepositModal() {
+    const modal = new bootstrap.Modal(document.getElementById('depositModal'));
+    modal.show();
+}
+
+// تسجيل الخروج
+async function logout() {
+    if (!confirm('هل أنت متأكد من تسجيل الخروج؟')) return;
+    
+    try {
+        await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { 'x-auth-token': localStorage.getItem('authToken') }
+        });
+    } catch (error) {
+        console.error('خطأ في تسجيل الخروج:', error);
+    } finally {
+        localStorage.removeItem('authToken');
+        window.location.href = '/login.html';
+    }
+}
+
+// إعداد النموذج السريع للشحن
+document.getElementById('quickDepositForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+    
+    try {
+        const response = await fetch('/api/user/deposit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-auth-token': localStorage.getItem('authToken')
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            alert('✅ تم إرسال طلب الشحن بنجاح');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('depositModal'));
+            modal.hide();
+            this.reset();
+            loadUserHeader(); // تحديث الرصيد
+        } else {
+            throw new Error('فشل طلب الشحن');
+        }
+    } catch (error) {
+        alert('❌ ' + error.message);
+    }
+});
+
+// تحميل الهيدر عند بدء الصفحة
+document.addEventListener('DOMContentLoaded', loadUserHeader);
 
     // إضافة تحقق من الجلسة بشكل دوري
     setInterval(validateSession, 5 * 60 * 1000); // كل 5 دقائق
