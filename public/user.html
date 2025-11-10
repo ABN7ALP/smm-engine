@@ -6,6 +6,7 @@
   <title>SMM Engine | المرشد الرقمي</title>
 
   <!-- المكتبات الخارجية -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
@@ -18,7 +19,8 @@
 
     
 <!-- في user.html - أضف هذا في مكان واضح -->
-<header class="user-header">
+
+    <header class="user-header">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center py-3">
             <!-- الشعار -->
@@ -32,13 +34,13 @@
             <!-- شريط المستخدم -->
             <div class="user-controls">
                 <!-- زر إضافة رصيد -->
-                <button class="btn btn-success btn-sm me-2" onclick="showDepositModal()">
+                <button class="btn btn-success btn-sm me-2" id="quickDepositBtn">
                     <i class="fas fa-plus-circle"></i>
                     <span class="balance-amount" id="headerBalance">$0.00</span>
                 </button>
                 
                 <!-- زر الإشعارات -->
-                <button class="btn btn-outline-secondary btn-sm me-2 position-relative" onclick="showNotifications()">
+                <button class="btn btn-outline-secondary btn-sm me-2 position-relative" id="notificationsBtn">
                     <i class="fas fa-bell"></i>
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">
                         0
@@ -48,7 +50,7 @@
                 <!-- ملف المستخدم -->
                 <div class="dropdown">
                     <button class="btn btn-outline-primary dropdown-toggle d-flex align-items-center" 
-                            type="button" data-bs-toggle="dropdown">
+                            type="button" id="userDropdown" data-bs-toggle="dropdown">
                         <img src="/assets/default-avatar.png" 
                              alt="الصورة الشخصية" 
                              class="rounded-circle me-2" 
@@ -64,13 +66,13 @@
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="#" onclick="showDepositModal()">
+                            <a class="dropdown-item" href="#" id="dropdownDepositBtn">
                                 <i class="fas fa-wallet me-2"></i>شحن الرصيد
                             </a>
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            <a class="dropdown-item text-danger" href="#" onclick="logout()">
+                            <a class="dropdown-item text-danger" href="#" id="logoutHeaderBtn">
                                 <i class="fas fa-sign-out-alt me-2"></i>تسجيل الخروج
                             </a>
                         </li>
@@ -112,6 +114,27 @@
         </div>
     </div>
 </div>
+
+<!-- نافذة الإشعارات -->
+<div class="modal fade" id="notificationsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-bell me-2"></i>الإشعارات</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="notificationsList">
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-bell-slash fa-2x mb-3"></i>
+                        <p>لا توجد إشعارات جديدة</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
     
     <!--الخطوة 1: اختيار الفئة -->
     <div id="step1" class="step">
@@ -1101,7 +1124,12 @@ async function initialize() {
         }
     };
 
-  // تحميل بيانات المستخدم للهيدر
+
+  // =================================================================
+//  نظام الهيدر والإشعارات - الإصدار المصحح
+// =================================================================
+
+// تحميل بيانات المستخدم للهيدر
 async function loadUserHeader() {
     try {
         const token = localStorage.getItem('authToken');
@@ -1118,6 +1146,7 @@ async function loadUserHeader() {
         if (response.ok) {
             const userData = await response.json();
             updateHeader(userData);
+            loadNotifications(); // تحميل الإشعارات
         } else {
             showLoginButton();
         }
@@ -1148,8 +1177,96 @@ function showLoginButton() {
 
 // نافذة شحن الرصيد السريع
 function showDepositModal() {
-    const modal = new bootstrap.Modal(document.getElementById('depositModal'));
-    modal.show();
+    const modalElement = document.getElementById('depositModal');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
+}
+
+// نافذة الإشعارات
+function showNotifications() {
+    const modalElement = document.getElementById('notificationsModal');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
+}
+
+// تحميل الإشعارات
+async function loadNotifications() {
+    try {
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
+
+        const response = await fetch('/api/user/notifications', {
+            headers: { 'x-auth-token': token }
+        });
+
+        if (response.ok) {
+            const notifications = await response.json();
+            displayNotifications(notifications);
+        }
+    } catch (error) {
+        console.error('خطأ في تحميل الإشعارات:', error);
+    }
+}
+
+// عرض الإشعارات
+function displayNotifications(notifications) {
+    const container = document.getElementById('notificationsList');
+    const countElement = document.getElementById('notificationCount');
+    
+    // تحديث العداد
+    const unreadCount = notifications.filter(n => !n.read).length;
+    countElement.textContent = unreadCount;
+    countElement.style.display = unreadCount > 0 ? 'block' : 'none';
+    
+    // عرض الإشعارات
+    if (!notifications || notifications.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-bell-slash fa-2x mb-3"></i>
+                <p>لا توجد إشعارات جديدة</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = notifications.map(notification => `
+        <div class="notification-item ${notification.read ? '' : 'bg-light'}">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-${getNotificationIcon(notification.type)} text-${getNotificationColor(notification.type)} mt-1 me-3"></i>
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">${notification.title}</h6>
+                    <p class="mb-1 small">${notification.message}</p>
+                    <small class="text-muted">${new Date(notification.createdAt).toLocaleString('ar-SA')}</small>
+                </div>
+                ${!notification.read ? '<span class="badge bg-primary">جديد</span>' : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+// دوال مساعدة للإشعارات
+function getNotificationIcon(type) {
+    const icons = {
+        'info': 'info-circle',
+        'success': 'check-circle',
+        'warning': 'exclamation-triangle',
+        'error': 'exclamation-circle'
+    };
+    return icons[type] || 'bell';
+}
+
+function getNotificationColor(type) {
+    const colors = {
+        'info': 'info',
+        'success': 'success',
+        'warning': 'warning',
+        'error': 'danger'
+    };
+    return colors[type] || 'secondary';
 }
 
 // تسجيل الخروج
@@ -1176,6 +1293,12 @@ document.getElementById('quickDepositForm').addEventListener('submit', async fun
     const formData = new FormData(this);
     const data = Object.fromEntries(formData.entries());
     
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الإرسال...';
+    submitBtn.disabled = true;
+    
     try {
         const response = await fetch('/api/user/deposit', {
             method: 'POST',
@@ -1186,6 +1309,8 @@ document.getElementById('quickDepositForm').addEventListener('submit', async fun
             body: JSON.stringify(data)
         });
 
+        const result = await response.json();
+
         if (response.ok) {
             alert('✅ تم إرسال طلب الشحن بنجاح');
             const modal = bootstrap.Modal.getInstance(document.getElementById('depositModal'));
@@ -1193,16 +1318,39 @@ document.getElementById('quickDepositForm').addEventListener('submit', async fun
             this.reset();
             loadUserHeader(); // تحديث الرصيد
         } else {
-            throw new Error('فشل طلب الشحن');
+            throw new Error(result.error || 'فشل طلب الشحن');
         }
     } catch (error) {
         alert('❌ ' + error.message);
+    } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
     }
 });
 
-// تحميل الهيدر عند بدء الصفحة
-document.addEventListener('DOMContentLoaded', loadUserHeader);
+// إعداد مستمعي الأحداث
+document.addEventListener('DOMContentLoaded', function() {
+    // تحميل الهيدر
+    loadUserHeader();
+    
+    // إعداد الأزرار
+    document.getElementById('quickDepositBtn').addEventListener('click', showDepositModal);
+    document.getElementById('notificationsBtn').addEventListener('click', showNotifications);
+    document.getElementById('dropdownDepositBtn').addEventListener('click', showDepositModal);
+    document.getElementById('logoutHeaderBtn').addEventListener('click', logout);
+    
+    // إعداد dropdown يدويًا إذا لزم
+    const userDropdown = document.getElementById('userDropdown');
+    if (userDropdown) {
+        userDropdown.addEventListener('click', function(e) {
+            e.preventDefault();
+            const dropdown = new bootstrap.Dropdown(this);
+            dropdown.toggle();
+        });
+    }
+});
 
+console.log('✅ نظام الهيدر جاهز للعمل');
     // إضافة تحقق من الجلسة بشكل دوري
     setInterval(validateSession, 5 * 60 * 1000); // كل 5 دقائق
 
