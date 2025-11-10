@@ -389,14 +389,16 @@ button.edit-btn, .btn-primary {
     position: sticky;
     top: 0;
     z-index: 1000;
-    padding: 10px 0;
+    border-radius: 0 0 18px 18px; /* حواف سفلية ناعمة */
+    padding: 8px 0;
 }
 
-/* تنسيق عام للمحتوى داخل الهيدر */
+/* الحاوية العامة داخل الهيدر */
 .user-header .container-fluid {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 15px; /* فراغ بسيط بين الشعار والأزرار */
 }
 
 /* الشعار */
@@ -408,16 +410,20 @@ button.edit-btn, .btn-primary {
     font-weight: 700;
     color: #333;
     margin: 0;
-}
-
-/* منطقة الأزرار */
-.user-controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    padding: 4px 12px;
+    background: #f9fafb;
+    border-radius: 12px;
 }
 
 /* الأزرار */
+.user-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-right: 6px;
+}
+
+/* تحسين مظهر الأزرار */
 .user-controls .btn {
     border-radius: 10px;
     padding: 6px 12px;
@@ -425,6 +431,11 @@ button.edit-btn, .btn-primary {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: 0.2s ease;
+}
+
+.user-controls .btn:hover {
+    transform: translateY(-1px);
 }
 
 /* الصورة الشخصية */
@@ -443,23 +454,33 @@ button.edit-btn, .btn-primary {
     color: #333;
 }
 
-/* تحسينات للجوال */
+/* زر تسجيل الدخول */
+.user-controls a.btn-primary {
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 8px 16px;
+    white-space: nowrap;
+}
+
+/* للجوال */
 @media (max-width: 768px) {
     .logo h1 {
         font-size: 1.1rem;
+        padding: 3px 10px;
     }
 
     .user-controls {
         gap: 6px;
     }
 
-    .user-controls .btn {
+    .user-controls .btn,
+    .user-controls a.btn-primary {
         padding: 6px 8px;
         font-size: 0.85rem;
     }
 
     #headerUsername {
-        display: none; /* يخفي الاسم لتوفير مساحة */
+        display: none;
     }
 
     #headerAvatar {
@@ -468,14 +489,14 @@ button.edit-btn, .btn-primary {
     }
 }
 
-/* تحسين مظهر شريط الإشعارات والرصيد */
+/* الأيقونة والرصيد */
 .balance-amount {
     font-weight: 600;
     margin-right: 4px;
     color: #0d6efd;
 }
 
-/* تعديل خفيف على dropdown */
+/* تعديل لطيف على القوائم المنسدلة */
 .dropdown-menu {
     border-radius: 12px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
