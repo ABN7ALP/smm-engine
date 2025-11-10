@@ -2066,7 +2066,7 @@ async function updateUser() {
     }
 }
 
-// تجميد/فك تجميد الرصيد
+  // تجميد/فك تجميد الرصيد
 async function toggleFreezeBalance(userId, freeze) {
     const action = freeze ? 'تجميد' : 'فك تجميد';
     const actionText = freeze ? 'تجميد الرصيد' : 'فك تجميد الرصيد';
@@ -2086,11 +2086,12 @@ async function toggleFreezeBalance(userId, freeze) {
             showNotification(`✅ تم ${actionText} بنجاح`, 'success');
             loadAllUsers(); // إعادة تحميل القائمة
         } else {
-            throw new Error(`فشل ${actionText}`);
+            const errorData = await response.json();
+            throw new Error(errorData.error || `فشل ${actionText}`);
         }
     } catch (error) {
         console.error(`خطأ في ${actionText}:`, error);
-        showNotification(`❌ فشل ${actionText}`, 'error');
+        showNotification(`❌ ${error.message}`, 'error');
     }
 }
 
@@ -2114,11 +2115,12 @@ async function changeUserStatus(userId, newStatus) {
             showNotification(`✅ تم ${actionText} بنجاح`, 'success');
             loadAllUsers(); // إعادة تحميل القائمة
         } else {
-            throw new Error(`فشل ${actionText}`);
+            const errorData = await response.json();
+            throw new Error(errorData.error || `فشل ${actionText}`);
         }
     } catch (error) {
         console.error(`خطأ في ${actionText}:`, error);
-        showNotification(`❌ فشل ${actionText}`, 'error');
+        showNotification(`❌ ${error.message}`, 'error');
     }
 }
 
