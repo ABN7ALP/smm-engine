@@ -534,42 +534,99 @@ const server = http.createServer(async (req, res) => {
       }
       return;
     }
-
-    // إنشاء طلب جديد
-    if (method === 'POST' && pathname === '/api/orders') {
-      const body = await readBody(req);
-      const data = JSON.parse(body || '{}');
-      
-      if (!data.serviceId || !data.link || !isValidUrl(data.link)) {
+    
+    // إنشاء طلب جديد مع الإشعارات
+if (method === 'POST' && pathname === '/api/orders') {
+    const body = await readBody(req);
+    const data = JSON.parse(body || '{}');
+    
+    if (!data.serviceId || !data.link || !isValidUrl(data.link)) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Missing or invalid fields' }));
         return;
-      }
+    }
 
-      try {
+    try {
         const maxIdOrder = await Order.findOne().sort('-id').exec();
         const newId = (maxIdOrder?.id || 0) + 1;
         
+        // الحصول على المستخدم إذا كان مسجلاً
+        let username = 'public';
+        let userId = null;
+        
+        const authUsername = checkAuth(req);
+        if (authUsername) {
+            const user = await User.findOne({ username: authUsername });
+            if (user) {
+                username = user.username;
+                userId = user._id;
+                
+                // التحقق من الرصيد إذا كان الطلب مدفوع
+                if (user.balanceFrozen) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'لا يمكن إنشاء طلب - الرصيد مجمد' }));
+                    return;
+                }
+            }
+        }
+        
         const order = await Order.create({
-          id: newId,
-          serviceId: data.serviceId,
-          link: data.link,
-          quantity: data.quantity,
-          price: data.price,
-          status: 'pending',
-          username: data.username || 'public'
+            id: newId,
+            serviceId: data.serviceId,
+            link: data.link,
+            quantity: data.quantity,
+            price: data.price,
+            status: 'pending',
+            username: username,
+            userId: userId
         });
 
-        await logAction(data.username || 'public', 'order_create', { id: order.id }, clientIP);
+        await logAction(username, 'order_create', { id: order.id }, clientIP);
+        
+        // إرسال إشعار للمستخدم إذا كان مسجلاً
+        if (userId) {
+            await Notification.create({
+                id: Date.now(),
+                userId: userId,
+                type: 'success',
+                title: 'تم إنشاء طلب جديد',
+                message: `تم إنشاء طلبك #${order.id} بنجاح. سيتم معالجته قريباً.`,
+                relatedTo: 'order',
+                relatedId: order.id
+            });
+
+            // تحديث إحصائيات المستخدم
+            const user = await User.findOne({ username: authUsername });
+            if (user) {
+                user.orders.total = (user.orders.total || 0) + 1;
+                user.orders.pending = (user.orders.pending || 0) + 1;
+                await user.save();
+            }
+        }
+
+        // إرسال إشعار للأدمن
+        const adminUsers = await User.find({ role: 'admin' });
+        for (const admin of adminUsers) {
+            await Notification.create({
+                id: Date.now() + Math.random(), // تجنب تكرار ID
+                userId: admin._id,
+                type: 'info',
+                title: 'طلب جديد',
+                message: `تم إنشاء طلب جديد #${order.id} من قبل ${username}`,
+                relatedTo: 'order',
+                relatedId: order.id
+            });
+        }
         
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(order));
-      } catch (error) {
+    } catch (error) {
+        console.error('خطأ في إنشاء الطلب:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to create order' }));
-      }
-      return;
     }
+    return;
+                                       }
     
     // معاينة الرابط
     if (method === 'POST' && pathname === '/api/preview') {
@@ -1209,37 +1266,180 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // تحديث حالة الطلب
-    if (pathname.startsWith('/api/orders/') && method === 'PUT') {
-      try {
+    
+    // تحديث حالة الطلب مع نظام الخصم
+if (pathname.startsWith('/api/orders/') && method === 'PUT') {
+    try {
         const id = parseInt(pathname.split('/').pop(), 10);
         const body = await readBody(req);
         const data = JSON.parse(body || '{}');
         
+        const order = await Order.findOne({ id });
+        if (!order) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Order not found' }));
+            return;
+        }
+
+        // إذا تم تغيير الحالة إلى processing وكانت pending، قم بخصم المبلغ
+        if (data.status === 'processing' && order.status === 'pending') {
+            const user = await User.findOne({ username: order.username });
+            if (user) {
+                // التحقق من أن الرصيد كافي وغير مجمد
+                if (user.balanceFrozen) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'لا يمكن معالجة الطلب - الرصيد مجمد' }));
+                    return;
+                }
+                
+                if (user.balance < order.price) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'رصيد المستخدم غير كافي' }));
+                    return;
+                }
+
+                // خصم المبلغ من رصيد المستخدم
+                user.balance -= order.price;
+                user.totalSpent += order.price;
+                
+                // تحديث إحصائيات الطلبات
+                user.orders.total = (user.orders.total || 0) + 1;
+                user.orders.pending = (user.orders.pending || 0) + 1;
+                
+                await user.save();
+
+                // تسجيل المعاملة
+                const maxIdTransaction = await Transaction.findOne().sort('-id').exec();
+                const newTransactionId = (maxIdTransaction?.id || 0) + 1;
+
+                await Transaction.create({
+                    id: newTransactionId,
+                    userId: user._id,
+                    username: user.username,
+                    type: 'payment',
+                    amount: -order.price,
+                    method: 'system',
+                    status: 'completed',
+                    userNote: `دفع مقابل الطلب #${order.id}`,
+                    createdAt: new Date()
+                });
+
+                // إرسال إشعار للمستخدم
+                await Notification.create({
+                    id: Date.now(),
+                    userId: user._id,
+                    type: 'info',
+                    title: 'تم خصم المبلغ',
+                    message: `تم خصم $${order.price.toFixed(2)} من رصيدك مقابل الطلب #${order.id}`,
+                    relatedTo: 'order',
+                    relatedId: order.id
+                });
+
+                console.log(`✅ تم خصم $${order.price} من رصيد ${user.username}`);
+            }
+        }
+
+        // إذا تم إلغاء الطلب أو رفضه، إرجاع المبلغ
+        if ((data.status === 'cancelled' || data.status === 'rejected') && 
+            (order.status === 'processing' || order.status === 'pending')) {
+            const user = await User.findOne({ username: order.username });
+            if (user && order.status === 'processing') {
+                // إرجاع المبلغ للمستخدم
+                user.balance += order.price;
+                user.totalSpent -= order.price;
+                await user.save();
+
+                // تسجيل معاملة الإرجاع
+                const maxIdTransaction = await Transaction.findOne().sort('-id').exec();
+                const newTransactionId = (maxIdTransaction?.id || 0) + 1;
+
+                await Transaction.create({
+                    id: newTransactionId,
+                    userId: user._id,
+                    username: user.username,
+                    type: 'refund',
+                    amount: order.price,
+                    method: 'system',
+                    status: 'completed',
+                    userNote: `استرجاع مبلغ الطلب #${order.id}`,
+                    createdAt: new Date()
+                });
+
+                // إرسال إشعار للمستخدم
+                await Notification.create({
+                    id: Date.now(),
+                    userId: user._id,
+                    type: 'info',
+                    title: 'تم استرجاع المبلغ',
+                    message: `تم إرجاع $${order.price.toFixed(2)} إلى رصيدك للطلب #${order.id}`,
+                    relatedTo: 'order',
+                    relatedId: order.id
+                });
+            }
+        }
+
+        // تحديث حالة الطلب
         const updatedOrder = await Order.findOneAndUpdate(
-          { id },
-          { 
-            status: data.status,
-            updatedAt: new Date()
-          },
-          { new: true }
+            { id },
+            { 
+                status: data.status,
+                updatedAt: new Date()
+            },
+            { new: true }
         );
 
         if (updatedOrder) {
-          await logAction(username, 'order_update', { id, status: data.status }, clientIP);
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(updatedOrder));
+            // إرسال إشعار بتغيير حالة الطلب
+            const user = await User.findOne({ username: order.username });
+            if (user) {
+                await Notification.create({
+                    id: Date.now(),
+                    userId: user._id,
+                    type: data.status === 'completed' ? 'success' : 
+                          data.status === 'rejected' ? 'error' : 'info',
+                    title: `تم تحديث حالة الطلب #${order.id}`,
+                    message: `حالة الطلب #${order.id} أصبحت: ${getOrderStatusText(data.status)}`,
+                    relatedTo: 'order',
+                    relatedId: order.id
+                });
+
+                // تحديث إحصائيات المستخدم
+                if (data.status === 'completed') {
+                    user.orders.completed = (user.orders.completed || 0) + 1;
+                    user.orders.pending = Math.max(0, (user.orders.pending || 0) - 1);
+                } else if (data.status === 'rejected') {
+                    user.orders.rejected = (user.orders.rejected || 0) + 1;
+                    user.orders.pending = Math.max(0, (user.orders.pending || 0) - 1);
+                }
+                await user.save();
+            }
+
+            await logAction(username, 'order_update', { id, status: data.status }, clientIP);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(updatedOrder));
         } else {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Order not found' }));
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Order not found' }));
         }
-      } catch (error) {
+    } catch (error) {
         console.error('Update order error:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to update order' }));
-      }
-      return;
     }
+    return;
+}
+
+// دالة مساعدة للحصول على نص حالة الطلب
+function getOrderStatusText(status) {
+    const statusMap = {
+        'pending': 'قيد الانتظار',
+        'processing': 'قيد التنفيذ', 
+        'completed': 'مكتمل',
+        'rejected': 'مرفوض',
+        'cancelled': 'ملغي'
+    };
+    return statusMap[status] || status;
+                  }
 
     // السجلات
     if (pathname === '/api/logs' && method === 'GET') {
