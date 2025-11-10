@@ -381,64 +381,108 @@ button.edit-btn, .btn-primary {
     font-size: 0.9rem; /* تصغير حجم زر الرجوع */
   }
    }
+
 .user-header {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid #e9ecef;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     position: sticky;
     top: 0;
     z-index: 1000;
+    padding: 10px 0;
 }
 
-.balance-amount {
-    font-weight: 600;
-    margin-right: 4px;
+/* تنسيق عام للمحتوى داخل الهيدر */
+.user-header .container-fluid {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
+/* الشعار */
+.logo h1 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+}
+
+/* منطقة الأزرار */
+.user-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* الأزرار */
 .user-controls .btn {
-    border-radius: 8px;
-    padding: 8px 16px;
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.dropdown-toggle::after {
-    margin-right: 8px;
+/* الصورة الشخصية */
+#headerAvatar {
+    border: 2px solid #e0e0e0;
+    object-fit: cover;
+    transition: 0.3s;
+}
+#headerAvatar:hover {
+    border-color: #0d6efd;
+}
+
+/* اسم المستخدم */
+#headerUsername {
+    font-weight: 600;
+    color: #333;
 }
 
 /* تحسينات للجوال */
 @media (max-width: 768px) {
-    .user-header .container-fluid {
-        padding: 0 15px;
-    }
-    
-    .balance-amount {
-        display: none;
-    }
-    
-    .user-controls .btn {
-        padding: 6px 12px;
-    }
-    
     .logo h1 {
         font-size: 1.1rem;
     }
+
+    .user-controls {
+        gap: 6px;
+    }
+
+    .user-controls .btn {
+        padding: 6px 8px;
+        font-size: 0.85rem;
+    }
+
+    #headerUsername {
+        display: none; /* يخفي الاسم لتوفير مساحة */
+    }
+
+    #headerAvatar {
+        width: 28px;
+        height: 28px;
+    }
 }
 
-.notification-item {
-    padding: 12px;
-    border-bottom: 1px solid #e9ecef;
-    transition: background-color 0.2s;
-    cursor: pointer;
+/* تحسين مظهر شريط الإشعارات والرصيد */
+.balance-amount {
+    font-weight: 600;
+    margin-right: 4px;
+    color: #0d6efd;
 }
 
-.notification-item:hover {
-    background-color: #f8f9fa;
+/* تعديل خفيف على dropdown */
+.dropdown-menu {
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
-
-.notification-item:last-child {
-    border-bottom: none;
+.dropdown-item {
+    font-size: 0.9rem;
 }
-
-.notification-item.unread {
-    background-color: #f0f9ff;
-    border-left: 3px solid #007bff;
+.dropdown-item i {
+    color: #0d6efd;
 }
