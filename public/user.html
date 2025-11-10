@@ -42,7 +42,7 @@
                 <!-- زر الإشعارات -->
                 <button class="btn btn-outline-secondary btn-sm me-2 position-relative" id="notificationsBtn">
                     <i class="fas fa-bell"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount" style="display: none;">
                         0
                     </span>
                 </button>
@@ -50,7 +50,7 @@
                 <!-- ملف المستخدم -->
                 <div class="dropdown">
                     <button class="btn btn-outline-primary dropdown-toggle d-flex align-items-center" 
-                            type="button" id="userDropdown" data-bs-toggle="dropdown">
+                            type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <img src="/assets/default-avatar.png" 
                              alt="الصورة الشخصية" 
                              class="rounded-circle me-2" 
@@ -59,7 +59,7 @@
                              id="headerAvatar">
                         <span class="d-none d-md-inline" id="headerUsername">مستخدم</span>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li>
                             <a class="dropdown-item" href="/profile.html">
                                 <i class="fas fa-user me-2"></i>الملف الشخصي
@@ -1125,8 +1125,9 @@ async function initialize() {
     };
 
 
+
   // =================================================================
-//  نظام الهيدر والإشعارات - الإصدار المصحح
+//  نظام الهيدر والإشعارات - الإصدار المصحح بالكامل
 // =================================================================
 
 // تحميل بيانات المستخدم للهيدر
@@ -1158,38 +1159,53 @@ async function loadUserHeader() {
 
 // تحديث الهيدر ببيانات المستخدم
 function updateHeader(userData) {
-    document.getElementById('headerUsername').textContent = userData.username;
-    document.getElementById('headerBalance').textContent = `$${userData.balance.toFixed(2)}`;
+    if (document.getElementById('headerUsername')) {
+        document.getElementById('headerUsername').textContent = userData.username;
+    }
+    if (document.getElementById('headerBalance')) {
+        document.getElementById('headerBalance').textContent = `$${userData.balance.toFixed(2)}`;
+    }
     
-    if (userData.avatar && userData.avatar !== '/assets/default-avatar.png') {
+    if (userData.avatar && userData.avatar !== '/assets/default-avatar.png' && document.getElementById('headerAvatar')) {
         document.getElementById('headerAvatar').src = userData.avatar;
     }
 }
 
 // إظهار زر الدخول للزوار
 function showLoginButton() {
-    document.querySelector('.user-controls').innerHTML = `
-        <a href="/login.html" class="btn btn-primary">
-            <i class="fas fa-sign-in-alt me-2"></i>تسجيل الدخول
-        </a>
-    `;
+    const userControls = document.querySelector('.user-controls');
+    if (userControls) {
+        userControls.innerHTML = `
+            <a href="/login.html" class="btn btn-primary">
+                <i class="fas fa-sign-in-alt me-2"></i>تسجيل الدخول
+            </a>
+        `;
+    }
 }
 
 // نافذة شحن الرصيد السريع
 function showDepositModal() {
     const modalElement = document.getElementById('depositModal');
-    if (modalElement) {
+    if (modalElement && typeof bootstrap !== 'undefined') {
         const modal = new bootstrap.Modal(modalElement);
         modal.show();
+    } else {
+        // Fallback إذا لم تكن bootstrap متوفرة
+        modalElement.style.display = 'block';
+        modalElement.classList.add('show');
     }
 }
 
 // نافذة الإشعارات
 function showNotifications() {
     const modalElement = document.getElementById('notificationsModal');
-    if (modalElement) {
+    if (modalElement && typeof bootstrap !== 'undefined') {
         const modal = new bootstrap.Modal(modalElement);
         modal.show();
+    } else {
+        // Fallback إذا لم تكن bootstrap متوفرة
+        modalElement.style.display = 'block';
+        modalElement.classList.add('show');
     }
 }
 
@@ -1206,9 +1222,24 @@ async function loadNotifications() {
         if (response.ok) {
             const notifications = await response.json();
             displayNotifications(notifications);
+        } else if (response.status === 404) {
+            // إذا لم يكن API الإشعارات موجوداً، تجاهل الخطأ
+            console.log('API الإشعارات غير متوفر حالياً');
+            hideNotificationsBadge();
+        } else {
+            throw new Error('فشل تحميل الإشعارات');
         }
     } catch (error) {
         console.error('خطأ في تحميل الإشعارات:', error);
+        hideNotificationsBadge();
+    }
+}
+
+// إخفاء بادج الإشعارات
+function hideNotificationsBadge() {
+    const countElement = document.getElementById('notificationCount');
+    if (countElement) {
+        countElement.style.display = 'none';
     }
 }
 
@@ -1216,6 +1247,8 @@ async function loadNotifications() {
 function displayNotifications(notifications) {
     const container = document.getElementById('notificationsList');
     const countElement = document.getElementById('notificationCount');
+    
+    if (!container || !countElement) return;
     
     // تحديث العداد
     const unreadCount = notifications.filter(n => !n.read).length;
@@ -1234,7 +1267,8 @@ function displayNotifications(notifications) {
     }
     
     container.innerHTML = notifications.map(notification => `
-        <div class="notification-item ${notification.read ? '' : 'bg-light'}">
+        <div class="notification-item ${notification.read ? '' : 'unread'}" 
+             onclick="markNotificationAsRead('${notification._id}')">
             <div class="d-flex align-items-start">
                 <i class="fas fa-${getNotificationIcon(notification.type)} text-${getNotificationColor(notification.type)} mt-1 me-3"></i>
                 <div class="flex-grow-1">
@@ -1246,6 +1280,40 @@ function displayNotifications(notifications) {
             </div>
         </div>
     `).join('');
+}
+
+// تحديد الإشعار كمقروء
+async function markNotificationAsRead(notificationId) {
+    try {
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
+
+        const response = await fetch(`/api/user/notifications/${notificationId}`, {
+            method: 'PUT',
+            headers: { 'x-auth-token': token }
+        });
+
+        if (response.ok) {
+            // تحديث الواجهة مباشرة
+            const notificationElement = document.querySelector(`[onclick="markNotificationAsRead('${notificationId}')"]`);
+            if (notificationElement) {
+                notificationElement.classList.remove('unread');
+                const badge = notificationElement.querySelector('.badge');
+                if (badge) badge.remove();
+                
+                // تحديث العداد
+                const countElement = document.getElementById('notificationCount');
+                if (countElement) {
+                    const currentCount = parseInt(countElement.textContent) || 0;
+                    const newCount = Math.max(0, currentCount - 1);
+                    countElement.textContent = newCount;
+                    countElement.style.display = newCount > 0 ? 'block' : 'none';
+                }
+            }
+        }
+    } catch (error) {
+        console.error('خطأ في تحديث حالة الإشعار:', error);
+    }
 }
 
 // دوال مساعدة للإشعارات
@@ -1313,8 +1381,14 @@ document.getElementById('quickDepositForm').addEventListener('submit', async fun
 
         if (response.ok) {
             alert('✅ تم إرسال طلب الشحن بنجاح');
-            const modal = bootstrap.Modal.getInstance(document.getElementById('depositModal'));
-            modal.hide();
+            const modalElement = document.getElementById('depositModal');
+            if (modalElement && typeof bootstrap !== 'undefined') {
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                modal.hide();
+            } else {
+                modalElement.style.display = 'none';
+                modalElement.classList.remove('show');
+            }
             this.reset();
             loadUserHeader(); // تحديث الرصيد
         } else {
@@ -1334,19 +1408,20 @@ document.addEventListener('DOMContentLoaded', function() {
     loadUserHeader();
     
     // إعداد الأزرار
-    document.getElementById('quickDepositBtn').addEventListener('click', showDepositModal);
-    document.getElementById('notificationsBtn').addEventListener('click', showNotifications);
-    document.getElementById('dropdownDepositBtn').addEventListener('click', showDepositModal);
-    document.getElementById('logoutHeaderBtn').addEventListener('click', logout);
+    const quickDepositBtn = document.getElementById('quickDepositBtn');
+    const notificationsBtn = document.getElementById('notificationsBtn');
+    const dropdownDepositBtn = document.getElementById('dropdownDepositBtn');
+    const logoutHeaderBtn = document.getElementById('logoutHeaderBtn');
+    
+    if (quickDepositBtn) quickDepositBtn.addEventListener('click', showDepositModal);
+    if (notificationsBtn) notificationsBtn.addEventListener('click', showNotifications);
+    if (dropdownDepositBtn) dropdownDepositBtn.addEventListener('click', showDepositModal);
+    if (logoutHeaderBtn) logoutHeaderBtn.addEventListener('click', logout);
     
     // إعداد dropdown يدويًا إذا لزم
     const userDropdown = document.getElementById('userDropdown');
-    if (userDropdown) {
-        userDropdown.addEventListener('click', function(e) {
-            e.preventDefault();
-            const dropdown = new bootstrap.Dropdown(this);
-            dropdown.toggle();
-        });
+    if (userDropdown && typeof bootstrap !== 'undefined') {
+        new bootstrap.Dropdown(userDropdown);
     }
 });
 
