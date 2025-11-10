@@ -1674,63 +1674,293 @@ let currentEditingUser = null;
 
 // إعداد قسم إدارة المستخدمين
 function setupUsersManagement() {
-    // إضافة تبويب المستخدمين للقائمة الجانبية
-    const sidebarNav = document.querySelector('.sidebar-nav');
-    const usersNavItem = `
-        <div class="nav-item">
+    // الانتظار حتى يتم تحميل DOM بالكامل
+    setTimeout(() => {
+        const sidebarNav = document.querySelector('.sidebar nav');
+        if (!sidebarNav) {
+            console.error('❌ عنصر القائمة الجانبية غير موجود');
+            return;
+        }
+
+        // إضافة تبويب المستخدمين للقائمة الجانبية
+        const usersNavItem = `
             <a href="#users" class="nav-link" data-section="users">
                 <i class="fas fa-users"></i> إدارة المستخدمين
             </a>
-        </div>
-    `;
-    sidebarNav.insertAdjacentHTML('beforeend', usersNavItem);
+        `;
+        sidebarNav.insertAdjacentHTML('beforeend', usersNavItem);
 
-    // إضافة قسم المستخدمين للوحة التحكم
-    const mainContent = document.querySelector('.main-content');
-    const usersSection = `
-        <section id="users-section" class="section" style="display: none;">
-            <h2 class="mb-4"><i class="fas fa-users"></i> إدارة المستخدمين</h2>
+        // إضافة قسم المستخدمين للوحة التحكم
+        const mainContent = document.querySelector('.main-content');
+        if (!mainContent) {
+            console.error('❌ عنصر المحتوى الرئيسي غير موجود');
+            return;
+        }
+
+        const usersSection = `
+            <section id="users-section" class="section" style="display: none;">
+                <h2 class="mb-4"><i class="fas fa-users"></i> إدارة المستخدمين</h2>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">قائمة المستخدمين</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="filter-area mb-3">
+                            <div class="row g-2">
+                                <div class="col-md-8">
+                                    <input id="searchUsers" type="text" class="form-control" placeholder="🔍 ابحث عن مستخدم بالاسم أو البريد...">
+                                </div>
+                                <div class="col-md-4">
+                                    <button class="btn btn-primary w-100" onclick="loadAllUsers()">
+                                        <i class="fas fa-sync-alt"></i> تحديث القائمة
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>المستخدم</th>
+                                        <th>البريد الإلكتروني</th>
+                                        <th>رقم الهاتف</th>
+                                        <th>الرصيد</th>
+                                        <th>الحالة</th>
+                                        <th>التسجيل</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted">
+                                            <div class="py-4">
+                                                <i class="fas fa-spinner fa-spin me-2"></i>
+                                                جاري تحميل البيانات...
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        `;
+        mainContent.insertAdjacentHTML('beforeend', usersSection);
+
+        // إعداد البحث
+        const searchInput = document.getElementById('searchUsers');
+        if (searchInput) {
+            searchInput.addEventListener('input', filterUsers);
+        }
+
+        // إضافة حدث التنقل للقائمة الجانبية الجديدة
+        setupUsersNavigation();
+
+        console.log('✅ نظام إدارة المستخدمين تم تحميله بنجاح');
+
+    }, 100);
+}
+
+// إعداد التنقل لقسم المستخدمين
+function setupUsersNavigation() {
+    const usersNavLink = document.querySelector('[data-section="users"]');
+    if (usersNavLink) {
+        usersNavLink.addEventListener('click', function(e) {
+            e.preventDefault();
             
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">قائمة المستخدمين</h5>
-                </div>
-                <div class="card-body">
-                    <div class="filter-area">
-                        <input id="searchUsers" type="text" class="form-control" placeholder="🔍 ابحث عن مستخدم بالاسم أو البريد...">
-                        <button class="btn btn-primary" onclick="loadAllUsers()">
-                            <i class="fas fa-sync-alt"></i> تحديث
-                        </button>
-                    </div>
-                    
-                    <div class="table-responsive mt-3">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>اسم المستخدم</th>
-                                    <th>البريد الإلكتروني</th>
-                                    <th>رقم الهاتف</th>
-                                    <th>الرصيد</th>
-                                    <th>الحالة</th>
-                                    <th>تاريخ التسجيل</th>
-                                    <th>الإجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody id="usersTableBody">
-                                <!-- سيتم تعبئة المستخدمين هنا -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </section>
+            // إزالة النشاط من جميع الروابط
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // إضافة النشاط للرابط الحالي
+            this.classList.add('active');
+            
+            // إخفاء جميع الأقسام
+            document.querySelectorAll('.section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // إظهار قسم المستخدمين
+            const usersSection = document.getElementById('users-section');
+            if (usersSection) {
+                usersSection.style.display = 'block';
+                loadAllUsers(); // تحميل البيانات تلقائياً
+            }
+        });
+    }
+}
 
-        <!-- نافذة تعديل المستخدم -->
-        <div class="modal fade" id="editUserModal" tabindex="-1">
+// تحميل جميع المستخدمين
+async function loadAllUsers() {
+    try {
+        showNotification('جاري تحميل بيانات المستخدمين...', 'info');
+        
+        const response = await fetchWithAuth('/api/admin/users');
+        if (!response) {
+            showNotification('❌ فشل الاتصال بالخادم', 'error');
+            return;
+        }
+        
+        if (!response.ok) {
+            throw new Error(`خطأ في السيرفر: ${response.status}`);
+        }
+        
+        allUsers = await response.json();
+        renderUsers(allUsers);
+        showNotification(`✅ تم تحميل ${allUsers.length} مستخدم`, 'success');
+        
+    } catch (error) {
+        console.error('خطأ في تحميل المستخدمين:', error);
+        showNotification('❌ فشل تحميل بيانات المستخدمين', 'error');
+        
+        // عرض رسالة خطأ في الجدول
+        const tbody = document.getElementById('usersTableBody');
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        فشل تحميل البيانات: ${error.message}
+                    </td>
+                </tr>
+            `;
+        }
+    }
+}
+
+// عرض المستخدمين
+function renderUsers(users) {
+    const tbody = document.getElementById('usersTableBody');
+    if (!tbody) return;
+    
+    if (!users || users.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center text-muted py-4">
+                    <i class="fas fa-users-slash fa-2x mb-3 d-block"></i>
+                    لا توجد مستخدمين مسجلين
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = users.map(user => `
+        <tr>
+            <td>
+                <div class="d-flex align-items-center">
+                    <img src="${user.avatar || '/assets/default-avatar.png'}" 
+                         class="rounded-circle me-2" width="36" height="36" 
+                         alt="${user.username}"
+                         onerror="this.src='/assets/default-avatar.png'">
+                    <div>
+                        <div class="fw-bold">${user.username}</div>
+                        <small class="text-muted">${user.fullName || 'لا يوجد اسم'}</small>
+                    </div>
+                </div>
+            </td>
+            <td>${user.email}</td>
+            <td>${user.phone || '—'}</td>
+            <td>
+                <div class="d-flex align-items-center">
+                    <span class="fw-bold text-success">$${user.balance.toFixed(2)}</span>
+                    ${user.balanceFrozen ? 
+                        '<i class="fas fa-lock text-warning ms-2" title="رصيد مجمد"></i>' : 
+                        '<i class="fas fa-lock-open text-success ms-2" title="رصيد متاح"></i>'
+                    }
+                </div>
+            </td>
+            <td>
+                <span class="badge bg-${getUserStatusColor(user.status)}">
+                    <i class="fas ${getUserStatusIcon(user.status)} me-1"></i>
+                    ${getUserStatusText(user.status)}
+                </span>
+            </td>
+            <td>
+                <small>${new Date(user.createdAt).toLocaleDateString('ar-SA')}</small>
+                <br>
+                <small class="text-muted">${new Date(user.createdAt).toLocaleTimeString('ar-SA')}</small>
+            </td>
+            <td>
+                <div class="btn-action-group">
+                    <button class="btn btn-sm btn-outline-primary" onclick="openEditUserModal('${user._id}')" 
+                            title="تعديل البيانات" data-bs-toggle="tooltip">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="toggleFreezeBalance('${user._id}', ${!user.balanceFrozen})" 
+                            title="${user.balanceFrozen ? 'فك تجميد الرصيد' : 'تجميد الرصيد'}" data-bs-toggle="tooltip">
+                        <i class="fas ${user.balanceFrozen ? 'fa-unlock' : 'fa-lock'}"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-${user.status === 'banned' ? 'success' : 'danger'}" 
+                            onclick="changeUserStatus('${user._id}', '${user.status === 'banned' ? 'active' : 'banned'}')"
+                            title="${user.status === 'banned' ? 'فك الحظر' : 'حظر الحساب'}" data-bs-toggle="tooltip">
+                        <i class="fas ${user.status === 'banned' ? 'fa-user-check' : 'fa-user-slash'}"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+
+    // تفعيل أدوات التلميح
+    if (typeof bootstrap !== 'undefined') {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+}
+
+// فتح نافذة تعديل المستخدم
+async function openEditUserModal(userId) {
+    try {
+        const response = await fetchWithAuth(`/api/admin/users/${userId}`);
+        if (!response) return;
+        
+        const user = await response.json();
+        currentEditingUser = user;
+        
+        // إنشاء النافذة المنبثقة ديناميكياً إذا لم تكن موجودة
+        createEditUserModal();
+        
+        // تعبئة النموذج
+        document.querySelector('#editUserForm [name="username"]').value = user.username;
+        document.querySelector('#editUserForm [name="email"]').value = user.email;
+        document.querySelector('#editUserForm [name="fullName"]').value = user.fullName || '';
+        document.querySelector('#editUserForm [name="phone"]').value = user.phone || '';
+        document.querySelector('#editUserForm [name="balance"]').value = user.balance;
+        document.querySelector('#editUserForm [name="status"]').value = user.status;
+        document.getElementById('editUserId').value = user._id;
+        
+        // فتح النافذة
+        const modalElement = document.getElementById('editUserModal');
+        if (modalElement && typeof bootstrap !== 'undefined') {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+        
+    } catch (error) {
+        console.error('خطأ في تحميل بيانات المستخدم:', error);
+        showNotification('❌ فشل تحميل بيانات المستخدم', 'error');
+    }
+}
+
+// إنشاء نافذة تعديل المستخدم ديناميكياً
+function createEditUserModal() {
+    if (document.getElementById('editUserModal')) return;
+    
+    const modalHTML = `
+        <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">تعديل بيانات المستخدم</h5>
+                        <h5 class="modal-title">
+                            <i class="fas fa-user-edit me-2"></i>
+                            تعديل بيانات المستخدم
+                        </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
@@ -1746,19 +1976,19 @@ function setupUsersManagement() {
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">الاسم الكامل</label>
-                                    <input type="text" name="fullName" class="form-control">
+                                    <input type="text" name="fullName" class="form-control" placeholder="اختياري">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">رقم الهاتف</label>
-                                    <input type="tel" name="phone" class="form-control">
+                                    <input type="tel" name="phone" class="form-control" placeholder="اختياري">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">الرصيد ($)</label>
-                                    <input type="number" name="balance" class="form-control" step="0.01" min="0">
+                                    <input type="number" name="balance" class="form-control" step="0.01" min="0" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">حالة الحساب</label>
-                                    <select name="status" class="form-select">
+                                    <select name="status" class="form-select" required>
                                         <option value="active">نشط</option>
                                         <option value="suspended">موقوف</option>
                                         <option value="banned">محظور</option>
@@ -1766,132 +1996,49 @@ function setupUsersManagement() {
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label">كلمة السر الجديدة (اختياري)</label>
-                                    <input type="password" name="newPassword" class="form-control" placeholder="اتركه فارغاً للحفاظ على كلمة السر الحالية">
+                                    <input type="password" name="newPassword" class="form-control" 
+                                           placeholder="اتركه فارغاً للحفاظ على كلمة السر الحالية">
+                                    <div class="form-text">يجب أن تحتوي على 8 أحرف على الأقل مع أحرف كبيرة وصغيرة وأرقام</div>
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label">سبب التعديل (اختياري)</label>
-                                    <textarea name="adminNote" class="form-control" rows="2" placeholder="سجل سبب التعديل للإشارة المرجعية"></textarea>
+                                    <textarea name="adminNote" class="form-control" rows="2" 
+                                              placeholder="سجل سبب التعديل للإشارة المرجعية"></textarea>
                                 </div>
                             </div>
                             <input type="hidden" name="userId" id="editUserId">
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                        <button type="button" class="btn btn-primary" onclick="updateUser()">حفظ التغييرات</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>إلغاء
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="updateUser()">
+                            <i class="fas fa-save me-1"></i>حفظ التغييرات
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     `;
-    mainContent.insertAdjacentHTML('beforeend', usersSection);
-
-    // إعداد البحث
-    document.getElementById('searchUsers').addEventListener('input', filterUsers);
-}
-
-// تحميل جميع المستخدمين
-async function loadAllUsers() {
-    try {
-        const response = await fetchWithAuth('/api/admin/users');
-        if (!response) return;
-        
-        allUsers = await response.json();
-        renderUsers(allUsers);
-        
-    } catch (error) {
-        console.error('خطأ في تحميل المستخدمين:', error);
-        show('❌ فشل تحميل المستخدمين', 'error');
-    }
-}
-
-// عرض المستخدمين
-function renderUsers(users) {
-    const tbody = document.getElementById('usersTableBody');
     
-    if (!users || users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">لا توجد مستخدمين</td></tr>';
-        return;
-    }
-    
-    tbody.innerHTML = users.map(user => `
-        <tr>
-            <td>
-                <div class="d-flex align-items-center">
-                    <img src="${user.avatar || '/assets/default-avatar.png'}" 
-                         class="rounded-circle me-2" width="32" height="32" 
-                         alt="${user.username}">
-                    <div>
-                        <div class="fw-bold">${user.username}</div>
-                        <small class="text-muted">${user.fullName || 'لا يوجد اسم'}</small>
-                    </div>
-                </div>
-            </td>
-            <td>${user.email}</td>
-            <td>${user.phone || '—'}</td>
-            <td>
-                <span class="fw-bold text-success">$${user.balance.toFixed(2)}</span>
-                ${user.balanceFrozen ? '<i class="fas fa-lock text-warning ms-1" title="رصيد مجمد"></i>' : ''}
-            </td>
-            <td>
-                <span class="badge bg-${getUserStatusColor(user.status)}">
-                    ${getUserStatusText(user.status)}
-                </span>
-            </td>
-            <td>${new Date(user.createdAt).toLocaleDateString('ar-SA')}</td>
-            <td>
-                <div class="btn-action-group">
-                    <button class="btn btn-sm btn-primary" onclick="openEditUserModal('${user._id}')" title="تعديل">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-warning" onclick="toggleFreezeBalance('${user._id}', ${!user.balanceFrozen})" 
-                            title="${user.balanceFrozen ? 'فك تجميد الرصيد' : 'تجميد الرصيد'}">
-                        <i class="fas ${user.balanceFrozen ? 'fa-unlock' : 'fa-lock'}"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="changeUserStatus('${user._id}', '${user.status === 'banned' ? 'active' : 'banned'}')"
-                            title="${user.status === 'banned' ? 'فك الحظر' : 'حظر الحساب'}">
-                        <i class="fas ${user.status === 'banned' ? 'fa-user-check' : 'fa-user-slash'}"></i>
-                    </button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
-}
-
-// فتح نافذة تعديل المستخدم
-async function openEditUserModal(userId) {
-    try {
-        const response = await fetchWithAuth(`/api/admin/users/${userId}`);
-        if (!response) return;
-        
-        const user = await response.json();
-        currentEditingUser = user;
-        
-        // تعبئة النموذج
-        document.querySelector('#editUserForm [name="username"]').value = user.username;
-        document.querySelector('#editUserForm [name="email"]').value = user.email;
-        document.querySelector('#editUserForm [name="fullName"]').value = user.fullName || '';
-        document.querySelector('#editUserForm [name="phone"]').value = user.phone || '';
-        document.querySelector('#editUserForm [name="balance"]').value = user.balance;
-        document.querySelector('#editUserForm [name="status"]').value = user.status;
-        document.getElementById('editUserId').value = user._id;
-        
-        // فتح النافذة
-        const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
-        modal.show();
-        
-    } catch (error) {
-        console.error('خطأ في تحميل بيانات المستخدم:', error);
-        show('❌ فشل تحميل بيانات المستخدم', 'error');
-    }
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
 // تحديث بيانات المستخدم
 async function updateUser() {
     const form = document.getElementById('editUserForm');
+    if (!form) return;
+    
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
     const userId = data.userId;
+    
+    // التحقق من البيانات
+    if (!data.username || !data.email) {
+        showNotification('❌ اسم المستخدم والبريد الإلكتروني مطلوبان', 'error');
+        return;
+    }
     
     delete data.userId; // إزالة حقل ID من البيانات المرسلة
     
@@ -1902,70 +2049,76 @@ async function updateUser() {
         });
 
         if (response && response.ok) {
-            show('✅ تم تحديث بيانات المستخدم بنجاح', 'success');
-            const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
-            modal.hide();
+            showNotification('✅ تم تحديث بيانات المستخدم بنجاح', 'success');
+            const modalElement = document.getElementById('editUserModal');
+            if (modalElement && typeof bootstrap !== 'undefined') {
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                modal.hide();
+            }
             loadAllUsers(); // إعادة تحميل القائمة
         } else {
-            throw new Error('فشل تحديث البيانات');
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'فشل تحديث البيانات');
         }
     } catch (error) {
         console.error('خطأ في تحديث المستخدم:', error);
-        show('❌ فشل تحديث بيانات المستخدم', 'error');
+        showNotification('❌ ' + error.message, 'error');
     }
 }
 
 // تجميد/فك تجميد الرصيد
 async function toggleFreezeBalance(userId, freeze) {
     const action = freeze ? 'تجميد' : 'فك تجميد';
+    const actionText = freeze ? 'تجميد الرصيد' : 'فك تجميد الرصيد';
     
-    if (!confirm(`هل أنت متأكد من ${action} الرصيد؟`)) return;
+    if (!confirm(`هل أنت متأكد من ${actionText}؟`)) return;
     
     try {
         const response = await fetchWithAuth(`/api/admin/users/${userId}/freeze`, {
             method: 'PUT',
             body: JSON.stringify({ 
                 freeze: freeze,
-                reason: freeze ? 'تجميد رصيد من قبل الأدمن' : 'فك تجميد الرصيد من قبل الأدمن'
+                reason: `${actionText} من قبل الأدمن`
             })
         });
 
         if (response && response.ok) {
-            show(`✅ تم ${action} الرصيد بنجاح`, 'success');
+            showNotification(`✅ تم ${actionText} بنجاح`, 'success');
             loadAllUsers(); // إعادة تحميل القائمة
         } else {
-            throw new Error(`فشل ${action} الرصيد`);
+            throw new Error(`فشل ${actionText}`);
         }
     } catch (error) {
-        console.error(`خطأ في ${action} الرصيد:`, error);
-        show(`❌ فشل ${action} الرصيد`, 'error');
+        console.error(`خطأ في ${actionText}:`, error);
+        showNotification(`❌ فشل ${actionText}`, 'error');
     }
 }
 
 // تغيير حالة الحساب
 async function changeUserStatus(userId, newStatus) {
     const action = newStatus === 'banned' ? 'حظر' : 'فك الحظر';
+    const actionText = newStatus === 'banned' ? 'حظر الحساب' : 'فك حظر الحساب';
     
-    if (!confirm(`هل أنت متأكد من ${action} الحساب؟`)) return;
+    if (!confirm(`هل أنت متأكد من ${actionText}؟`)) return;
     
     try {
         const response = await fetchWithAuth(`/api/admin/users/${userId}/status`, {
             method: 'PUT',
             body: JSON.stringify({ 
                 status: newStatus,
-                reason: newStatus === 'banned' ? 'تم حظر الحساب من قبل الأدمن' : 'تم فك حظر الحساب'
+                reason: `${actionText} من قبل الأدمن`
             })
         });
 
         if (response && response.ok) {
-            show(`✅ تم ${action} الحساب بنجاح`, 'success');
+            showNotification(`✅ تم ${actionText} بنجاح`, 'success');
             loadAllUsers(); // إعادة تحميل القائمة
         } else {
-            throw new Error(`فشل ${action} الحساب`);
+            throw new Error(`فشل ${actionText}`);
         }
     } catch (error) {
-        console.error(`خطأ في ${action} الحساب:`, error);
-        show(`❌ فشل ${action} الحساب`, 'error');
+        console.error(`خطأ في ${actionText}:`, error);
+        showNotification(`❌ فشل ${actionText}`, 'error');
     }
 }
 
@@ -1975,7 +2128,8 @@ function filterUsers(e) {
     const filtered = allUsers.filter(user =>
         user.username.toLowerCase().includes(query) ||
         user.email.toLowerCase().includes(query) ||
-        (user.fullName && user.fullName.toLowerCase().includes(query))
+        (user.fullName && user.fullName.toLowerCase().includes(query)) ||
+        (user.phone && user.phone.includes(query))
     );
     renderUsers(filtered);
 }
@@ -1988,6 +2142,15 @@ function getUserStatusColor(status) {
         'banned': 'danger'
     };
     return colors[status] || 'secondary';
+}
+
+function getUserStatusIcon(status) {
+    const icons = {
+        'active': 'fa-check-circle',
+        'suspended': 'fa-pause-circle',
+        'banned': 'fa-times-circle'
+    };
+    return icons[status] || 'fa-user';
 }
 
 function getUserStatusText(status) {
@@ -2003,10 +2166,14 @@ function getUserStatusText(status) {
 const originalInitializeApp = window.initializeApp;
 window.initializeApp = function() {
     originalInitializeApp();
-    setupUsersManagement();
-    // تحميل المستخدمين تلقائياً عند الدخول للوحة التحكم
-    loadAllUsers();
+    setTimeout(() => {
+        setupUsersManagement();
+    }, 500); // تأخير بسيط لضمان تحميل DOM بالكامل
 };
+
+console.log('✅ نظام إدارة المستخدمين جاهز للتشغيل');
+
+
 
 // بدء تشغيل التطبيق
 document.addEventListener('DOMContentLoaded', initializeApp);
