@@ -381,3 +381,40 @@ button.edit-btn, .btn-primary {
     font-size: 0.9rem; /* تصغير حجم زر الرجوع */
   }
    }
+.user-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #e9ecef;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.balance-amount {
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+.user-controls .btn {
+    border-radius: 8px;
+    padding: 8px 16px;
+}
+
+.dropdown-toggle::after {
+    margin-right: 8px;
+}
+
+/* تحسينات للجوال */
+@media (max-width: 768px) {
+    .user-header .container-fluid {
+        padding: 0 15px;
+    }
+    
+    .balance-amount {
+        display: none;
+    }
+    
+    .user-controls .btn {
+        padding: 6px 12px;
+    }
+}
