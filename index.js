@@ -1357,6 +1357,58 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // ==================== نظام الإشعارات ====================
+
+// الحصول على إشعارات المستخدم
+if (pathname === '/api/user/notifications' && method === 'GET') {
+    try {
+        const user = await User.findOne({ username });
+        if (!user) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            return;
+        }
+
+        const notifications = await Notification.find({ userId: user._id })
+            .sort({ createdAt: -1 })
+            .limit(20);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(notifications));
+
+    } catch (error) {
+        console.error('خطأ في جلب الإشعارات:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في جلب الإشعارات' }));
+    }
+    return;
+}
+
+// تحديث حالة الإشعار كمقروء
+if (pathname.startsWith('/api/user/notifications/') && method === 'PUT') {
+    try {
+        const notificationId = pathname.split('/').pop();
+        const updatedNotification = await Notification.findByIdAndUpdate(
+            notificationId,
+            { read: true },
+            { new: true }
+        );
+
+        if (updatedNotification) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(updatedNotification));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'الإشعار غير موجود' }));
+        }
+    } catch (error) {
+        console.error('خطأ في تحديث الإشعار:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في تحديث الإشعار' }));
+    }
+    return;
+}
+
     // --- المسار غير موجود ---
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'API Endpoint Not Found' }));
