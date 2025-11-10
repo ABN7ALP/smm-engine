@@ -817,6 +817,10 @@ async function loadUserData() {
 
         userData = await response.json();
         displayUserData(userData);
+        
+        // تحميل الطلبات الشخصية للإحصائيات
+        await loadUserOrders();
+        
         hideLoading();
         
     } catch (error) {
@@ -826,6 +830,96 @@ async function loadUserData() {
     }
 }
 
+// تحميل طلبات المستخدم للإحصائيات
+async function loadUserOrders() {
+    try {
+        const response = await fetch('/api/user/orders', { 
+            headers: headers 
+        });
+        
+        if (response.ok) {
+            const orders = await response.json();
+            updateOrderStats(orders);
+        }
+    } catch (error) {
+        console.error('خطأ في تحميل الطلبات:', error);
+    }
+}
+
+// تحديث إحصائيات الطلبات
+function updateOrderStats(orders) {
+    if (!orders || !Array.isArray(orders)) return;
+    
+    const totalOrders = orders.length;
+    const completedOrders = orders.filter(order => order.status === 'completed').length;
+    const pendingOrders = orders.filter(order => order.status === 'pending').length;
+    
+    document.getElementById('totalOrders').textContent = totalOrders;
+    document.getElementById('completedOrders').textContent = completedOrders;
+    
+    // تحديث بيانات المستخدم
+    if (userData.orders) {
+        userData.orders.total = totalOrders;
+        userData.orders.completed = completedOrders;
+        userData.orders.pending = pendingOrders;
+    }
+}
+
+// تحديث دالة رفع الصورة الشخصية
+async function handleAvatarUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // التحقق من حجم الملف (5MB كحد أقصى)
+    if (file.size > 5 * 1024 * 1024) {
+        showAlert('❌ حجم الصورة يجب أن يكون أقل من 5MB', 'error');
+        return;
+    }
+
+    // التحقق من نوع الملف
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+        showAlert('❌ نوع الملف غير مدعوم. الرجاء استخدام JPG, PNG, أو GIF', 'error');
+        return;
+    }
+
+    try {
+        showLoading('جاري رفع الصورة...');
+        
+        // إنشاء FormData لرفع الملف
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        const response = await fetch('/api/user/upload-avatar', {
+            method: 'POST',
+            headers: {
+                'x-auth-token': headers['x-auth-token']
+            },
+            body: formData
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            document.getElementById('userAvatar').src = result.avatar;
+            showAlert('✅ تم تحديث الصورة الشخصية بنجاح', 'success');
+            
+            // تحديث الصورة في الهيدر أيضاً
+            const headerAvatar = document.getElementById('headerAvatar');
+            if (headerAvatar) {
+                headerAvatar.src = result.avatar;
+            }
+        } else {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'فشل رفع الصورة');
+        }
+    } catch (error) {
+        showAlert('❌ ' + error.message, 'error');
+        console.error('خطأ في رفع الصورة:', error);
+    } finally {
+        hideLoading();
+    }
+}    
+    
 // عرض بيانات المستخدم الحقيقية
 function displayUserData(data) {
     // المعلومات الأساسية
