@@ -261,6 +261,36 @@ function isValidUrl(urlStr) {
 }
 
 /**
+ * إرسال إشعار عند تغيير حالة الطلب
+ */
+async function sendOrderStatusNotification(orderId, newStatus, username) {
+    try {
+        const user = await User.findOne({ username });
+        if (!user) return;
+
+        const statusMessages = {
+            'pending': 'قيد الانتظار',
+            'processing': 'قيد التنفيذ', 
+            'completed': 'مكتمل',
+            'rejected': 'مرفوض'
+        };
+
+        await Notification.create({
+            id: Date.now(),
+            userId: user._id,
+            type: newStatus === 'completed' ? 'success' : 'info',
+            title: `تحديث حالة الطلب #${orderId}`,
+            message: `تم تغيير حالة طلبك رقم #${orderId} إلى: ${statusMessages[newStatus] || newStatus}`,
+            relatedTo: 'order',
+            relatedId: orderId
+        });
+
+    } catch (error) {
+        console.error('خطأ في إرسال إشعار حالة الطلب:', error);
+    }
+}
+
+/**
  * قراءة body الطلب
  */
 function readBody(req) {
@@ -583,17 +613,19 @@ if (method === 'POST' && pathname === '/api/orders') {
 
         await logAction(username, 'order_create', { id: order.id }, clientIP);
         
-        // إرسال إشعار للمستخدم إذا كان مسجلاً
-        if (userId) {
-            await Notification.create({
-                id: Date.now(),
-                userId: userId,
-                type: 'success',
-                title: 'تم إنشاء طلب جديد',
-                message: `تم إنشاء طلبك #${order.id} بنجاح. سيتم معالجته قريباً.`,
-                relatedTo: 'order',
-                relatedId: order.id
-            });
+
+// إنشاء إشعار تلقائي للمستخدم
+await Notification.create({
+    id: Date.now(),
+    userId: user._id, // نحتاج للحصول على user object أولاً
+    type: 'info',
+    title: 'طلب جديد تم إنشاؤه',
+    message: `تم إنشاء طلبك رقم #${order.id} بنجاح وحالته: قيد الانتظار`,
+    relatedTo: 'order',
+    relatedId: order.id
+});
+
+await logAction(data.username || 'public', 'order_create', { id: order.id });
 
             // تحديث إحصائيات المستخدم
             const user = await User.findOne({ username: authUsername });
@@ -985,6 +1017,51 @@ if (method === 'POST' && pathname === '/api/orders') {
         return;
     }
 
+    // في قسم المسارات المحمية - إضافة هذه الـ APIs
+if (method === 'GET' && pathname === '/api/user/notifications') {
+    try {
+        const user = await User.findOne({ username });
+        if (!user) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            return;
+        }
+
+        const notifications = await Notification.find({ userId: user._id })
+            .sort({ createdAt: -1 })
+            .limit(20);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(notifications));
+
+    } catch (error) {
+        console.error('خطأ في جلب الإشعارات:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في جلب الإشعارات' }));
+    }
+    return;
+}
+
+// تحديث إشعار كمقروء
+if (method === 'PUT' && pathname.startsWith('/api/user/notifications/')) {
+    try {
+        const notificationId = pathname.split('/').pop();
+        
+        await Notification.findByIdAndUpdate(notificationId, { 
+            read: true 
+        });
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+
+    } catch (error) {
+        console.error('خطأ في تحديث الإشعار:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في تحديث الإشعار' }));
+    }
+    return;
+}
+
     // ==================== نظام الملف الشخصي المتقدم ====================
 
     // تغيير كلمة السر (محدث مع تشفير)
@@ -1053,46 +1130,54 @@ if (method === 'POST' && pathname === '/api/orders') {
         return;
     }
 
-    // رفع الصورة الشخصية
-    if (method === 'POST' && pathname === '/api/user/upload-avatar') {
-        const body = await readBody(req);
-        const { avatar } = JSON.parse(body || '{}');
+    
+    // رفع الصورة الشخصية - استبدال الكود الحالي
+if (method === 'POST' && pathname === '/api/user/upload-avatar') {
+    const username = checkAuth(req);
+    if (!username) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'غير مصرح' }));
+        return;
+    }
 
-        if (!avatar) {
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'صورة غير مرفوعة' }));
+    const body = await readBody(req);
+    const { avatar } = JSON.parse(body || '{}');
+
+    if (!avatar) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'صورة غير مرفوعة' }));
+        return;
+    }
+
+    try {
+        const user = await User.findOne({ username });
+        if (!user) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
             return;
         }
 
-        try {
-            const user = await User.findOne({ username });
-            if (!user) {
-                res.writeHead(404, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
-                return;
-            }
+        // حفظ الصورة (هنا يمكنك إضافة حفظ فعلي للصورة إذا needed)
+        user.avatar = avatar;
+        user.updatedAt = new Date();
+        await user.save();
 
-            // حفظ الصورة
-            user.avatar = avatar;
-            user.updatedAt = new Date();
-            await user.save();
+        await logAction(username, 'avatar_upload');
 
-            await logAction(username, 'avatar_upload', {}, clientIP);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            success: true,
+            message: 'تم تحديث الصورة الشخصية بنجاح',
+            avatar: user.avatar
+        }));
 
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({
-                success: true,
-                message: 'تم تحديث الصورة الشخصية بنجاح',
-                avatar: user.avatar
-            }));
-
-        } catch (error) {
-            console.error('خطأ في رفع الصورة:', error);
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'خطأ في رفع الصورة' }));
-        }
-        return;
+    } catch (error) {
+        console.error('خطأ في رفع الصورة:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في رفع الصورة' }));
     }
+    return;
+}
 
     // الحصول على معاملات المستخدم
     if (method === 'GET' && pathname === '/api/user/transactions') {
@@ -1389,6 +1474,8 @@ if (pathname.startsWith('/api/orders/') && method === 'PUT') {
         );
 
         if (updatedOrder) {
+          await sendOrderStatusNotification(id, data.status, username);
+          await logAction(username, 'order_update', { id, status: data.status });
             // إرسال إشعار بتغيير حالة الطلب
             const user = await User.findOne({ username: order.username });
             if (user) {
@@ -1612,210 +1699,172 @@ if (pathname.startsWith('/api/user/notifications/') && method === 'PUT') {
 
     // ==================== نظام إدارة المستخدمين (للأدمن فقط) ====================
 
-// الحصول على جميع المستخدمين
-if (pathname === '/api/admin/users' && method === 'GET') {
-    if (!isAdmin) {
-        res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Access denied' }));
-        return;
-    }
+    // ==================== نظام إدارة المستخدمين المتكامل ====================
+
+// تجميد/فك تجميد رصيد المستخدم
+if (method === 'PUT' && pathname.startsWith('/api/admin/users/') && pathname.includes('/freeze')) {
+    const userId = pathname.split('/')[4]; // /api/admin/users/{userId}/freeze
+    
+    const body = await readBody(req);
+    const { freeze, reason } = JSON.parse(body || '{}');
 
     try {
-        const users = await User.find({})
-            .select('-password') // استبعاد كلمة السر
-            .sort({ createdAt: -1 });
-        
+        const user = await User.findById(userId);
+        if (!user) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            return;
+        }
+
+        user.balanceFrozen = freeze;
+        user.freezeReason = reason || '';
+        user.updatedAt = new Date();
+        await user.save();
+
+        await logAction(username, freeze ? 'freeze_balance' : 'unfreeze_balance', { 
+            userId, 
+            username: user.username,
+            reason 
+        });
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(users));
+        res.end(JSON.stringify({
+            success: true,
+            message: freeze ? 'تم تجميد الرصيد بنجاح' : 'تم فك تجميد الرصيد بنجاح',
+            user: {
+                username: user.username,
+                balanceFrozen: user.balanceFrozen,
+                freezeReason: user.freezeReason
+            }
+        }));
+
     } catch (error) {
-        console.error('خطأ في جلب المستخدمين:', error);
+        console.error('خطأ في تجميد الرصيد:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Failed to load users' }));
-    }
-    return;
-}
-
-// الحصول على مستخدم معين
-if (pathname.startsWith('/api/admin/users/') && method === 'GET') {
-    if (!isAdmin) {
-        res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Access denied' }));
-        return;
-    }
-
-    try {
-        const userId = pathname.split('/').pop();
-        const user = await User.findById(userId).select('-password');
-        
-        if (user) {
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(user));
-        } else {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'User not found' }));
-        }
-    } catch (error) {
-        console.error('خطأ في جلب المستخدم:', error);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Failed to load user' }));
-    }
-    return;
-}
-
-// تحديث بيانات المستخدم
-if (pathname.startsWith('/api/admin/users/') && method === 'PUT') {
-    if (!isAdmin) {
-        res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Access denied' }));
-        return;
-    }
-
-    try {
-        const userId = pathname.split('/').pop();
-        const body = await readBody(req);
-        const updateData = JSON.parse(body || '{}');
-        
-        // إذا كانت هناك كلمة سر جديدة، قم بتشفيرها
-        if (updateData.newPassword) {
-            updateData.password = await bcrypt.hash(updateData.newPassword, SALT_ROUNDS);
-            delete updateData.newPassword;
-        }
-        
-        // تحديث البيانات
-        const updatedUser = await User.findByIdAndUpdate(
-            userId,
-            { 
-                ...updateData,
-                updatedAt: new Date()
-            },
-            { new: true }
-        ).select('-password');
-
-        if (updatedUser) {
-            await logAction(username, 'admin_user_update', { 
-                userId: userId,
-                updatedFields: Object.keys(updateData)
-            }, clientIP);
-            
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(updatedUser));
-        } else {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'User not found' }));
-        }
-    } catch (error) {
-        console.error('خطأ في تحديث المستخدم:', error);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Failed to update user' }));
-    }
-    return;
-}
-
-// تجميد/فك تجميد الرصيد
-if (pathname.startsWith('/api/admin/users/') && pathname.includes('/freeze') && method === 'PUT') {
-    if (!isAdmin) {
-        res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Access denied' }));
-        return;
-    }
-
-    try {
-        const userId = pathname.split('/')[4]; // /api/admin/users/{id}/freeze
-        const body = await readBody(req);
-        const { freeze, reason } = JSON.parse(body || '{}');
-        
-        const updatedUser = await User.findByIdAndUpdate(
-            userId,
-            { 
-                balanceFrozen: freeze,
-                freezeReason: reason || '',
-                updatedAt: new Date()
-            },
-            { new: true }
-        ).select('-password');
-
-        if (updatedUser) {
-            await logAction(username, freeze ? 'admin_freeze_balance' : 'admin_unfreeze_balance', { 
-                userId: userId,
-                reason: reason
-            }, clientIP);
-            
-            // إرسال إشعار للمستخدم
-            await Notification.create({
-                id: Date.now(),
-                userId: userId,
-                type: freeze ? 'warning' : 'info',
-                title: freeze ? 'تم تجميد رصيدك' : 'تم فك تجميد رصيدك',
-                message: reason || (freeze ? 'تم تجميد رصيدك من قبل الإدارة' : 'تم فك تجميد رصيدك من قبل الإدارة'),
-                relatedTo: 'balance',
-                relatedId: userId
-            });
-
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(updatedUser));
-        } else {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'User not found' }));
-        }
-    } catch (error) {
-        console.error('خطأ في تجميد/فك تجميد الرصيد:', error);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Failed to update balance status' }));
+        res.end(JSON.stringify({ error: 'خطأ في تجميد الرصيد' }));
     }
     return;
 }
 
 // تغيير حالة الحساب
-if (pathname.startsWith('/api/admin/users/') && pathname.includes('/status') && method === 'PUT') {
-    if (!isAdmin) {
-        res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Access denied' }));
+if (method === 'PUT' && pathname.startsWith('/api/admin/users/') && pathname.includes('/status')) {
+    const userId = pathname.split('/')[4]; // /api/admin/users/{userId}/status
+    
+    const body = await readBody(req);
+    const { status, reason } = JSON.parse(body || '{}');
+
+    if (!['active', 'suspended', 'banned'].includes(status)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'حالة غير صالحة' }));
         return;
     }
 
     try {
-        const userId = pathname.split('/')[4]; // /api/admin/users/{id}/status
-        const body = await readBody(req);
-        const { status, reason } = JSON.parse(body || '{}');
-        
-        const updatedUser = await User.findByIdAndUpdate(
-            userId,
-            { 
-                status: status,
-                banReason: status === 'banned' ? reason : '',
-                updatedAt: new Date()
-            },
-            { new: true }
-        ).select('-password');
-
-        if (updatedUser) {
-            await logAction(username, 'admin_user_status_change', { 
-                userId: userId,
-                newStatus: status,
-                reason: reason
-            }, clientIP);
-            
-            // إرسال إشعار للمستخدم
-            await Notification.create({
-                id: Date.now(),
-                userId: userId,
-                type: status === 'banned' ? 'error' : 'success',
-                title: status === 'banned' ? 'تم حظر حسابك' : 'تم فك حظر حسابك',
-                message: reason || (status === 'banned' ? 'تم حظر حسابك من قبل الإدارة' : 'تم فك حظر حسابك من قبل الإدارة'),
-                relatedTo: 'account',
-                relatedId: userId
-            });
-
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(updatedUser));
-        } else {
+        const user = await User.findById(userId);
+        if (!user) {
             res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'User not found' }));
+            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            return;
         }
+
+        user.status = status;
+        user.banReason = (status === 'banned') ? reason : '';
+        user.updatedAt = new Date();
+        await user.save();
+
+        await logAction(username, 'change_user_status', { 
+            userId, 
+            username: user.username,
+            oldStatus: user.status,
+            newStatus: status,
+            reason 
+        });
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            success: true,
+            message: `تم ${getStatusActionText(status)} الحساب بنجاح`,
+            user: {
+                username: user.username,
+                status: user.status,
+                banReason: user.banReason
+            }
+        }));
+
     } catch (error) {
         console.error('خطأ في تغيير حالة الحساب:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Failed to update user status' }));
+        res.end(JSON.stringify({ error: 'خطأ في تغيير حالة الحساب' }));
+    }
+    return;
+}
+
+// دالة مساعدة للحصول على نص الإجراء
+function getStatusActionText(status) {
+    const actions = {
+        'active': 'تفعيل',
+        'suspended': 'تعليق', 
+        'banned': 'حظر'
+    };
+    return actions[status] || 'تغيير حالة';
+}
+
+// الحصول على بيانات مستخدم معين
+if (method === 'GET' && pathname.startsWith('/api/admin/users/') && !pathname.includes('/freeze') && !pathname.includes('/status')) {
+    const userId = pathname.split('/').pop();
+    
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            return;
+        }
+
+        // إرجاع بيانات المستخدم بدون كلمة السر
+        const userData = {
+            _id: user._id,
+            username: user.username,
+            email: user.email,
+            phone: user.phone,
+            fullName: user.fullName,
+            avatar: user.avatar,
+            role: user.role,
+            balance: user.balance,
+            balanceFrozen: user.balanceFrozen,
+            freezeReason: user.freezeReason,
+            status: user.status,
+            banReason: user.banReason,
+            orders: user.orders,
+            lastLogin: user.lastLogin,
+            createdAt: user.createdAt
+        };
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(userData));
+
+    } catch (error) {
+        console.error('خطأ في جلب بيانات المستخدم:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في جلب بيانات المستخدم' }));
+    }
+    return;
+}
+
+// الحصول على جميع المستخدمين
+if (method === 'GET' && pathname === '/api/admin/users') {
+    try {
+        const users = await User.find({})
+            .select('-password') // استبعاد كلمة السر
+            .sort({ createdAt: -1 });
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(users));
+
+    } catch (error) {
+        console.error('خطأ في جلب المستخدمين:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في جلب المستخدمين' }));
     }
     return;
 }
