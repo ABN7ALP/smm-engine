@@ -1,5 +1,5 @@
 // =================================================================
-//  SMM Engine - نظام متكامل 100% (مصحح ومرتب)
+//  SMM Engine - نظام متكامل 100% (مصحح ومرتب ومؤمن)
 // =================================================================
 
 const http = require('http');
@@ -9,6 +9,8 @@ const crypto = require('crypto');
 const fetch = require('node-fetch');
 const { exec } = require('child_process');
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+
 const metascraper = require('metascraper')([
   require('metascraper-url')(),
   require('metascraper-title')(),
@@ -16,8 +18,17 @@ const metascraper = require('metascraper')([
   require('metascraper-image')()
 ]);
 
-// ==================== إعدادات الاتصال بقاعدة البيانات ====================
+// ==================== إعدادات الأمان ====================
+const SALT_ROUNDS = 12;
+const SESSION_DURATION = 4 * 60 * 60 * 1000; // 4 ساعات
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOGIN_TIMEOUT = 15 * 60 * 1000; // 15 دقيقة
+
+// ==================== إعدادات قاعدة البيانات ====================
 const MONGODB_URI = "mongodb+srv://ds132z1998_db_user:AL2sG3m1yB6BaoRY@cluster1.ehjwrgc.mongodb.net/smmdb?retryWrites=true&w=majority";
+
+// تخزين محاولات تسجيل الدخول الفاشلة
+const loginAttempts = new Map();
 
 /**
  * الاتصال بقاعدة البيانات MongoDB
@@ -28,30 +39,100 @@ async function connectDB() {
     console.log('✅ تم الاتصال بقاعدة البيانات MongoDB بنجاح');
   } catch (error) {
     console.log('❌ خطأ في الاتصال بقاعدة البيانات:', error.message);
-    process.exit(1); // إيقاف التطبيق إذا فشل الاتصال
+    process.exit(1);
   }
 }
 
 connectDB();
 
+/**
+ * إعادة تعيين كلمة سر الأدمن (تشغيل مرة واحدة فقط)
+ */
+async function resetAdminPassword() {
+  try {
+    const newPassword = "Admin123!"; // كلمة السر الجديدة القوية
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    
+    await User.findOneAndUpdate(
+      { username: 'admin' },
+      { 
+        password: hashedPassword,
+        lastPasswordChange: new Date()
+      }
+    );
+    
+    console.log('🔑 تم تحديث كلمة سر الأدمن:', newPassword);
+  } catch (error) {
+    console.log('❌ خطأ في تحديث كلمة السر:', error.message);
+  }
+}
+
+// استدعاء الدالة مرة واحدة ثم تعليقها
+//resetAdminPassword();
 // ==================== نماذج قاعدة البيانات ====================
 
 /**
  * نموذج المستخدم - تخزين بيانات المستخدمين
  */
 const userSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    phone: String,
-    fullName: String,
-    avatar: { type: String, default: '/assets/default-avatar.png' },
-    role: { type: String, enum: ['user', 'admin'], default: 'user' },
-    balance: { type: Number, default: 0 },
-    totalSpent: { type: Number, default: 0 },
-    status: { type: String, enum: ['active', 'suspended', 'banned'], default: 'active' },
+    username: { 
+        type: String, 
+        required: true, 
+        unique: true,
+        trim: true,
+        minlength: 3,
+        maxlength: 30,
+        match: /^[a-zA-Z0-9_]+$/ // فقط أحرف إنجليزية وأرقام وشرطة سفلية
+    },
+    password: { 
+        type: String, 
+        required: true 
+    },
+    email: { 
+        type: String, 
+        required: true, 
+        unique: true,
+        lowercase: true,
+        match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    },
+    phone: {
+        type: String,
+        match: /^[\+]?[0-9]{10,15}$/
+    },
+    fullName: {
+        type: String,
+        trim: true,
+        maxlength: 100
+    },
+    avatar: { 
+        type: String, 
+        default: '/assets/default-avatar.png' 
+    },
+    role: { 
+        type: String, 
+        enum: ['user', 'admin'], 
+        default: 'user' 
+    },
+    balance: { 
+        type: Number, 
+        default: 0,
+        min: 0
+    },
+    totalSpent: { 
+        type: Number, 
+        default: 0,
+        min: 0
+    },
+    status: { 
+        type: String, 
+        enum: ['active', 'suspended', 'banned'], 
+        default: 'active' 
+    },
     banReason: String,
-    balanceFrozen: { type: Boolean, default: false },
+    balanceFrozen: { 
+        type: Boolean, 
+        default: false 
+    },
     freezeReason: String,
     
     // الإحصائيات
@@ -64,6 +145,7 @@ const userSchema = new mongoose.Schema({
     
     // التواريخ
     lastLogin: Date,
+    lastPasswordChange: { type: Date, default: Date.now },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 });
@@ -103,7 +185,8 @@ const logSchema = new mongoose.Schema({
   id: { type: Number, unique: true },
   user: String,
   action: String,
-  meta: Object
+  meta: Object,
+  ip: String
 }, { timestamps: true });
 
 /**
@@ -188,16 +271,48 @@ function readBody(req) {
   });
 }
 
+/**
+ * التحقق من قوة كلمة المرور
+ */
+function isPasswordStrong(password) {
+    const minLength = 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    
+    return password.length >= minLength && 
+           hasUpperCase && 
+           hasLowerCase && 
+           hasNumbers && 
+           hasSpecialChar;
+}
+
+/**
+ * الحصول على IP العميل
+ */
+function getClientIP(req) {
+    return req.headers['x-forwarded-for'] || 
+           req.headers['x-real-ip'] || 
+           req.connection.remoteAddress || 
+           'unknown';
+}
+
 // ==================== نظام المصادقة وإدارة الجلسات ====================
 const sessions = new Map();
 
 /**
  * إنشاء جلسة جديدة للمستخدم
  */
-function createSession(username) {
-  const token = crypto.randomBytes(24).toString('hex');
-  const ttl = 240 * 60 * 1000; // 4 ساعات
-  sessions.set(token, { username, expires: Date.now() + ttl });
+function createSession(username, ip) {
+  const token = crypto.randomBytes(32).toString('hex');
+  const ttl = SESSION_DURATION;
+  sessions.set(token, { 
+    username, 
+    ip,
+    expires: Date.now() + ttl,
+    createdAt: new Date()
+  });
   return token;
 }
 
@@ -214,13 +329,66 @@ function checkAuth(req) {
     return null;
   }
   
+  // تجديد مدة الجلسة عند النشاط
+  session.expires = Date.now() + SESSION_DURATION;
   return session.username;
 }
 
-// تنظيف الجلسات المنتهية كل 10 دقائق
+/**
+ * التحقق من محاولات تسجيل الدخول
+ */
+function checkLoginAttempts(username, ip) {
+    const key = `${username}_${ip}`;
+    const attempts = loginAttempts.get(key) || { count: 0, lastAttempt: 0 };
+    
+    // إذا تجاوز الحد المسموح وكان الوقت لم ينته بعد
+    if (attempts.count >= MAX_LOGIN_ATTEMPTS && 
+        Date.now() - attempts.lastAttempt < LOGIN_TIMEOUT) {
+        return false;
+    }
+    
+    // إذا انتهى الوقت، إعادة تعيين العداد
+    if (Date.now() - attempts.lastAttempt >= LOGIN_TIMEOUT) {
+        attempts.count = 0;
+    }
+    
+    return true;
+}
+
+/**
+ * تسجيل محاولة تسجيل دخول فاشلة
+ */
+function recordFailedLogin(username, ip) {
+    const key = `${username}_${ip}`;
+    const attempts = loginAttempts.get(key) || { count: 0, lastAttempt: 0 };
+    
+    attempts.count++;
+    attempts.lastAttempt = Date.now();
+    loginAttempts.set(key, attempts);
+}
+
+/**
+ * مسح محاولات تسجيل الدخول الناجحة
+ */
+function clearLoginAttempts(username, ip) {
+    const key = `${username}_${ip}`;
+    loginAttempts.delete(key);
+}
+
+// تنظيف الجلسات والمحاولات المنتهية كل 10 دقائق
 setInterval(() => {
+  const now = Date.now();
+  
+  // تنظيف الجلسات المنتهية
   sessions.forEach((session, token) => {
-    if (Date.now() > session.expires) sessions.delete(token);
+    if (now > session.expires) sessions.delete(token);
+  });
+  
+  // تنظيف محاولات تسجيل الدخول المنتهية
+  loginAttempts.forEach((attempts, key) => {
+    if (now - attempts.lastAttempt >= LOGIN_TIMEOUT) {
+      loginAttempts.delete(key);
+    }
   });
 }, 10 * 60 * 1000);
 
@@ -229,7 +397,7 @@ setInterval(() => {
 /**
  * تسجيل إجراء في النظام
  */
-async function logAction(user, action, meta = {}) {
+async function logAction(user, action, meta = {}, ip = 'unknown') {
   try {
     const maxIdLog = await Log.findOne().sort('-id').exec();
     const newId = (maxIdLog?.id || 0) + 1;
@@ -239,6 +407,7 @@ async function logAction(user, action, meta = {}) {
       user,
       action,
       meta,
+      ip,
       createdAt: new Date()
     });
   } catch (error) {
@@ -275,13 +444,16 @@ async function initializeDefaultData() {
     // التحقق من وجود أدمن
     const adminCount = await User.countDocuments({ username: 'admin' });
     if (adminCount === 0) {
+      const hashedPassword = await bcrypt.hash('Admin123!', SALT_ROUNDS);
+      
       await User.create({
         username: 'admin',
-        password: 'admin123',
+        password: hashedPassword,
         email: 'admin@smm.com',
         role: 'admin',
         balance: 0,
-        status: 'active'
+        status: 'active',
+        fullName: 'مدير النظام'
       });
       console.log('✅ تم إنشاء حساب الأدمن');
     }
@@ -302,6 +474,7 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const pathname = url.pathname;
     const method = req.method;
+    const clientIP = getClientIP(req);
 
     // ==================== المسارات العامة (لا تحتاج مصادقة) ====================
 
@@ -361,42 +534,99 @@ const server = http.createServer(async (req, res) => {
       }
       return;
     }
-
-    // إنشاء طلب جديد
-    if (method === 'POST' && pathname === '/api/orders') {
-      const body = await readBody(req);
-      const data = JSON.parse(body || '{}');
-      
-      if (!data.serviceId || !data.link || !isValidUrl(data.link)) {
+    
+    // إنشاء طلب جديد مع الإشعارات
+if (method === 'POST' && pathname === '/api/orders') {
+    const body = await readBody(req);
+    const data = JSON.parse(body || '{}');
+    
+    if (!data.serviceId || !data.link || !isValidUrl(data.link)) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Missing or invalid fields' }));
         return;
-      }
+    }
 
-      try {
+    try {
         const maxIdOrder = await Order.findOne().sort('-id').exec();
         const newId = (maxIdOrder?.id || 0) + 1;
         
+        // الحصول على المستخدم إذا كان مسجلاً
+        let username = 'public';
+        let userId = null;
+        
+        const authUsername = checkAuth(req);
+        if (authUsername) {
+            const user = await User.findOne({ username: authUsername });
+            if (user) {
+                username = user.username;
+                userId = user._id;
+                
+                // التحقق من الرصيد إذا كان الطلب مدفوع
+                if (user.balanceFrozen) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'لا يمكن إنشاء طلب - الرصيد مجمد' }));
+                    return;
+                }
+            }
+        }
+        
         const order = await Order.create({
-          id: newId,
-          serviceId: data.serviceId,
-          link: data.link,
-          quantity: data.quantity,
-          price: data.price,
-          status: 'pending',
-          username: data.username || 'public'
+            id: newId,
+            serviceId: data.serviceId,
+            link: data.link,
+            quantity: data.quantity,
+            price: data.price,
+            status: 'pending',
+            username: username,
+            userId: userId
         });
 
-        await logAction(data.username || 'public', 'order_create', { id: order.id });
+        await logAction(username, 'order_create', { id: order.id }, clientIP);
+        
+        // إرسال إشعار للمستخدم إذا كان مسجلاً
+        if (userId) {
+            await Notification.create({
+                id: Date.now(),
+                userId: userId,
+                type: 'success',
+                title: 'تم إنشاء طلب جديد',
+                message: `تم إنشاء طلبك #${order.id} بنجاح. سيتم معالجته قريباً.`,
+                relatedTo: 'order',
+                relatedId: order.id
+            });
+
+            // تحديث إحصائيات المستخدم
+            const user = await User.findOne({ username: authUsername });
+            if (user) {
+                user.orders.total = (user.orders.total || 0) + 1;
+                user.orders.pending = (user.orders.pending || 0) + 1;
+                await user.save();
+            }
+        }
+
+        // إرسال إشعار للأدمن
+        const adminUsers = await User.find({ role: 'admin' });
+        for (const admin of adminUsers) {
+            await Notification.create({
+                id: Date.now() + Math.random(), // تجنب تكرار ID
+                userId: admin._id,
+                type: 'info',
+                title: 'طلب جديد',
+                message: `تم إنشاء طلب جديد #${order.id} من قبل ${username}`,
+                relatedTo: 'order',
+                relatedId: order.id
+            });
+        }
         
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(order));
-      } catch (error) {
+    } catch (error) {
+        console.error('خطأ في إنشاء الطلب:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to create order' }));
-      }
-      return;
     }
+    return;
+                                       }
     
     // معاينة الرابط
     if (method === 'POST' && pathname === '/api/preview') {
@@ -481,28 +711,47 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // تسجيل الدخول
+    // تسجيل الدخول (محدث مع نظام الأمان)
     if (method === 'POST' && pathname === '/api/auth/login') {
       const body = await readBody(req);
       const { username, password } = JSON.parse(body || '{}');
       
+      // التحقق من محاولات تسجيل الدخول
+      if (!checkLoginAttempts(username, clientIP)) {
+        res.writeHead(429, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          error: 'تم تجاوز عدد المحاولات المسموحة. الرجاء المحاولة بعد 15 دقيقة.' 
+        }));
+        return;
+      }
+      
       try {
-        const user = await User.findOne({ username, password, status: 'active' });
+        const user = await User.findOne({ username, status: 'active' });
         
-        if (user) {
-          const token = createSession(username);
-          await logAction(username, 'login');
+        if (user && await bcrypt.compare(password, user.password)) {
+          // تسجيل الدخول ناجح
+          const token = createSession(username, clientIP);
+          await logAction(username, 'login_success', {}, clientIP);
+          clearLoginAttempts(username, clientIP);
+          
+          // تحديث آخر تسجيل دخول
+          await User.updateOne({ username }, { lastLogin: new Date() });
           
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ 
             token, 
             username,
             role: user.role,
-            balance: user.balance
+            balance: user.balance,
+            message: 'تم تسجيل الدخول بنجاح'
           }));
         } else {
-          // التحقق إذا الحساب محظور
-          const bannedUser = await User.findOne({ username, password, status: 'banned' });
+          // تسجيل الدخول فاشل
+          recordFailedLogin(username, clientIP);
+          await logAction(username, 'login_failed', { reason: 'invalid_credentials' }, clientIP);
+          
+            // التحقق إذا الحساب محظور
+          const bannedUser = await User.findOne({ username, status: 'banned' });
           if (bannedUser) {
             res.writeHead(403, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ 
@@ -511,10 +760,14 @@ const server = http.createServer(async (req, res) => {
             }));
           } else {
             res.writeHead(401, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'اسم المستخدم أو كلمة السر غير صحيحة' }));
+            res.end(JSON.stringify({ 
+              error: 'اسم المستخدم أو كلمة السر غير صحيحة',
+              remainingAttempts: MAX_LOGIN_ATTEMPTS - (loginAttempts.get(`${username}_${clientIP}`)?.count || 0)
+            }));
           }
         }
       } catch (error) {
+        await logAction('system', 'login_error', { error: error.message }, clientIP);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'خطأ في الخادم' }));
       }
@@ -523,7 +776,7 @@ const server = http.createServer(async (req, res) => {
 
     // ==================== نظام المستخدمين ====================
 
-    // تسجيل مستخدم جديد
+    // تسجيل مستخدم جديد (محدث مع تشفير كلمات المرور)
     if (method === 'POST' && pathname === '/api/auth/register') {
         const body = await readBody(req);
         const { username, password, email, phone, fullName } = JSON.parse(body || '{}');
@@ -543,9 +796,18 @@ const server = http.createServer(async (req, res) => {
         }
 
         // التحقق من قوة كلمة السر
-        if (password.length < 6) {
+        if (!isPasswordStrong(password)) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'كلمة السر يجب أن تكون 6 أحرف على الأقل' }));
+            res.end(JSON.stringify({ 
+                error: 'كلمة السر ضعيفة',
+                requirements: {
+                    minLength: 8,
+                    requiresUpperCase: true,
+                    requiresLowerCase: true,
+                    requiresNumbers: true,
+                    requiresSpecialChars: true
+                }
+            }));
             return;
         }
 
@@ -565,10 +827,12 @@ const server = http.createServer(async (req, res) => {
                 return;
             }
 
-            // إنشاء المستخدم الجديد
+            // تشفير كلمة المرور وإنشاء المستخدم الجديد
+            const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+            
             const newUser = await User.create({
                 username,
-                password,
+                password: hashedPassword,
                 email,
                 phone: phone || '',
                 fullName: fullName || '',
@@ -581,7 +845,8 @@ const server = http.createServer(async (req, res) => {
                     pending: 0,
                     rejected: 0
                 },
-                lastLogin: new Date()
+                lastLogin: new Date(),
+                lastPasswordChange: new Date()
             });
 
             // إنشاء إشعار ترحيبي
@@ -597,7 +862,7 @@ const server = http.createServer(async (req, res) => {
             await logAction('system', 'user_register', { 
                 username: newUser.username, 
                 userId: newUser._id 
-            });
+            }, clientIP);
 
             res.writeHead(201, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
@@ -613,6 +878,7 @@ const server = http.createServer(async (req, res) => {
 
         } catch (error) {
             console.error('خطأ في إنشاء المستخدم:', error);
+            await logAction('system', 'register_error', { error: error.message }, clientIP);
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'خطأ في إنشاء الحساب' }));
         }
@@ -623,7 +889,7 @@ const server = http.createServer(async (req, res) => {
     const username = checkAuth(req);
     if (!username) {
       res.writeHead(401, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Unauthorized: Authentication required' }));
+      res.end(JSON.stringify({ error: 'غير مصرح: يلزم تسجيل الدخول' }));
       return;
     }
 
@@ -651,6 +917,7 @@ const server = http.createServer(async (req, res) => {
                 status: user.status,
                 orders: user.orders,
                 lastLogin: user.lastLogin,
+                lastPasswordChange: user.lastPasswordChange,
                 createdAt: user.createdAt
             };
 
@@ -695,7 +962,7 @@ const server = http.createServer(async (req, res) => {
 
             await logAction(username, 'profile_update', { 
                 updatedFields: Object.keys(updateData) 
-            });
+            }, clientIP);
 
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
@@ -718,220 +985,203 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-
     // ==================== نظام الملف الشخصي المتقدم ====================
 
-// تغيير كلمة السر
-if (method === 'PUT' && pathname === '/api/user/change-password') {
-    const username = checkAuth(req);
-    if (!username) {
-        res.writeHead(401, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'غير مصرح' }));
-        return;
-    }
+    // تغيير كلمة السر (محدث مع تشفير)
+    if (method === 'PUT' && pathname === '/api/user/change-password') {
+        const body = await readBody(req);
+        const { currentPassword, newPassword } = JSON.parse(body || '{}');
 
-    const body = await readBody(req);
-    const { currentPassword, newPassword } = JSON.parse(body || '{}');
-
-    if (!currentPassword || !newPassword) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'جميع الحقول مطلوبة' }));
-        return;
-    }
-
-    if (newPassword.length < 6) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'كلمة السر الجديدة يجب أن تكون 6 أحرف على الأقل' }));
-        return;
-    }
-
-    try {
-        const user = await User.findOne({ username });
-        if (!user) {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
-            return;
-        }
-
-        // التحقق من كلمة السر الحالية
-        if (user.password !== currentPassword) {
+        if (!currentPassword || !newPassword) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'كلمة السر الحالية غير صحيحة' }));
+            res.end(JSON.stringify({ error: 'جميع الحقول مطلوبة' }));
             return;
         }
 
-        // تحديث كلمة السر
-        user.password = newPassword;
-        user.updatedAt = new Date();
-        await user.save();
-
-        await logAction(username, 'password_change');
-
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-            success: true,
-            message: 'تم تغيير كلمة السر بنجاح'
-        }));
-
-    } catch (error) {
-        console.error('خطأ في تغيير كلمة السر:', error);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'خطأ في تغيير كلمة السر' }));
-    }
-    return;
-}
-
-// رفع الصورة الشخصية
-if (method === 'POST' && pathname === '/api/user/upload-avatar') {
-    const username = checkAuth(req);
-    if (!username) {
-        res.writeHead(401, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'غير مصرح' }));
-        return;
-    }
-
-    const body = await readBody(req);
-    const { avatar } = JSON.parse(body || '{}');
-
-    if (!avatar) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'صورة غير مرفوعة' }));
-        return;
-    }
-
-    try {
-        const user = await User.findOne({ username });
-        if (!user) {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+        // التحقق من قوة كلمة السر الجديدة
+        if (!isPasswordStrong(newPassword)) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ 
+                error: 'كلمة السر الجديدة ضعيفة',
+                requirements: {
+                    minLength: 8,
+                    requiresUpperCase: true,
+                    requiresLowerCase: true,
+                    requiresNumbers: true,
+                    requiresSpecialChars: true
+                }
+            }));
             return;
         }
 
-        // حفظ الصورة
-        user.avatar = avatar;
-        user.updatedAt = new Date();
-        await user.save();
+        try {
+            const user = await User.findOne({ username });
+            if (!user) {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+                return;
+            }
 
-        await logAction(username, 'avatar_upload');
+            // التحقق من كلمة السر الحالية
+            const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+            if (!isCurrentPasswordValid) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'كلمة السر الحالية غير صحيحة' }));
+                return;
+            }
 
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-            success: true,
-            message: 'تم تحديث الصورة الشخصية بنجاح',
-            avatar: user.avatar
-        }));
+            // تحديث كلمة السر
+            const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+            user.password = hashedNewPassword;
+            user.lastPasswordChange = new Date();
+            user.updatedAt = new Date();
+            await user.save();
 
-    } catch (error) {
-        console.error('خطأ في رفع الصورة:', error);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'خطأ في رفع الصورة' }));
-    }
-    return;
-}
+            await logAction(username, 'password_change', {}, clientIP);
 
-// الحصول على معاملات المستخدم
-if (method === 'GET' && pathname === '/api/user/transactions') {
-    const username = checkAuth(req);
-    if (!username) {
-        res.writeHead(401, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'غير مصرح' }));
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                success: true,
+                message: 'تم تغيير كلمة السر بنجاح'
+            }));
+
+        } catch (error) {
+            console.error('خطأ في تغيير كلمة السر:', error);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'خطأ في تغيير كلمة السر' }));
+        }
         return;
     }
 
-    try {
-        const user = await User.findOne({ username });
-        if (!user) {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+    // رفع الصورة الشخصية
+    if (method === 'POST' && pathname === '/api/user/upload-avatar') {
+        const body = await readBody(req);
+        const { avatar } = JSON.parse(body || '{}');
+
+        if (!avatar) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'صورة غير مرفوعة' }));
             return;
         }
 
-        const transactions = await Transaction.find({ username })
-            .sort({ createdAt: -1 })
-            .limit(50);
+        try {
+            const user = await User.findOne({ username });
+            if (!user) {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+                return;
+            }
 
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(transactions));
+            // حفظ الصورة
+            user.avatar = avatar;
+            user.updatedAt = new Date();
+            await user.save();
 
-    } catch (error) {
-        console.error('خطأ في جلب المعاملات:', error);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'خطأ في جلب المعاملات' }));
-    }
-    return;
-}
+            await logAction(username, 'avatar_upload', {}, clientIP);
 
-// طلب شحن رصيد
-if (method === 'POST' && pathname === '/api/user/deposit') {
-    const username = checkAuth(req);
-    if (!username) {
-        res.writeHead(401, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'غير مصرح' }));
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                success: true,
+                message: 'تم تحديث الصورة الشخصية بنجاح',
+                avatar: user.avatar
+            }));
+
+        } catch (error) {
+            console.error('خطأ في رفع الصورة:', error);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'خطأ في رفع الصورة' }));
+        }
         return;
     }
 
-    const body = await readBody(req);
-    const { amount, method, details } = JSON.parse(body || '{}');
+    // الحصول على معاملات المستخدم
+    if (method === 'GET' && pathname === '/api/user/transactions') {
+        try {
+            const user = await User.findOne({ username });
+            if (!user) {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+                return;
+            }
 
-    if (!amount || !method || amount <= 0) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'بيانات غير صحيحة' }));
+            const transactions = await Transaction.find({ username })
+                .sort({ createdAt: -1 })
+                .limit(50);
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(transactions));
+
+        } catch (error) {
+            console.error('خطأ في جلب المعاملات:', error);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'خطأ في جلب المعاملات' }));
+        }
         return;
     }
 
-    try {
-        const user = await User.findOne({ username });
-        if (!user) {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+    // طلب شحن رصيد
+    if (method === 'POST' && pathname === '/api/user/deposit') {
+        const body = await readBody(req);
+        const { amount, method, details } = JSON.parse(body || '{}');
+
+        if (!amount || !method || amount <= 0) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'بيانات غير صحيحة' }));
             return;
         }
 
-        // إنشاء معاملة جديدة
-        const maxIdTransaction = await Transaction.findOne().sort('-id').exec();
-        const newId = (maxIdTransaction?.id || 0) + 1;
+        try {
+            const user = await User.findOne({ username });
+            if (!user) {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+                return;
+            }
 
-        const transaction = await Transaction.create({
-            id: newId,
-            userId: user._id,
-            username: user.username,
-            type: 'deposit',
-            amount: parseFloat(amount),
-            method: method,
-            status: 'pending',
-            details: details || {},
-            userNote: `طلب شحن رصيد بقيمة $${amount}`
-        });
+            // إنشاء معاملة جديدة
+            const maxIdTransaction = await Transaction.findOne().sort('-id').exec();
+            const newId = (maxIdTransaction?.id || 0) + 1;
 
-        // إرسال إشعار للأدمن
-        await Notification.create({
-            id: Date.now(),
-            userId: user._id,
-            type: 'info',
-            title: 'طلب شحن رصيد جديد',
-            message: `المستخدم ${username} طلب شحن رصيد بقيمة $${amount}`,
-            relatedTo: 'transaction',
-            relatedId: transaction.id
-        });
+            const transaction = await Transaction.create({
+                id: newId,
+                userId: user._id,
+                username: user.username,
+                type: 'deposit',
+                amount: parseFloat(amount),
+                method: method,
+                status: 'pending',
+                details: details || {},
+                userNote: `طلب شحن رصيد بقيمة $${amount}`
+            });
 
-        await logAction(username, 'deposit_request', { amount, method });
+            // إرسال إشعار للأدمن
+            await Notification.create({
+                id: Date.now(),
+                userId: user._id,
+                type: 'info',
+                title: 'طلب شحن رصيد جديد',
+                message: `المستخدم ${username} طلب شحن رصيد بقيمة $${amount}`,
+                relatedTo: 'transaction',
+                relatedId: transaction.id
+            });
 
-        res.writeHead(201, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-            success: true,
-            message: 'تم إرسال طلب الشحن بنجاح',
-            transaction: transaction
-        }));
+            await logAction(username, 'deposit_request', { amount, method }, clientIP);
 
-    } catch (error) {
-        console.error('خطأ في طلب الشحن:', error);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'خطأ في طلب الشحن' }));
+            res.writeHead(201, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                success: true,
+                message: 'تم إرسال طلب الشحن بنجاح',
+                transaction: transaction
+            }));
+
+        } catch (error) {
+            console.error('خطأ في طلب الشحن:', error);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'خطأ في طلب الشحن' }));
+        }
+        return;
     }
-    return;
-}
 
-    
     // طلبات المستخدم الشخصية
     if (pathname === '/api/user/orders' && method === 'GET') {
       try {
@@ -947,13 +1197,13 @@ if (method === 'POST' && pathname === '/api/user/deposit') {
 
     // تسجيل الخروج
     if (method === 'POST' && pathname === '/api/auth/logout') {
-      sessions.delete(req.headers['x-auth-token']);
-      await logAction(username, 'logout');
+      const token = req.headers['x-auth-token'];
+      if (token) sessions.delete(token);
+      await logAction(username, 'logout', {}, clientIP);
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ ok: true }));
+      res.end(JSON.stringify({ ok: true, message: 'تم تسجيل الخروج بنجاح' }));
       return;
-    }
-
+                            }
     // ==================== مسارات الأدمن ====================
     
     // التحقق من صلاحيات الأدمن
@@ -962,7 +1212,7 @@ if (method === 'POST' && pathname === '/api/user/deposit') {
 
     if (!isAdmin && pathname.startsWith('/api/admin')) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Access denied' }));
+        res.end(JSON.stringify({ error: 'ممنوع الوصول: يلزم صلاحيات أدمن' }));
         return;
     }
 
@@ -1016,37 +1266,180 @@ if (method === 'POST' && pathname === '/api/user/deposit') {
       return;
     }
 
-    // تحديث حالة الطلب
-    if (pathname.startsWith('/api/orders/') && method === 'PUT') {
-      try {
+    
+    // تحديث حالة الطلب مع نظام الخصم
+if (pathname.startsWith('/api/orders/') && method === 'PUT') {
+    try {
         const id = parseInt(pathname.split('/').pop(), 10);
         const body = await readBody(req);
         const data = JSON.parse(body || '{}');
         
+        const order = await Order.findOne({ id });
+        if (!order) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Order not found' }));
+            return;
+        }
+
+        // إذا تم تغيير الحالة إلى processing وكانت pending، قم بخصم المبلغ
+        if (data.status === 'processing' && order.status === 'pending') {
+            const user = await User.findOne({ username: order.username });
+            if (user) {
+                // التحقق من أن الرصيد كافي وغير مجمد
+                if (user.balanceFrozen) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'لا يمكن معالجة الطلب - الرصيد مجمد' }));
+                    return;
+                }
+                
+                if (user.balance < order.price) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'رصيد المستخدم غير كافي' }));
+                    return;
+                }
+
+                // خصم المبلغ من رصيد المستخدم
+                user.balance -= order.price;
+                user.totalSpent += order.price;
+                
+                // تحديث إحصائيات الطلبات
+                user.orders.total = (user.orders.total || 0) + 1;
+                user.orders.pending = (user.orders.pending || 0) + 1;
+                
+                await user.save();
+
+                // تسجيل المعاملة
+                const maxIdTransaction = await Transaction.findOne().sort('-id').exec();
+                const newTransactionId = (maxIdTransaction?.id || 0) + 1;
+
+                await Transaction.create({
+                    id: newTransactionId,
+                    userId: user._id,
+                    username: user.username,
+                    type: 'payment',
+                    amount: -order.price,
+                    method: 'system',
+                    status: 'completed',
+                    userNote: `دفع مقابل الطلب #${order.id}`,
+                    createdAt: new Date()
+                });
+
+                // إرسال إشعار للمستخدم
+                await Notification.create({
+                    id: Date.now(),
+                    userId: user._id,
+                    type: 'info',
+                    title: 'تم خصم المبلغ',
+                    message: `تم خصم $${order.price.toFixed(2)} من رصيدك مقابل الطلب #${order.id}`,
+                    relatedTo: 'order',
+                    relatedId: order.id
+                });
+
+                console.log(`✅ تم خصم $${order.price} من رصيد ${user.username}`);
+            }
+        }
+
+        // إذا تم إلغاء الطلب أو رفضه، إرجاع المبلغ
+        if ((data.status === 'cancelled' || data.status === 'rejected') && 
+            (order.status === 'processing' || order.status === 'pending')) {
+            const user = await User.findOne({ username: order.username });
+            if (user && order.status === 'processing') {
+                // إرجاع المبلغ للمستخدم
+                user.balance += order.price;
+                user.totalSpent -= order.price;
+                await user.save();
+
+                // تسجيل معاملة الإرجاع
+                const maxIdTransaction = await Transaction.findOne().sort('-id').exec();
+                const newTransactionId = (maxIdTransaction?.id || 0) + 1;
+
+                await Transaction.create({
+                    id: newTransactionId,
+                    userId: user._id,
+                    username: user.username,
+                    type: 'refund',
+                    amount: order.price,
+                    method: 'system',
+                    status: 'completed',
+                    userNote: `استرجاع مبلغ الطلب #${order.id}`,
+                    createdAt: new Date()
+                });
+
+                // إرسال إشعار للمستخدم
+                await Notification.create({
+                    id: Date.now(),
+                    userId: user._id,
+                    type: 'info',
+                    title: 'تم استرجاع المبلغ',
+                    message: `تم إرجاع $${order.price.toFixed(2)} إلى رصيدك للطلب #${order.id}`,
+                    relatedTo: 'order',
+                    relatedId: order.id
+                });
+            }
+        }
+
+        // تحديث حالة الطلب
         const updatedOrder = await Order.findOneAndUpdate(
-          { id },
-          { 
-            status: data.status,
-            updatedAt: new Date()
-          },
-          { new: true }
+            { id },
+            { 
+                status: data.status,
+                updatedAt: new Date()
+            },
+            { new: true }
         );
 
         if (updatedOrder) {
-          await logAction(username, 'order_update', { id, status: data.status });
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(updatedOrder));
+            // إرسال إشعار بتغيير حالة الطلب
+            const user = await User.findOne({ username: order.username });
+            if (user) {
+                await Notification.create({
+                    id: Date.now(),
+                    userId: user._id,
+                    type: data.status === 'completed' ? 'success' : 
+                          data.status === 'rejected' ? 'error' : 'info',
+                    title: `تم تحديث حالة الطلب #${order.id}`,
+                    message: `حالة الطلب #${order.id} أصبحت: ${getOrderStatusText(data.status)}`,
+                    relatedTo: 'order',
+                    relatedId: order.id
+                });
+
+                // تحديث إحصائيات المستخدم
+                if (data.status === 'completed') {
+                    user.orders.completed = (user.orders.completed || 0) + 1;
+                    user.orders.pending = Math.max(0, (user.orders.pending || 0) - 1);
+                } else if (data.status === 'rejected') {
+                    user.orders.rejected = (user.orders.rejected || 0) + 1;
+                    user.orders.pending = Math.max(0, (user.orders.pending || 0) - 1);
+                }
+                await user.save();
+            }
+
+            await logAction(username, 'order_update', { id, status: data.status }, clientIP);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(updatedOrder));
         } else {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Order not found' }));
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Order not found' }));
         }
-      } catch (error) {
+    } catch (error) {
         console.error('Update order error:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to update order' }));
-      }
-      return;
     }
+    return;
+}
+
+// دالة مساعدة للحصول على نص حالة الطلب
+function getOrderStatusText(status) {
+    const statusMap = {
+        'pending': 'قيد الانتظار',
+        'processing': 'قيد التنفيذ', 
+        'completed': 'مكتمل',
+        'rejected': 'مرفوض',
+        'cancelled': 'ملغي'
+    };
+    return statusMap[status] || status;
+                  }
 
     // السجلات
     if (pathname === '/api/logs' && method === 'GET') {
@@ -1065,7 +1458,7 @@ if (method === 'POST' && pathname === '/api/user/deposit') {
     // تحديث البيانات
     if (pathname === '/api/admin/refresh-data' && method === 'POST') {
       try {
-        await logAction(username, 'data_refresh');
+        await logAction(username, 'data_refresh', {}, clientIP);
         
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ 
@@ -1100,7 +1493,7 @@ if (method === 'POST' && pathname === '/api/user/deposit') {
           max: data.max ? parseInt(data.max, 10) : undefined,
         });
 
-        await logAction(username, 'service_create', { id: newService.id, name: newService.name });
+        await logAction(username, 'service_create', { id: newService.id, name: newService.name }, clientIP);
         
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(newService));
@@ -1130,7 +1523,7 @@ if (method === 'POST' && pathname === '/api/user/deposit') {
         );
 
         if (updatedService) {
-          await logAction(username, 'service_update', { id, changes: data });
+          await logAction(username, 'service_update', { id, changes: data }, clientIP);
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify(updatedService));
         } else {
@@ -1150,7 +1543,7 @@ if (method === 'POST' && pathname === '/api/user/deposit') {
         const deletedService = await Service.findOneAndDelete({ id });
 
         if (deletedService) {
-          await logAction(username, 'service_delete', { id });
+          await logAction(username, 'service_delete', { id }, clientIP);
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ ok: true }));
         } else {
@@ -1164,6 +1557,269 @@ if (method === 'POST' && pathname === '/api/user/deposit') {
       return;
     }
 
+    // ==================== نظام الإشعارات ====================
+
+// الحصول على إشعارات المستخدم
+if (pathname === '/api/user/notifications' && method === 'GET') {
+    try {
+        const user = await User.findOne({ username });
+        if (!user) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            return;
+        }
+
+        const notifications = await Notification.find({ userId: user._id })
+            .sort({ createdAt: -1 })
+            .limit(20);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(notifications));
+
+    } catch (error) {
+        console.error('خطأ في جلب الإشعارات:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في جلب الإشعارات' }));
+    }
+    return;
+}
+
+// تحديث حالة الإشعار كمقروء
+if (pathname.startsWith('/api/user/notifications/') && method === 'PUT') {
+    try {
+        const notificationId = pathname.split('/').pop();
+        const updatedNotification = await Notification.findByIdAndUpdate(
+            notificationId,
+            { read: true },
+            { new: true }
+        );
+
+        if (updatedNotification) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(updatedNotification));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'الإشعار غير موجود' }));
+        }
+    } catch (error) {
+        console.error('خطأ في تحديث الإشعار:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في تحديث الإشعار' }));
+    }
+    return;
+}
+
+
+    // ==================== نظام إدارة المستخدمين (للأدمن فقط) ====================
+
+// الحصول على جميع المستخدمين
+if (pathname === '/api/admin/users' && method === 'GET') {
+    if (!isAdmin) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Access denied' }));
+        return;
+    }
+
+    try {
+        const users = await User.find({})
+            .select('-password') // استبعاد كلمة السر
+            .sort({ createdAt: -1 });
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(users));
+    } catch (error) {
+        console.error('خطأ في جلب المستخدمين:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to load users' }));
+    }
+    return;
+}
+
+// الحصول على مستخدم معين
+if (pathname.startsWith('/api/admin/users/') && method === 'GET') {
+    if (!isAdmin) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Access denied' }));
+        return;
+    }
+
+    try {
+        const userId = pathname.split('/').pop();
+        const user = await User.findById(userId).select('-password');
+        
+        if (user) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(user));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'User not found' }));
+        }
+    } catch (error) {
+        console.error('خطأ في جلب المستخدم:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to load user' }));
+    }
+    return;
+}
+
+// تحديث بيانات المستخدم
+if (pathname.startsWith('/api/admin/users/') && method === 'PUT') {
+    if (!isAdmin) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Access denied' }));
+        return;
+    }
+
+    try {
+        const userId = pathname.split('/').pop();
+        const body = await readBody(req);
+        const updateData = JSON.parse(body || '{}');
+        
+        // إذا كانت هناك كلمة سر جديدة، قم بتشفيرها
+        if (updateData.newPassword) {
+            updateData.password = await bcrypt.hash(updateData.newPassword, SALT_ROUNDS);
+            delete updateData.newPassword;
+        }
+        
+        // تحديث البيانات
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { 
+                ...updateData,
+                updatedAt: new Date()
+            },
+            { new: true }
+        ).select('-password');
+
+        if (updatedUser) {
+            await logAction(username, 'admin_user_update', { 
+                userId: userId,
+                updatedFields: Object.keys(updateData)
+            }, clientIP);
+            
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(updatedUser));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'User not found' }));
+        }
+    } catch (error) {
+        console.error('خطأ في تحديث المستخدم:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to update user' }));
+    }
+    return;
+}
+
+// تجميد/فك تجميد الرصيد
+if (pathname.startsWith('/api/admin/users/') && pathname.includes('/freeze') && method === 'PUT') {
+    if (!isAdmin) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Access denied' }));
+        return;
+    }
+
+    try {
+        const userId = pathname.split('/')[4]; // /api/admin/users/{id}/freeze
+        const body = await readBody(req);
+        const { freeze, reason } = JSON.parse(body || '{}');
+        
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { 
+                balanceFrozen: freeze,
+                freezeReason: reason || '',
+                updatedAt: new Date()
+            },
+            { new: true }
+        ).select('-password');
+
+        if (updatedUser) {
+            await logAction(username, freeze ? 'admin_freeze_balance' : 'admin_unfreeze_balance', { 
+                userId: userId,
+                reason: reason
+            }, clientIP);
+            
+            // إرسال إشعار للمستخدم
+            await Notification.create({
+                id: Date.now(),
+                userId: userId,
+                type: freeze ? 'warning' : 'info',
+                title: freeze ? 'تم تجميد رصيدك' : 'تم فك تجميد رصيدك',
+                message: reason || (freeze ? 'تم تجميد رصيدك من قبل الإدارة' : 'تم فك تجميد رصيدك من قبل الإدارة'),
+                relatedTo: 'balance',
+                relatedId: userId
+            });
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(updatedUser));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'User not found' }));
+        }
+    } catch (error) {
+        console.error('خطأ في تجميد/فك تجميد الرصيد:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to update balance status' }));
+    }
+    return;
+}
+
+// تغيير حالة الحساب
+if (pathname.startsWith('/api/admin/users/') && pathname.includes('/status') && method === 'PUT') {
+    if (!isAdmin) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Access denied' }));
+        return;
+    }
+
+    try {
+        const userId = pathname.split('/')[4]; // /api/admin/users/{id}/status
+        const body = await readBody(req);
+        const { status, reason } = JSON.parse(body || '{}');
+        
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { 
+                status: status,
+                banReason: status === 'banned' ? reason : '',
+                updatedAt: new Date()
+            },
+            { new: true }
+        ).select('-password');
+
+        if (updatedUser) {
+            await logAction(username, 'admin_user_status_change', { 
+                userId: userId,
+                newStatus: status,
+                reason: reason
+            }, clientIP);
+            
+            // إرسال إشعار للمستخدم
+            await Notification.create({
+                id: Date.now(),
+                userId: userId,
+                type: status === 'banned' ? 'error' : 'success',
+                title: status === 'banned' ? 'تم حظر حسابك' : 'تم فك حظر حسابك',
+                message: reason || (status === 'banned' ? 'تم حظر حسابك من قبل الإدارة' : 'تم فك حظر حسابك من قبل الإدارة'),
+                relatedTo: 'account',
+                relatedId: userId
+            });
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(updatedUser));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'User not found' }));
+        }
+    } catch (error) {
+        console.error('خطأ في تغيير حالة الحساب:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to update user status' }));
+    }
+    return;
+}
+    
     // --- المسار غير موجود ---
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'API Endpoint Not Found' }));
