@@ -584,16 +584,25 @@ if (method === 'POST' && pathname === '/api/orders') {
         await logAction(username, 'order_create', { id: order.id }, clientIP);
         
         // إرسال إشعار للمستخدم إذا كان مسجلاً
-        if (userId) {
-            await Notification.create({
-                id: Date.now(),
-                userId: userId,
-                type: 'success',
-                title: 'تم إنشاء طلب جديد',
-                message: `تم إنشاء طلبك #${order.id} بنجاح. سيتم معالجته قريباً.`,
-                relatedTo: 'order',
-                relatedId: order.id
-            });
+        // إرسال إشعار للمستخدم إذا كان مسجلاً
+if (userId) {
+    try {
+        await Notification.create({
+            id: Date.now(), // ✅ أصلحنا المشكلة هنا
+            userId: userId,
+            type: 'success',
+            title: 'تم إنشاء طلب جديد',
+            message: `تم إنشاء طلبك #${order.id} بنجاح. سيتم معالجته قريباً.`,
+            relatedTo: 'order',
+            relatedId: order.id,
+            read: false,
+            createdAt: new Date()
+        });
+        console.log(`✅ تم إرسال إشعار للمستخدم ${username} بإنشاء طلب #${order.id}`);
+    } catch (error) {
+        console.error('❌ خطأ في إنشاء الإشعار:', error);
+    }
+}
 
             // تحديث إحصائيات المستخدم
             const user = await User.findOne({ username: authUsername });
@@ -605,18 +614,27 @@ if (method === 'POST' && pathname === '/api/orders') {
         }
 
         // إرسال إشعار للأدمن
-        const adminUsers = await User.find({ role: 'admin' });
-        for (const admin of adminUsers) {
-            await Notification.create({
-                id: Date.now() + Math.random(), // تجنب تكرار ID
-                userId: admin._id,
-                type: 'info',
-                title: 'طلب جديد',
-                message: `تم إنشاء طلب جديد #${order.id} من قبل ${username}`,
-                relatedTo: 'order',
-                relatedId: order.id
-            });
-        }
+        // إرسال إشعار للأدمن
+try {
+    const adminUsers = await User.find({ role: 'admin' });
+    for (let i = 0; i < adminUsers.length; i++) {
+        const admin = adminUsers[i];
+        await Notification.create({
+            id: Date.now() + i, // ✅ نستخدم index لتجنب التكرار
+            userId: admin._id,
+            type: 'info',
+            title: 'طلب جديد',
+            message: `تم إنشاء طلب جديد #${order.id} من قبل ${username}`,
+            relatedTo: 'order',
+            relatedId: order.id,
+            read: false,
+            createdAt: new Date()
+        });
+    }
+    console.log(`✅ تم إرسال إشعارات للأدمن بخصوص الطلب #${order.id}`);
+} catch (error) {
+    console.error('❌ خطأ في إرسال إشعارات الأدمن:', error);
+}
         
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(order));
@@ -1390,18 +1408,27 @@ if (pathname.startsWith('/api/orders/') && method === 'PUT') {
 
         if (updatedOrder) {
             // إرسال إشعار بتغيير حالة الطلب
-            const user = await User.findOne({ username: order.username });
-            if (user) {
-                await Notification.create({
-                    id: Date.now(),
-                    userId: user._id,
-                    type: data.status === 'completed' ? 'success' : 
-                          data.status === 'rejected' ? 'error' : 'info',
-                    title: `تم تحديث حالة الطلب #${order.id}`,
-                    message: `حالة الطلب #${order.id} أصبحت: ${getOrderStatusText(data.status)}`,
-                    relatedTo: 'order',
-                    relatedId: order.id
-                });
+            // إرسال إشعار بتغيير حالة الطلب
+const user = await User.findOne({ username: order.username });
+if (user) {
+    try {
+        await Notification.create({
+            id: Date.now(), // ✅ تأكد من استخدام Date.now() فقط
+            userId: user._id,
+            type: data.status === 'completed' ? 'success' : 
+                  data.status === 'rejected' ? 'error' : 'info',
+            title: `تم تحديث حالة الطلب #${order.id}`,
+            message: `حالة الطلب #${order.id} أصبحت: ${getOrderStatusText(data.status)}`,
+            relatedTo: 'order',
+            relatedId: order.id,
+            read: false,
+            createdAt: new Date()
+        });
+        console.log(`✅ تم إرسال إشعار للمستخدم ${order.username} بتحديث حالة الطلب #${order.id}`);
+    } catch (error) {
+        console.error('❌ خطأ في إرسال إشعار تحديث الحالة:', error);
+    }
+}
 
                 // تحديث إحصائيات المستخدم
                 if (data.status === 'completed') {
