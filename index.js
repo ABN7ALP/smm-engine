@@ -1744,6 +1744,7 @@ if (pathname.startsWith('/api/admin/users/') && method === 'PUT') {
 }
 
 // تجميد/فك تجميد الرصيد
+// 🔧 إصلاح كامل لتجميد الرصيد
 if (pathname.startsWith('/api/admin/users/') && pathname.includes('/freeze') && method === 'PUT') {
     if (!isAdmin) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
@@ -1752,53 +1753,65 @@ if (pathname.startsWith('/api/admin/users/') && pathname.includes('/freeze') && 
     }
 
     try {
-        const userId = pathname.split('/')[4]; // /api/admin/users/{id}/freeze
+        const pathParts = pathname.split('/');
+        const userId = pathParts[4]; // /api/admin/users/{id}/freeze
+        
+        console.log(`🔄 تجميد رصيد المستخدم: ${userId}`);
+        
         const body = await readBody(req);
         const { freeze, reason } = JSON.parse(body || '{}');
         
-        const updatedUser = await User.findByIdAndUpdate(
-            userId,
-            { 
-                balanceFrozen: freeze,
-                freezeReason: reason || '',
-                updatedAt: new Date()
-            },
-            { new: true }
-        ).select('-password');
-
-        if (updatedUser) {
-            await logAction(username, freeze ? 'admin_freeze_balance' : 'admin_unfreeze_balance', { 
-                userId: userId,
-                reason: reason
-            }, clientIP);
-            
-            // إرسال إشعار للمستخدم
-            await Notification.create({
-                id: Date.now(),
-                userId: userId,
-                type: freeze ? 'warning' : 'info',
-                title: freeze ? 'تم تجميد رصيدك' : 'تم فك تجميد رصيدك',
-                message: reason || (freeze ? 'تم تجميد رصيدك من قبل الإدارة' : 'تم فك تجميد رصيدك من قبل الإدارة'),
-                relatedTo: 'balance',
-                relatedId: userId
-            });
-
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(updatedUser));
-        } else {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'User not found' }));
+        // التحقق من صحة البيانات
+        if (!userId) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'User ID مطلوب' }));
+            return;
         }
+
+        // البحث عن المستخدم أولاً للتأكد من وجوده
+        const user = await User.findById(userId);
+        if (!user) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            return;
+        }
+
+        // تحديث حالة التجميد
+        user.balanceFrozen = Boolean(freeze);
+        user.freezeReason = reason || '';
+        user.updatedAt = new Date();
+        
+        await user.save();
+
+        await logAction(username, freeze ? 'admin_freeze_balance' : 'admin_unfreeze_balance', { 
+            userId: userId,
+            reason: reason
+        }, clientIP);
+        
+        // إرسال إشعار للمستخدم
+        await Notification.create({
+            userId: user._id,
+            type: freeze ? 'warning' : 'info',
+            title: freeze ? 'تم تجميد رصيدك' : 'تم فك تجميد رصيدك',
+            message: reason || (freeze ? 'تم تجميد رصيدك من قبل الإدارة' : 'تم فك تجميد رصيدك من قبل الإدارة'),
+            relatedTo: 'balance'
+        });
+
+        // إرجاع بيانات المستخدم المحدثة
+        const updatedUser = await User.findById(userId).select('-password');
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(updatedUser));
+        
     } catch (error) {
-        console.error('خطأ في تجميد/فك تجميد الرصيد:', error);
+        console.error('❌ خطأ في تجميد/فك تجميد الرصيد:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Failed to update balance status' }));
+        res.end(JSON.stringify({ error: 'Failed to update balance status: ' + error.message }));
     }
     return;
 }
-
 // تغيير حالة الحساب
-// تغيير حالة الحساب
+// 🔧 إصلاح كامل لتغيير حالة الحساب
 if (pathname.startsWith('/api/admin/users/') && pathname.includes('/status') && method === 'PUT') {
     if (!isAdmin) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
@@ -1810,19 +1823,18 @@ if (pathname.startsWith('/api/admin/users/') && pathname.includes('/status') && 
         const pathParts = pathname.split('/');
         const userId = pathParts[4]; // /api/admin/users/{id}/status
         
-        console.log(`🔄 محاولة تغيير حالة المستخدم: ${userId}`); // 🔍 إضافة log
+        console.log(`🔄 تغيير حالة المستخدم: ${userId}`);
         
         const body = await readBody(req);
         const { status, reason } = JSON.parse(body || '{}');
         
-        // ✅ التحقق من أن userId موجود
-        if (!userId || userId === 'undefined') {
+        // التحقق من صحة البيانات
+        if (!userId) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'User ID مطلوب' }));
             return;
         }
 
-        // ✅ التحقق من أن status صالح
         const validStatuses = ['active', 'suspended', 'banned'];
         if (!validStatuses.includes(status)) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -1830,43 +1842,46 @@ if (pathname.startsWith('/api/admin/users/') && pathname.includes('/status') && 
             return;
         }
 
-        const updatedUser = await User.findByIdAndUpdate(
-            userId,
-            { 
-                status: status,
-                banReason: status === 'banned' ? (reason || '') : '',
-                updatedAt: new Date()
-            },
-            { new: true }
-        ).select('-password');
-
-        if (updatedUser) {
-            console.log(`✅ تم تغيير حالة المستخدم ${userId} إلى: ${status}`);
-            
-            await logAction(username, 'admin_user_status_change', { 
-                userId: userId,
-                newStatus: status,
-                reason: reason
-            }, clientIP);
-            
-            // إرسال إشعار للمستخدم
-            await Notification.create({
-                id: Date.now(),
-                userId: userId,
-                type: status === 'banned' ? 'error' : 'success',
-                title: status === 'banned' ? 'تم حظر حسابك' : 'تم فك حظر حسابك',
-                message: reason || (status === 'banned' ? 'تم حظر حسابك من قبل الإدارة' : 'تم فك حظر حسابك من قبل الإدارة'),
-                relatedTo: 'account',
-                relatedId: userId
-            });
-
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(updatedUser));
-        } else {
-            console.log(`❌ المستخدم غير موجود: ${userId}`);
+        // البحث عن المستخدم أولاً
+        const user = await User.findById(userId);
+        if (!user) {
             res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'User not found' }));
+            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            return;
         }
+
+        // تحديث الحالة
+        user.status = status;
+        if (status === 'banned') {
+            user.banReason = reason || '';
+        } else {
+            user.banReason = '';
+        }
+        user.updatedAt = new Date();
+        
+        await user.save();
+
+        await logAction(username, 'admin_user_status_change', { 
+            userId: userId,
+            newStatus: status,
+            reason: reason
+        }, clientIP);
+        
+        // إرسال إشعار للمستخدم
+        await Notification.create({
+            userId: user._id,
+            type: status === 'banned' ? 'error' : 'success',
+            title: status === 'banned' ? 'تم حظر حسابك' : 'تم فك حظر حسابك',
+            message: reason || (status === 'banned' ? 'تم حظر حسابك من قبل الإدارة' : 'تم فك حظر حسابك من قبل الإدارة'),
+            relatedTo: 'account'
+        });
+
+        // إرجاع بيانات المستخدم المحدثة
+        const updatedUser = await User.findById(userId).select('-password');
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(updatedUser));
+        
     } catch (error) {
         console.error('❌ خطأ في تغيير حالة الحساب:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
