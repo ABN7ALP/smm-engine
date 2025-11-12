@@ -831,7 +831,6 @@ async function loadUserData() {
 }
 
 // تحميل طلبات المستخدم للإحصائيات
-// تحميل طلبات المستخدم للإحصائيات - استبدال الدالة الحالية
 async function loadUserOrders() {
     try {
         const response = await fetch('/api/user/orders', { 
@@ -841,8 +840,6 @@ async function loadUserOrders() {
         if (response.ok) {
             const orders = await response.json();
             updateOrderStats(orders);
-        } else {
-            console.error('فشل تحميل الطلبات:', response.status);
         }
     } catch (error) {
         console.error('خطأ في تحميل الطلبات:', error);
@@ -850,20 +847,13 @@ async function loadUserOrders() {
 }
 
 // تحديث إحصائيات الطلبات
-// تحديث دالة updateOrderStats لتعمل بشكل صحيح
 function updateOrderStats(orders) {
-    if (!orders || !Array.isArray(orders)) {
-        console.log('لا توجد طلبات أو بيانات غير صالحة');
-        return;
-    }
+    if (!orders || !Array.isArray(orders)) return;
     
     const totalOrders = orders.length;
     const completedOrders = orders.filter(order => order.status === 'completed').length;
     const pendingOrders = orders.filter(order => order.status === 'pending').length;
     
-    console.log(`📊 الإحصائيات: ${totalOrders} طلبات, ${completedOrders} مكتملة`);
-    
-    // تحديث الواجهة
     document.getElementById('totalOrders').textContent = totalOrders;
     document.getElementById('completedOrders').textContent = completedOrders;
     
