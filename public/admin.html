@@ -1849,7 +1849,12 @@ function renderUsers(users) {
         return;
     }
     
-    tbody.innerHTML = users.map(user => `
+    tbody.innerHTML = users.map(user => {
+        // ✅ إصلاح: التحقق من وجود balance
+        const userBalance = user.balance || 0;
+        const isBalanceFrozen = user.balanceFrozen || false;
+        
+        return `
         <tr>
             <td>
                 <div class="d-flex align-items-center">
@@ -1863,12 +1868,12 @@ function renderUsers(users) {
                     </div>
                 </div>
             </td>
-            <td>${user.email}</td>
+            <td>${user.email || '—'}</td>
             <td>${user.phone || '—'}</td>
             <td>
                 <div class="d-flex align-items-center">
-                    <span class="fw-bold text-success">$${user.balance.toFixed(2)}</span>
-                    ${user.balanceFrozen ? 
+                    <span class="fw-bold text-success">$${userBalance.toFixed(2)}</span>
+                    ${isBalanceFrozen ? 
                         '<i class="fas fa-lock text-warning ms-2" title="رصيد مجمد"></i>' : 
                         '<i class="fas fa-lock-open text-success ms-2" title="رصيد متاح"></i>'
                     }
@@ -1891,9 +1896,9 @@ function renderUsers(users) {
                             title="تعديل البيانات" data-bs-toggle="tooltip">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-warning" onclick="toggleFreezeBalance('${user._id}', ${!user.balanceFrozen})" 
-                            title="${user.balanceFrozen ? 'فك تجميد الرصيد' : 'تجميد الرصيد'}" data-bs-toggle="tooltip">
-                        <i class="fas ${user.balanceFrozen ? 'fa-unlock' : 'fa-lock'}"></i>
+                    <button class="btn btn-sm btn-outline-warning" onclick="toggleFreezeBalance('${user._id}', ${!isBalanceFrozen})" 
+                            title="${isBalanceFrozen ? 'فك تجميد الرصيد' : 'تجميد الرصيد'}" data-bs-toggle="tooltip">
+                        <i class="fas ${isBalanceFrozen ? 'fa-unlock' : 'fa-lock'}"></i>
                     </button>
                     <button class="btn btn-sm btn-outline-${user.status === 'banned' ? 'success' : 'danger'}" 
                             onclick="changeUserStatus('${user._id}', '${user.status === 'banned' ? 'active' : 'banned'}')"
@@ -1903,8 +1908,9 @@ function renderUsers(users) {
                 </div>
             </td>
         </tr>
-    `).join('');
-
+        `;
+    }).join('');
+}
     // تفعيل أدوات التلميح
     if (typeof bootstrap !== 'undefined') {
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
