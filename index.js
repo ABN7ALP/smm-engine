@@ -535,11 +535,10 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     
-    // إنشاء طلب جديد مع الإشعارات
-
     
     // إنشاء طلب جديد مع الإشعارات
 if (method === 'POST' && pathname === '/api/orders') {
+  console.log('🎯 تم استلام طلب جديد من:', checkAuth(req) || 'مستخدم عام');
     const body = await readBody(req);
     const data = JSON.parse(body || '{}');
     
@@ -614,6 +613,7 @@ if (userId) {
 } else {
     console.log('🔍 المستخدم غير مسجل دخول - لا إشعارات');
 }
+
 
             // تحديث إحصائيات المستخدم
             const user = await User.findOne({ username: authUsername });
