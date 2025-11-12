@@ -1798,6 +1798,7 @@ if (pathname.startsWith('/api/admin/users/') && pathname.includes('/freeze') && 
 }
 
 // تغيير حالة الحساب
+// تغيير حالة الحساب
 if (pathname.startsWith('/api/admin/users/') && pathname.includes('/status') && method === 'PUT') {
     if (!isAdmin) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
@@ -1806,21 +1807,42 @@ if (pathname.startsWith('/api/admin/users/') && pathname.includes('/status') && 
     }
 
     try {
-        const userId = pathname.split('/')[4]; // /api/admin/users/{id}/status
+        const pathParts = pathname.split('/');
+        const userId = pathParts[4]; // /api/admin/users/{id}/status
+        
+        console.log(`🔄 محاولة تغيير حالة المستخدم: ${userId}`); // 🔍 إضافة log
+        
         const body = await readBody(req);
         const { status, reason } = JSON.parse(body || '{}');
         
+        // ✅ التحقق من أن userId موجود
+        if (!userId || userId === 'undefined') {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'User ID مطلوب' }));
+            return;
+        }
+
+        // ✅ التحقق من أن status صالح
+        const validStatuses = ['active', 'suspended', 'banned'];
+        if (!validStatuses.includes(status)) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'حالة غير صالحة' }));
+            return;
+        }
+
         const updatedUser = await User.findByIdAndUpdate(
             userId,
             { 
                 status: status,
-                banReason: status === 'banned' ? reason : '',
+                banReason: status === 'banned' ? (reason || '') : '',
                 updatedAt: new Date()
             },
             { new: true }
         ).select('-password');
 
         if (updatedUser) {
+            console.log(`✅ تم تغيير حالة المستخدم ${userId} إلى: ${status}`);
+            
             await logAction(username, 'admin_user_status_change', { 
                 userId: userId,
                 newStatus: status,
@@ -1841,13 +1863,14 @@ if (pathname.startsWith('/api/admin/users/') && pathname.includes('/status') && 
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(updatedUser));
         } else {
+            console.log(`❌ المستخدم غير موجود: ${userId}`);
             res.writeHead(404, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'User not found' }));
         }
     } catch (error) {
-        console.error('خطأ في تغيير حالة الحساب:', error);
+        console.error('❌ خطأ في تغيير حالة الحساب:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Failed to update user status' }));
+        res.end(JSON.stringify({ error: 'Failed to update user status: ' + error.message }));
     }
     return;
 }
