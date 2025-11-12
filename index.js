@@ -536,6 +536,9 @@ const server = http.createServer(async (req, res) => {
     }
     
     // إنشاء طلب جديد مع الإشعارات
+
+    
+    // إنشاء طلب جديد مع الإشعارات
 if (method === 'POST' && pathname === '/api/orders') {
     const body = await readBody(req);
     const data = JSON.parse(body || '{}');
@@ -584,25 +587,23 @@ if (method === 'POST' && pathname === '/api/orders') {
         await logAction(username, 'order_create', { id: order.id }, clientIP);
         
         // إرسال إشعار للمستخدم إذا كان مسجلاً
-        // إرسال إشعار للمستخدم إذا كان مسجلاً
-if (userId) {
-    try {
-        await Notification.create({
-            id: Date.now(), // ✅ أصلحنا المشكلة هنا
-            userId: userId,
-            type: 'success',
-            title: 'تم إنشاء طلب جديد',
-            message: `تم إنشاء طلبك #${order.id} بنجاح. سيتم معالجته قريباً.`,
-            relatedTo: 'order',
-            relatedId: order.id,
-            read: false,
-            createdAt: new Date()
-        });
-        console.log(`✅ تم إرسال إشعار للمستخدم ${username} بإنشاء طلب #${order.id}`);
-    } catch (error) {
-        console.error('❌ خطأ في إنشاء الإشعار:', error);
-    }
-}
+        if (userId) {
+            try {
+                await Notification.create({
+                    id: Date.now(), // ✅ أصلحنا المشكلة هنا
+                    userId: userId,
+                    type: 'success',
+                    title: 'تم إنشاء طلب جديد',
+                    message: `تم إنشاء طلبك #${order.id} بنجاح. سيتم معالجته قريباً.`,
+                    relatedTo: 'order',
+                    relatedId: order.id,
+                    read: false,
+                    createdAt: new Date()
+                });
+                console.log(`✅ تم إرسال إشعار للمستخدم ${username} بإنشاء طلب #${order.id}`);
+            } catch (error) {
+                console.error('❌ خطأ في إنشاء الإشعار:', error);
+            }
 
             // تحديث إحصائيات المستخدم
             const user = await User.findOne({ username: authUsername });
@@ -611,30 +612,29 @@ if (userId) {
                 user.orders.pending = (user.orders.pending || 0) + 1;
                 await user.save();
             }
-        
+        }
 
         // إرسال إشعار للأدمن
-        // إرسال إشعار للأدمن
-try {
-    const adminUsers = await User.find({ role: 'admin' });
-    for (let i = 0; i < adminUsers.length; i++) {
-        const admin = adminUsers[i];
-        await Notification.create({
-            id: Date.now() + i, // ✅ نستخدم index لتجنب التكرار
-            userId: admin._id,
-            type: 'info',
-            title: 'طلب جديد',
-            message: `تم إنشاء طلب جديد #${order.id} من قبل ${username}`,
-            relatedTo: 'order',
-            relatedId: order.id,
-            read: false,
-            createdAt: new Date()
-        });
-    }
-    console.log(`✅ تم إرسال إشعارات للأدمن بخصوص الطلب #${order.id}`);
-} catch (error) {
-    console.error('❌ خطأ في إرسال إشعارات الأدمن:', error);
-}
+        try {
+            const adminUsers = await User.find({ role: 'admin' });
+            for (let i = 0; i < adminUsers.length; i++) {
+                const admin = adminUsers[i];
+                await Notification.create({
+                    id: Date.now() + i, // ✅ نستخدم index لتجنب التكرار
+                    userId: admin._id,
+                    type: 'info',
+                    title: 'طلب جديد',
+                    message: `تم إنشاء طلب جديد #${order.id} من قبل ${username}`,
+                    relatedTo: 'order',
+                    relatedId: order.id,
+                    read: false,
+                    createdAt: new Date()
+                });
+            }
+            console.log(`✅ تم إرسال إشعارات للأدمن بخصوص الطلب #${order.id}`);
+        } catch (error) {
+            console.error('❌ خطأ في إرسال إشعارات الأدمن:', error);
+        }
         
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(order));
@@ -644,8 +644,7 @@ try {
         res.end(JSON.stringify({ error: 'Failed to create order' }));
     }
     return;
-                                       }
-    
+}
     // معاينة الرابط
     if (method === 'POST' && pathname === '/api/preview') {
       const body = await readBody(req);
