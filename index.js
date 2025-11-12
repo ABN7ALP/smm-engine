@@ -554,24 +554,27 @@ if (method === 'POST' && pathname === '/api/orders') {
         const newId = (maxIdOrder?.id || 0) + 1;
         
         // الحصول على المستخدم إذا كان مسجلاً
-        let username = 'public';
-        let userId = null;
+let username = 'public';
+let userId = null;
+
+const authUsername = checkAuth(req);
+console.log(`🔍 authUsername: ${authUsername}`); // <-- أضف هذا
+
+if (authUsername) {
+    const user = await User.findOne({ username: authUsername });
+    if (user) {
+        username = user.username;
+        userId = user._id.toString(); // ✅ تأكد من تحويله لـ string
+        console.log(`🔍 تم العثور على المستخدم: ${username}, userId: ${userId}`);
         
-        const authUsername = checkAuth(req);
-        if (authUsername) {
-            const user = await User.findOne({ username: authUsername });
-            if (user) {
-                username = user.username;
-                userId = user._id;
-                
-                // التحقق من الرصيد إذا كان الطلب مدفوع
-                if (user.balanceFrozen) {
-                    res.writeHead(400, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ error: 'لا يمكن إنشاء طلب - الرصيد مجمد' }));
-                    return;
-                }
-            }
+        // التحقق من الرصيد إذا كان الطلب مدفوع
+        if (user.balanceFrozen) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'لا يمكن إنشاء طلب - الرصيد مجمد' }));
+            return;
         }
+    }
+}
         
         const order = await Order.create({
             id: newId,
@@ -587,23 +590,30 @@ if (method === 'POST' && pathname === '/api/orders') {
         await logAction(username, 'order_create', { id: order.id }, clientIP);
         
         // إرسال إشعار للمستخدم إذا كان مسجلاً
-        if (userId) {
-            try {
-                await Notification.create({
-                    id: Date.now(), // ✅ أصلحنا المشكلة هنا
-                    userId: userId,
-                    type: 'success',
-                    title: 'تم إنشاء طلب جديد',
-                    message: `تم إنشاء طلبك #${order.id} بنجاح. سيتم معالجته قريباً.`,
-                    relatedTo: 'order',
-                    relatedId: order.id,
-                    read: false,
-                    createdAt: new Date()
-                });
-                console.log(`✅ تم إرسال إشعار للمستخدم ${username} بإنشاء طلب #${order.id}`);
-            } catch (error) {
-                console.error('❌ خطأ في إنشاء الإشعار:', error);
-            }
+        // في قسم إنشاء الطلب - بعد ما ينشئ الطلب
+console.log(`🔍 debugging - userId: ${userId}, username: ${username}`);
+
+if (userId) {
+    console.log(`🔍 جاري إنشاء إشعار للمستخدم: ${username}`);
+    try {
+        const notification = await Notification.create({
+            id: Date.now(),
+            userId: userId,
+            type: 'success', 
+            title: 'تم إنشاء طلب جديد',
+            message: `تم إنشاء طلبك #${order.id} بنجاح. سيتم معالجته قريباً.`,
+            relatedTo: 'order',
+            relatedId: order.id,
+            read: false,
+            createdAt: new Date()
+        });
+        console.log(`✅ تم إنشاء الإشعار بنجاح:`, notification);
+    } catch (error) {
+        console.error('❌ خطأ في إنشاء الإشعار:', error);
+    }
+} else {
+    console.log('🔍 المستخدم غير مسجل دخول - لا إشعارات');
+}
 
             // تحديث إحصائيات المستخدم
             const user = await User.findOne({ username: authUsername });
