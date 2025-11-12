@@ -1135,7 +1135,6 @@ async function loadUserHeader() {
     try {
         const token = localStorage.getItem('authToken');
         if (!token) {
-            // إذا لم يكن مسجل دخول، إظهار زر الدخول
             showLoginButton();
             return;
         }
@@ -1147,7 +1146,10 @@ async function loadUserHeader() {
         if (response.ok) {
             const userData = await response.json();
             updateHeader(userData);
-            loadNotifications(); // تحميل الإشعارات
+            
+            // تحميل الإشعارات فوراً بعد تسجيل الدخول
+            console.log('🔍 جاري تحميل الإشعارات...');
+            await loadNotifications();
         } else {
             showLoginButton();
         }
