@@ -1695,6 +1695,7 @@ if (pathname.startsWith('/api/admin/users/') && method === 'GET') {
 }
 
 // تحديث بيانات المستخدم
+// تحديث بيانات المستخدم (مبسط)
 if (pathname.startsWith('/api/admin/users/') && method === 'PUT') {
     if (!isAdmin) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
@@ -1707,42 +1708,53 @@ if (pathname.startsWith('/api/admin/users/') && method === 'PUT') {
         const body = await readBody(req);
         const updateData = JSON.parse(body || '{}');
         
-        // إذا كانت هناك كلمة سر جديدة، قم بتشفيرها
+        console.log('🔄 تحديث المستخدم:', userId, updateData);
+        
+        if (!userId) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'User ID مطلوب' }));
+            return;
+        }
+
+        // البحث عن المستخدم
+        const user = await User.findById(userId);
+        if (!user) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            return;
+        }
+
+        // تحديث الحقول الأساسية
+        if (updateData.username) user.username = updateData.username;
+        if (updateData.email) user.email = updateData.email;
+        if (updateData.fullName !== undefined) user.fullName = updateData.fullName;
+        if (updateData.phone !== undefined) user.phone = updateData.phone;
+        if (updateData.balance !== undefined) user.balance = parseFloat(updateData.balance);
+        if (updateData.status) user.status = updateData.status;
+        if (updateData.balanceFrozen !== undefined) user.balanceFrozen = Boolean(updateData.balanceFrozen);
+        
+        // إذا كانت هناك كلمة سر جديدة
         if (updateData.newPassword) {
-            updateData.password = await bcrypt.hash(updateData.newPassword, SALT_ROUNDS);
-            delete updateData.newPassword;
+            user.password = await bcrypt.hash(updateData.newPassword, SALT_ROUNDS);
+            user.lastPasswordChange = new Date();
         }
         
-        // تحديث البيانات
-        const updatedUser = await User.findByIdAndUpdate(
-            userId,
-            { 
-                ...updateData,
-                updatedAt: new Date()
-            },
-            { new: true }
-        ).select('-password');
+        user.updatedAt = new Date();
+        await user.save();
 
-        if (updatedUser) {
-            await logAction(username, 'admin_user_update', { 
-                userId: userId,
-                updatedFields: Object.keys(updateData)
-            }, clientIP);
-            
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(updatedUser));
-        } else {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'User not found' }));
-        }
+        // إرجاع البيانات المحدثة
+        const updatedUser = await User.findById(userId).select('-password');
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(updatedUser));
+        
     } catch (error) {
-        console.error('خطأ في تحديث المستخدم:', error);
+        console.error('❌ خطأ في تحديث المستخدم:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Failed to update user' }));
+        res.end(JSON.stringify({ error: 'Failed to update user: ' + error.message }));
     }
     return;
 }
-
 // تجميد/فك تجميد الرصيد
 // 🔧 إصلاح كامل لتجميد الرصيد
 if (pathname.startsWith('/api/admin/users/') && pathname.includes('/freeze') && method === 'PUT') {
