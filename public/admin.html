@@ -2109,17 +2109,16 @@ async function toggleFreezeBalance(userId, freeze) {
         showNotification(`❌ ${error.message}`, 'error');
     }
 }
-
-// 🔧 إصلاح دالة تغيير حالة الحساب
+//حالة الحساب 
 async function changeUserStatus(userId, newStatus) {
     const action = newStatus === 'banned' ? 'حظر' : 'فك الحظر';
     const actionText = newStatus === 'banned' ? 'حظر الحساب' : 'فك حظر الحساب';
     
+    console.log(`🎯 ID المستخدم المرسل: ${userId}`); // 🔍 إضافة log
+    
     if (!confirm(`هل أنت متأكد من ${actionText}؟`)) return;
     
     try {
-        console.log(`🔄 جاري ${actionText} للمستخدم: ${userId}`);
-        
         const response = await fetchWithAuth(`/api/admin/users/${userId}/status`, {
             method: 'PUT',
             body: JSON.stringify({ 
@@ -2137,12 +2136,12 @@ async function changeUserStatus(userId, newStatus) {
 
         if (response.ok) {
             showNotification(`✅ تم ${actionText} بنجاح`, 'success');
-            loadAllUsers(); // إعادة تحميل القائمة
+            loadAllUsers();
         } else {
             throw new Error(result.error || `فشل ${actionText}`);
         }
     } catch (error) {
-        console.error(`خطأ في ${actionText}:`, error);
+        console.error(`❌ خطأ في ${actionText}:`, error);
         showNotification(`❌ ${error.message}`, 'error');
     }
 }
