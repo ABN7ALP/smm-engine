@@ -611,7 +611,7 @@ if (userId) {
                 user.orders.pending = (user.orders.pending || 0) + 1;
                 await user.save();
             }
-        }
+        
 
         // إرسال إشعار للأدمن
         // إرسال إشعار للأدمن
