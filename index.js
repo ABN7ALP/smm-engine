@@ -1406,47 +1406,46 @@ if (pathname.startsWith('/api/orders/') && method === 'PUT') {
         );
 
         if (updatedOrder) {
-            // إرسال إشعار بتغيير حالة الطلب
-            // إرسال إشعار بتغيير حالة الطلب
-const user = await User.findOne({ username: order.username });
-if (user) {
-    try {
-        await Notification.create({
-            id: Date.now(), // ✅ تأكد من استخدام Date.now() فقط
-            userId: user._id,
-            type: data.status === 'completed' ? 'success' : 
-                  data.status === 'rejected' ? 'error' : 'info',
-            title: `تم تحديث حالة الطلب #${order.id}`,
-            message: `حالة الطلب #${order.id} أصبحت: ${getOrderStatusText(data.status)}`,
-            relatedTo: 'order',
-            relatedId: order.id,
-            read: false,
-            createdAt: new Date()
-        });
-        console.log(`✅ تم إرسال إشعار للمستخدم ${order.username} بتحديث حالة الطلب #${order.id}`);
-    } catch (error) {
-        console.error('❌ خطأ في إرسال إشعار تحديث الحالة:', error);
-    }
-}
-
-                // تحديث إحصائيات المستخدم
-                if (data.status === 'completed') {
-                    user.orders.completed = (user.orders.completed || 0) + 1;
-                    user.orders.pending = Math.max(0, (user.orders.pending || 0) - 1);
-                } else if (data.status === 'rejected') {
-                    user.orders.rejected = (user.orders.rejected || 0) + 1;
-                    user.orders.pending = Math.max(0, (user.orders.pending || 0) - 1);
-                }
-                await user.save();
-            }
-
-            await logAction(username, 'order_update', { id, status: data.status }, clientIP);
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(updatedOrder));
-        } else {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Order not found' }));
+    // إرسال إشعار بتغيير حالة الطلب
+    const user = await User.findOne({ username: order.username });
+    if (user) {
+        try {
+            await Notification.create({
+                id: Date.now(), // ✅ تأكد من استخدام Date.now() فقط
+                userId: user._id,
+                type: data.status === 'completed' ? 'success' : 
+                      data.status === 'rejected' ? 'error' : 'info',
+                title: `تم تحديث حالة الطلب #${order.id}`,
+                message: `حالة الطلب #${order.id} أصبحت: ${getOrderStatusText(data.status)}`,
+                relatedTo: 'order',
+                relatedId: order.id,
+                read: false,
+                createdAt: new Date()
+            });
+            console.log(`✅ تم إرسال إشعار للمستخدم ${order.username} بتحديث حالة الطلب #${order.id}`);
+        } catch (error) {
+            console.error('❌ خطأ في إرسال إشعار تحديث الحالة:', error);
         }
+
+        // تحديث إحصائيات المستخدم
+        if (data.status === 'completed') {
+            user.orders.completed = (user.orders.completed || 0) + 1;
+            user.orders.pending = Math.max(0, (user.orders.pending || 0) - 1);
+        } else if (data.status === 'rejected') {
+            user.orders.rejected = (user.orders.rejected || 0) + 1;
+            user.orders.pending = Math.max(0, (user.orders.pending || 0) - 1);
+        }
+        await user.save();
+    }
+
+    await logAction(username, 'order_update', { id, status: data.status }, clientIP);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(updatedOrder));
+} else {
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Order not found' }));
+}
+            
     } catch (error) {
         console.error('Update order error:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
