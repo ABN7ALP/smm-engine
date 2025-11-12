@@ -1965,7 +1965,7 @@ function createEditUserModal() {
                     <div class="modal-header">
                         <h5 class="modal-title">
                             <i class="fas fa-user-edit me-2"></i>
-                            تعديل بيانات المستخدم
+                            إدارة المستخدم - التحكم الكامل
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
@@ -1982,11 +1982,11 @@ function createEditUserModal() {
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">الاسم الكامل</label>
-                                    <input type="text" name="fullName" class="form-control" placeholder="اختياري">
+                                    <input type="text" name="fullName" class="form-control">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">رقم الهاتف</label>
-                                    <input type="tel" name="phone" class="form-control" placeholder="اختياري">
+                                    <input type="tel" name="phone" class="form-control">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">الرصيد ($)</label>
@@ -2000,16 +2000,40 @@ function createEditUserModal() {
                                         <option value="banned">محظور</option>
                                     </select>
                                 </div>
+                                
+                                <!-- 🔧 الإجراءات الإدارية -->
+                                <div class="col-12">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body">
+                                            <h6 class="card-title mb-3">
+                                                <i class="fas fa-cogs me-2"></i>الإجراءات الإدارية
+                                            </h6>
+                                            
+                                            <div class="row g-2">
+                                                <div class="col-md-6">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" name="balanceFrozen" id="balanceFrozenSwitch">
+                                                        <label class="form-check-label" for="balanceFrozenSwitch">
+                                                            <i class="fas fa-lock me-1"></i>تجميد الرصيد
+                                                        </label>
+                                                    </div>
+                                                    <small class="text-muted">يمنع المستخدم من إنشاء طلبات جديدة</small>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">سبب الإجراء (اختياري)</label>
+                                                    <textarea name="adminNote" class="form-control" rows="2" 
+                                                              placeholder="سجل سبب التعديل للإشارة المرجعية"></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
                                 <div class="col-12">
                                     <label class="form-label">كلمة السر الجديدة (اختياري)</label>
                                     <input type="password" name="newPassword" class="form-control" 
                                            placeholder="اتركه فارغاً للحفاظ على كلمة السر الحالية">
                                     <div class="form-text">يجب أن تحتوي على 8 أحرف على الأقل مع أحرف كبيرة وصغيرة وأرقام</div>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">سبب التعديل (اختياري)</label>
-                                    <textarea name="adminNote" class="form-control" rows="2" 
-                                              placeholder="سجل سبب التعديل للإشارة المرجعية"></textarea>
                                 </div>
                             </div>
                             <input type="hidden" name="userId" id="editUserId">
@@ -2019,8 +2043,11 @@ function createEditUserModal() {
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                             <i class="fas fa-times me-1"></i>إلغاء
                         </button>
+                        <button type="button" class="btn btn-danger" onclick="deleteUser()">
+                            <i class="fas fa-trash me-1"></i>حذف المستخدم
+                        </button>
                         <button type="button" class="btn btn-primary" onclick="updateUser()">
-                            <i class="fas fa-save me-1"></i>حفظ التغييرات
+                            <i class="fas fa-save me-1"></i>حفظ جميع التغييرات
                         </button>
                     </div>
                 </div>
@@ -2030,8 +2057,8 @@ function createEditUserModal() {
     
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
-
 // تحديث بيانات المستخدم
+// 🔧 دالة مبسطة لتحديث المستخدم
 async function updateUser() {
     const form = document.getElementById('editUserForm');
     if (!form) return;
@@ -2040,34 +2067,60 @@ async function updateUser() {
     const data = Object.fromEntries(formData.entries());
     const userId = data.userId;
     
-    // التحقق من البيانات
-    if (!data.username || !data.email) {
-        showNotification('❌ اسم المستخدم والبريد الإلكتروني مطلوبان', 'error');
+    if (!userId) {
+        showNotification('❌ خطأ: معرف المستخدم غير موجود', 'error');
         return;
     }
     
-    delete data.userId; // إزالة حقل ID من البيانات المرسلة
-    
     try {
+        // تنظيف البيانات قبل الإرسال
+        const updateData = {
+            username: data.username,
+            email: data.email,
+            fullName: data.fullName,
+            phone: data.phone,
+            balance: parseFloat(data.balance),
+            status: data.status,
+            balanceFrozen: data.balanceFrozen === 'on',
+            adminNote: data.adminNote
+        };
+        
+        // إذا كانت هناك كلمة سر جديدة
+        if (data.newPassword && data.newPassword.length >= 8) {
+            updateData.newPassword = data.newPassword;
+        }
+        
+        console.log('🔄 بيانات التحديث:', updateData);
+        
         const response = await fetchWithAuth(`/api/admin/users/${userId}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: JSON.stringify(updateData)
         });
 
-        if (response && response.ok) {
+        if (!response) {
+            showNotification('❌ فشل الاتصال بالخادم', 'error');
+            return;
+        }
+
+        const result = await response.json();
+
+        if (response.ok) {
             showNotification('✅ تم تحديث بيانات المستخدم بنجاح', 'success');
+            
+            // إغلاق النافذة
             const modalElement = document.getElementById('editUserModal');
             if (modalElement && typeof bootstrap !== 'undefined') {
                 const modal = bootstrap.Modal.getInstance(modalElement);
                 modal.hide();
             }
-            loadAllUsers(); // إعادة تحميل القائمة
+            
+            // إعادة تحميل القائمة
+            loadAllUsers();
         } else {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'فشل تحديث البيانات');
+            throw new Error(result.error || 'فشل تحديث البيانات');
         }
     } catch (error) {
-        console.error('خطأ في تحديث المستخدم:', error);
+        console.error('❌ خطأ في تحديث المستخدم:', error);
         showNotification('❌ ' + error.message, 'error');
     }
 }
