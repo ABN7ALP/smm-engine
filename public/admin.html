@@ -1891,11 +1891,13 @@ function renderUsers(users) {
                 <small class="text-muted">${new Date(user.createdAt).toLocaleTimeString('ar-SA')}</small>
             </td>
             <td>
-                <div class="btn-action-group">
-                    <button class="btn btn-sm btn-outline-primary" onclick="openEditUserModal('${user._id}')" 
-                            title="تعديل البيانات" data-bs-toggle="tooltip">
-                        <i class="fas fa-edit"></i>
-                    </button>
+                // في renderUsers - بسيط الأزرار
+
+    <div class="btn-action-group">
+        <button class="btn btn-sm btn-outline-primary" onclick="openEditUserModal('${user._id}')" 
+                title="إدارة المستخدم" data-bs-toggle="tooltip">
+            <i class="fas fa-cog"></i> إدارة
+        </button>
                     <button class="btn btn-sm btn-outline-warning" onclick="toggleFreezeBalance('${user._id}', ${!isBalanceFrozen})" 
                             title="${isBalanceFrozen ? 'فك تجميد الرصيد' : 'تجميد الرصيد'}" data-bs-toggle="tooltip">
                         <i class="fas ${isBalanceFrozen ? 'fa-unlock' : 'fa-lock'}"></i>
