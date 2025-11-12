@@ -576,20 +576,19 @@ if (authUsername) {
 }
         
         const order = await Order.create({
-            id: newId,
-            serviceId: data.serviceId,
-            link: data.link,
-            quantity: data.quantity,
-            price: data.price,
-            status: 'pending',
-            username: username,
-            userId: userId
-        });
+    id: newId,
+    serviceId: data.serviceId,
+    link: data.link,
+    quantity: data.quantity,
+    price: data.price,
+    status: 'pending',
+    username: username,
+    userId: userId
+});
 
-        await logAction(username, 'order_create', { id: order.id }, clientIP);
-        
-        // إرسال إشعار للمستخدم إذا كان مسجلاً
-        // في قسم إنشاء الطلب - بعد ما ينشئ الطلب
+await logAction(username, 'order_create', { id: order.id }, clientIP);
+
+// إرسال إشعار للمستخدم إذا كان مسجلاً
 console.log(`🔍 debugging - userId: ${userId}, username: ${username}`);
 
 if (userId) {
@@ -610,41 +609,39 @@ if (userId) {
     } catch (error) {
         console.error('❌ خطأ في إنشاء الإشعار:', error);
     }
+
+    // تحديث إحصائيات المستخدم
+    const user = await User.findOne({ username: authUsername });
+    if (user) {
+        user.orders.total = (user.orders.total || 0) + 1;
+        user.orders.pending = (user.orders.pending || 0) + 1;
+        await user.save();
+    }
 } else {
     console.log('🔍 المستخدم غير مسجل دخول - لا إشعارات');
 }
 
-
-            // تحديث إحصائيات المستخدم
-            const user = await User.findOne({ username: authUsername });
-            if (user) {
-                user.orders.total = (user.orders.total || 0) + 1;
-                user.orders.pending = (user.orders.pending || 0) + 1;
-                await user.save();
-            }
-        }
-
-        // إرسال إشعار للأدمن
-        try {
-            const adminUsers = await User.find({ role: 'admin' });
-            for (let i = 0; i < adminUsers.length; i++) {
-                const admin = adminUsers[i];
-                await Notification.create({
-                    id: Date.now() + i, // ✅ نستخدم index لتجنب التكرار
-                    userId: admin._id,
-                    type: 'info',
-                    title: 'طلب جديد',
-                    message: `تم إنشاء طلب جديد #${order.id} من قبل ${username}`,
-                    relatedTo: 'order',
-                    relatedId: order.id,
-                    read: false,
-                    createdAt: new Date()
-                });
-            }
-            console.log(`✅ تم إرسال إشعارات للأدمن بخصوص الطلب #${order.id}`);
-        } catch (error) {
-            console.error('❌ خطأ في إرسال إشعارات الأدمن:', error);
-        }
+// إرسال إشعار للأدمن
+try {
+    const adminUsers = await User.find({ role: 'admin' });
+    for (let i = 0; i < adminUsers.length; i++) {
+        const admin = adminUsers[i];
+        await Notification.create({
+            id: Date.now() + i, // ✅ نستخدم index لتجنب التكرار
+            userId: admin._id,
+            type: 'info',
+            title: 'طلب جديد',
+            message: `تم إنشاء طلب جديد #${order.id} من قبل ${username}`,
+            relatedTo: 'order',
+            relatedId: order.id,
+            read: false,
+            createdAt: new Date()
+        });
+    }
+    console.log(`✅ تم إرسال إشعارات للأدمن بخصوص الطلب #${order.id}`);
+} catch (error) {
+    console.error('❌ خطأ في إرسال إشعارات الأدمن:', error);
+}
         
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(order));
