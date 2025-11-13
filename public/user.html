@@ -840,8 +840,10 @@ orderStatusBox.innerHTML = `
 `;
 
 // ✅ إعادة تحميل الإشعارات فوراً
+// ✅ إعادة تحميل الإشعارات فوراً
 setTimeout(() => {
-  loadNotifications();
+    console.log('🔄 إعادة تحميل الإشعارات بعد إنشاء الطلب...');
+    loadNotifications();
 }, 1000);
 
 resetOrderForm();
@@ -1471,57 +1473,39 @@ console.log('✅ نظام الهيدر جاهز للعمل');
     setInterval(validateSession, 5 * 60 * 1000); // كل 5 دقائق
 
     console.log('✅ نظام الأمان والتحسينات تم تحميله بنجاح');
-// =================================================================
+
+ // =================================================================
 //  نظام الإشعارات السريع للطلبات - الإضافة الجديدة
 // =================================================================
 
-// 🔧 دالة جديدة لإنشاء إشعار للطلب
-async function createOrderNotification(order, service) {
-    try {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            console.log('⚠️ المستخدم غير مسجل - لا يمكن إنشاء إشعار');
-            return;
-        }
-
-        // إنشاء إشعار محلي فوري
-        const notificationData = {
-            title: '🎉 تم إنشاء طلب جديد',
-            message: `طلبك #${order.id} (${service.name}) تم إنشاؤه بنجاح وحالياً قيد الانتظار`,
-            type: 'success'
-        };
-
-        // إرسال الإشعار للسيرفر لحفظه
-        const response = await fetch('/api/user/notifications', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-auth-token': token
-            },
-            body: JSON.stringify(notificationData)
-        });
-
-        if (response.ok) {
-            console.log('✅ تم إنشاء إشعار الطلب بنجاح');
-        } else {
-            console.log('⚠️ تم إنشاء الطلب ولكن فشل حفظ الإشعار في السيرفر');
-        }
-
-        // ✅ عرض إشعار فوري للمستخدم حتى لو فشل الحفظ في السيرفر
-        showQuickNotification(`✅ تم إنشاء طلبك #${order.id} بنجاح`);
-
-    } catch (error) {
-        console.error('❌ خطأ في إنشاء إشعار الطلب:', error);
-        // مع ذلك نعرض إشعار فوري للمستخدم
-        showQuickNotification(`✅ تم إنشاء طلبك #${order.id} بنجاح`);
+// 🔧 دالة تحديث عداد الإشعارات
+function updateNotificationBadge(increment = true) {
+    const countElement = document.getElementById('notificationCount');
+    if (!countElement) return;
+    
+    let currentCount = parseInt(countElement.textContent) || 0;
+    
+    if (increment) {
+        currentCount += 1;
+    } else {
+        currentCount = Math.max(0, currentCount - 1);
     }
+    
+    countElement.textContent = currentCount;
+    countElement.style.display = currentCount > 0 ? 'block' : 'none';
+    
+    console.log(`📊 تحديث عداد الإشعارات إلى: ${currentCount}`);
 }
 
 // 🔧 دالة لعرض إشعار سريع
 function showQuickNotification(message) {
+    // إزالة أي إشعارات قديمة أولاً
+    const oldNotifications = document.querySelectorAll('.quick-notify-alert');
+    oldNotifications.forEach(notify => notify.remove());
+    
     // إنشاء إشعار مؤقت في الواجهة
     const quickNotify = document.createElement('div');
-    quickNotify.className = 'alert alert-success alert-dismissible fade show position-fixed';
+    quickNotify.className = 'quick-notify-alert alert alert-success alert-dismissible fade show position-fixed';
     quickNotify.style.cssText = `
         top: 20px; 
         left: 50%; 
@@ -1545,8 +1529,56 @@ function showQuickNotification(message) {
     }, 5000);
 }
 
-console.log('✅ نظام إشعارات الطلبات تم تحميله بنجاح');
-      
+// 🔧 دالة جديدة لإنشاء إشعار للطلب
+async function createOrderNotification(order, service) {
+    try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            console.log('⚠️ المستخدم غير مسجل - لا يمكن إنشاء إشعار');
+            return;
+        }
+
+        console.log(`🎯 إنشاء إشعار للطلب #${order.id}`);
+
+        // ✅ أولاً: عرض الإشعار الفوري
+        showQuickNotification(`✅ تم إنشاء طلبك #${order.id} بنجاح`);
+
+        // ✅ ثانياً: تحديث العداد فوراً
+        updateNotificationBadge(true);
+
+        // ✅ ثالثاً: إرسال الإشعار للسيرفر
+        const notificationData = {
+            title: '🎉 تم إنشاء طلب جديد',
+            message: `طلبك #${order.id} (${service.name}) تم إنشاؤه بنجاح وحالياً قيد الانتظار`,
+            type: 'success',
+            relatedTo: 'order',
+            relatedId: order.id
+        };
+
+        const response = await fetch('/api/user/notifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-auth-token': token
+            },
+            body: JSON.stringify(notificationData)
+        });
+
+        if (response.ok) {
+            console.log('✅ تم إنشاء إشعار الطلب بنجاح في السيرفر');
+        } else {
+            console.log('⚠️ تم إنشاء الطلب ولكن فشل حفظ الإشعار في السيرفر');
+        }
+
+    } catch (error) {
+        console.error('❌ خطأ في إنشاء إشعار الطلب:', error);
+        // مع ذلك نعرض إشعار فوري للمستخدم
+        showQuickNotification(`✅ تم إنشاء طلبك #${order.id} بنجاح`);
+        updateNotificationBadge(true);
+    }
+}
+
+console.log('✅ نظام إشعارات الطلبات تم تحميله بنجاح');     
         
 </script>
 </body>
