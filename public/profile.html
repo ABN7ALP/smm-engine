@@ -1,706 +1,968 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>الملف الشخصي - SMM Engine</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الملف الشخصي - SMM Engine</title>
+    
+    <!-- المكتبات -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #2c5aa0;
+            --secondary: #6c757d;
+            --success: #198754;
+            --info: #0dcaf0;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
 
-  <!-- المكتبات الخارجية -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+        * {
+            font-family: 'Tajawal', sans-serif;
+        }
 
-  <!-- ملف التصميم الرئيسي -->
-  <link rel="stylesheet" href="/style.css">
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
 
-  <style>
-    .profile-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 40px 0;
-      margin-bottom: 30px;
-    }
-    
-    .avatar-upload {
-      position: relative;
-      width: 150px;
-      height: 150px;
-      margin: 0 auto;
-    }
-    
-    .avatar-img {
-      width: 150px;
-      height: 150px;
-      border-radius: 50%;
-      border: 5px solid white;
-      object-fit: cover;
-    }
-    
-    .avatar-upload-label {
-      position: absolute;
-      bottom: 10px;
-      right: 10px;
-      background: #007bff;
-      color: white;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    
-    .avatar-upload-label:hover {
-      background: #0056b3;
-      transform: scale(1.1);
-    }
-    
-    .stats-card {
-      background: white;
-      border-radius: 15px;
-      padding: 25px;
-      text-align: center;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-      transition: transform 0.3s;
-      border-left: 5px solid #007bff;
-    }
-    
-    .stats-card:hover {
-      transform: translateY(-5px);
-    }
-    
-    .stats-number {
-      font-size: 2.5rem;
-      font-weight: bold;
-      color: #007bff;
-      margin-bottom: 10px;
-    }
-    
-    .stats-label {
-      color: #6c757d;
-      font-size: 0.9rem;
-    }
-    
-    .transaction-item {
-      border-right: 4px solid #28a745;
-      padding: 15px;
-      margin-bottom: 10px;
-      background: #f8f9fa;
-      border-radius: 8px;
-    }
-    
-    .transaction-item.withdraw {
-      border-right-color: #dc3545;
-    }
-    
-    .order-status-badge {
-      font-size: 0.8rem;
-      padding: 5px 10px;
-    }
-  </style>
+        .profile-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* الكروت */
+        .profile-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
+        }
+
+        .profile-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .profile-card .card-header {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            padding: 20px 25px;
+            font-weight: 700;
+        }
+
+        .stats-card {
+            text-align: center;
+            padding: 25px 15px;
+            border-radius: 15px;
+            background: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--primary);
+        }
+
+        .stats-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+
+        .stats-number {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .stats-label {
+            color: var(--secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* الصورة الشخصية */
+        .avatar-section {
+            text-align: center;
+            padding: 30px 20px;
+            background: var(--gradient);
+            color: white;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .avatar-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .avatar-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid white;
+            object-fit: cover;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .avatar-upload-btn {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: var(--primary);
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .avatar-upload-btn:hover {
+            background: var(--success);
+            transform: scale(1.1);
+        }
+
+        /* القوائم */
+        .transaction-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: var(--light);
+            border-radius: 10px;
+            border-right: 4px solid var(--success);
+            transition: all 0.3s ease;
+        }
+
+        .transaction-item.withdraw {
+            border-right-color: var(--danger);
+        }
+
+        .transaction-item:hover {
+            background: #e9ecef;
+            transform: translateX(-5px);
+        }
+
+        .order-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .order-item:hover {
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            border-color: var(--primary);
+        }
+
+        /* الأزرار */
+        .btn-modern {
+            border: none;
+            border-radius: 10px;
+            padding: 12px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .btn-primary-modern {
+            background: var(--gradient);
+            color: white;
+        }
+
+        /* النماذج */
+        .form-modern {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .form-control-modern {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control-modern:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(44, 90, 160, 0.25);
+        }
+
+        /* التنبيهات */
+        .alert-modern {
+            border: none;
+            border-radius: 10px;
+            padding: 15px 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        /* الشريط الجانبي */
+        .sidebar-profile {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .sidebar-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #f1f3f4;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--dark);
+            text-decoration: none;
+            display: block;
+        }
+
+        .sidebar-item:hover {
+            background: var(--gradient);
+            color: white;
+            transform: translateX(-5px);
+        }
+
+        .sidebar-item.active {
+            background: var(--gradient);
+            color: white;
+            border-right: 4px solid var(--warning);
+        }
+
+        /* الهيدر */
+        .profile-header {
+            background: var(--gradient);
+            color: white;
+            padding: 40px 0;
+            margin-bottom: 30px;
+            border-radius: 0 0 30px 30px;
+        }
+
+        /* التبويبات */
+        .nav-tabs-modern {
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .nav-tabs-modern .nav-link {
+            border: none;
+            color: var(--secondary);
+            font-weight: 600;
+            padding: 12px 25px;
+            border-radius: 10px 10px 0 0;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs-modern .nav-link.active {
+            background: var(--gradient);
+            color: white;
+            border: none;
+        }
+
+        .nav-tabs-modern .nav-link:hover {
+            border: none;
+            color: var(--primary);
+        }
+    </style>
 </head>
 <body>
-  <!-- الهيدر -->
-  <header class="user-header">
-    <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center py-3">
-            <!-- الشعار -->
-            <div class="logo">
-                <h1 class="h3 mb-0">
-                    <i class="fas fa-chart-line text-primary"></i>
-                    SMM Engine
-                </h1>
-            </div>
-            
-            <!-- شريط المستخدم -->
-            <div class="user-controls">
-                <!-- زر إضافة رصيد -->
-                <button class="btn btn-success btn-sm me-2" id="quickDepositBtn">
-                    <i class="fas fa-plus-circle"></i>
-                    <span class="balance-amount" id="headerBalance">$0.00</span>
-                </button>
-                
-                <!-- زر الإشعارات -->
-                <button class="btn btn-outline-secondary btn-sm me-2 position-relative" id="notificationsBtn">
-                    <i class="fas fa-bell"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount" style="display: none;">
-                        0
-                    </span>
-                </button>
-                
-                <!-- ملف المستخدم -->
-                <div class="dropdown">
-                    <button class="btn btn-outline-primary dropdown-toggle d-flex align-items-center" 
-                            type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="/assets/default-avatar.png" 
-                             alt="الصورة الشخصية" 
-                             class="rounded-circle me-2" 
-                             width="32" 
-                             height="32"
-                             id="headerAvatar">
-                        <span class="d-none d-md-inline" id="headerUsername">مستخدم</span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li>
-                            <a class="dropdown-item" href="/user.html">
-                                <i class="fas fa-home me-2"></i>الرئيسية
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#" id="dropdownDepositBtn">
-                                <i class="fas fa-wallet me-2"></i>شحن الرصيد
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item text-danger" href="#" id="logoutHeaderBtn">
-                                <i class="fas fa-sign-out-alt me-2"></i>تسجيل الخروج
-                            </a>
-                        </li>
-                    </ul>
+    <!-- الهيدر -->
+    <div class="profile-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="display-5 fw-bold mb-0">
+                        <i class="fas fa-user-cog me-3"></i>
+                        الملف الشخصي
+                    </h1>
+                    <p class="mb-0 opacity-75">إدارة حسابك وتتبع نشاطك</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="d-flex align-items-center justify-content-md-end gap-3">
+                        <div class="text-end">
+                            <div class="fw-bold fs-5" id="headerUsername">مستخدم</div>
+                            <div class="opacity-75" id="headerBalance">$0.00</div>
+                        </div>
+                        <img src="/assets/default-avatar.png" alt="الصورة الشخصية" 
+                             class="rounded-circle border border-3 border-white" 
+                             width="60" height="60" id="headerAvatar">
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-  </header>
 
-  <!-- محتوى البروفايل -->
-  <div class="container mt-4">
+    <div class="container profile-container">
+        <!-- رسائل التنبيه -->
+        <div id="alertBox"></div>
+
+        <div class="row g-4">
+            <!-- الشريط الجانبي -->
+            <div class="col-lg-3">
+                <div class="sidebar-profile sticky-top" style="top: 20px;">
+                    <div class="avatar-section">
+                        <div class="avatar-container">
+                            <img src="/assets/default-avatar.png" alt="الصورة الشخصية" class="avatar-img" id="profileAvatar">
+                            <div class="avatar-upload-btn" onclick="document.getElementById('avatarInput').click()">
+                                <i class="fas fa-camera"></i>
+                            </div>
+                            <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+                        </div>
+                        <h4 class="mt-3 mb-1 fw-bold" id="profileUsername">اسم المستخدم</h4>
+                        <p class="mb-0 opacity-75" id="profileEmail">البريد الإلكتروني</p>
+                    </div>
+
+                    <a href="/user.html" class="sidebar-item">
+                        <i class="fas fa-home me-2"></i>الرئيسية
+                    </a>
+                    <div class="sidebar-item active" onclick="showSection('overview')">
+                        <i class="fas fa-chart-pie me-2"></i>نظرة عامة
+                    </div>
+                    <div class="sidebar-item" onclick="showSection('edit')">
+                        <i class="fas fa-edit me-2"></i>تعديل البيانات
+                    </div>
+                    <div class="sidebar-item" onclick="showSection('security')">
+                        <i class="fas fa-shield-alt me-2"></i>الأمان
+                    </div>
+                    <div class="sidebar-item text-danger" onclick="logout()">
+                        <i class="fas fa-sign-out-alt me-2"></i>تسجيل الخروج
+                    </div>
+                </div>
+            </div>
+
+            <!-- المحتوى الرئيسي -->
+            <div class="col-lg-9">
+                <!-- قسم النظرة العامة -->
+                <div id="overviewSection" class="profile-section">
+                    <div class="row g-4">
+                        <!-- الإحصائيات -->
+                        <div class="col-12">
+                            <div class="profile-card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>إحصائياتي</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-3 col-6">
+                                            <div class="stats-card">
+                                                <div class="stats-number text-primary" id="totalOrders">0</div>
+                                                <div class="stats-label">إجمالي الطلبات</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 col-6">
+                                            <div class="stats-card">
+                                                <div class="stats-number text-success" id="completedOrders">0</div>
+                                                <div class="stats-label">مكتملة</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 col-6">
+                                            <div class="stats-card">
+                                                <div class="stats-number text-warning" id="pendingOrders">0</div>
+                                                <div class="stats-label">قيد الانتظار</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 col-6">
+                                            <div class="stats-card">
+                                                <div class="stats-number text-info" id="totalSpent">$0</div>
+                                                <div class="stats-label">إجمالي المنصرف</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- الرصيد -->
+                        <div class="col-md-6">
+                            <div class="profile-card h-100">
+                                <div class="card-header bg-success">
+                                    <h5 class="mb-0"><i class="fas fa-wallet me-2"></i>رصيدي</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <h1 class="text-success mb-4" id="currentBalance">$0.00</h1>
+                                    <button class="btn btn-primary-modern btn-modern w-100" onclick="showDepositModal()">
+                                        <i class="fas fa-plus-circle me-2"></i>شحن الرصيد
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- معلومات الحساب -->
+                        <div class="col-md-6">
+                            <div class="profile-card h-100">
+                                <div class="card-header bg-info">
+                                    <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i>معلومات الحساب</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <strong>الاسم الكامل:</strong>
+                                        <div class="text-muted" id="profileFullName">غير محدد</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong>رقم الهاتف:</strong>
+                                        <div class="text-muted" id="profilePhone">غير محدد</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong>تاريخ التسجيل:</strong>
+                                        <div class="text-muted" id="profileJoinDate">غير محدد</div>
+                                    </div>
+                                    <div class="mb-0">
+                                        <strong>آخر تسجيل دخول:</strong>
+                                        <div class="text-muted" id="profileLastLogin">غير محدد</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- الطلبات الأخيرة -->
+                        <div class="col-12">
+                            <div class="profile-card">
+                                <div class="card-header bg-warning text-dark">
+                                    <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>طلباتي الأخيرة</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="recentOrders">
+                                        <div class="text-center py-4 text-muted">
+                                            <i class="fas fa-shopping-cart fa-2x mb-3"></i>
+                                            <p>لا توجد طلبات</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- قسم تعديل البيانات -->
+                <div id="editSection" class="profile-section" style="display: none;">
+                    <div class="profile-card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-edit me-2"></i>تعديل البيانات الشخصية</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="editProfileForm" class="form-modern">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">الاسم الكامل</label>
+                                        <input type="text" name="fullName" class="form-control form-control-modern" 
+                                               id="editFullName" placeholder="أدخل الاسم الكامل">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">رقم الهاتف</label>
+                                        <input type="tel" name="phone" class="form-control form-control-modern" 
+                                               id="editPhone" placeholder="+963...">
+                                    </div>
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary-modern btn-modern">
+                                            <i class="fas fa-save me-2"></i>حفظ التغييرات
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-modern ms-2" onclick="showSection('overview')">
+                                            <i class="fas fa-times me-2"></i>إلغاء
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- قسم الأمان -->
+                <div id="securitySection" class="profile-section" style="display: none;">
+                    <div class="profile-card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>إعدادات الأمان</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="changePasswordForm" class="form-modern">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold">كلمة السر الحالية</label>
+                                        <input type="password" name="currentPassword" class="form-control form-control-modern" 
+                                               placeholder="أدخل كلمة السر الحالية" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">كلمة السر الجديدة</label>
+                                        <input type="password" name="newPassword" class="form-control form-control-modern" 
+                                               placeholder="كلمة السر الجديدة" required minlength="8">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">تأكيد كلمة السر</label>
+                                        <input type="password" name="confirmPassword" class="form-control form-control-modern" 
+                                               placeholder="أعد إدخال كلمة السر" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary-modern btn-modern">
+                                            <i class="fas fa-key me-2"></i>تغيير كلمة السر
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة شحن الرصيد -->
+    <div class="modal fade" id="depositModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-wallet me-2"></i>شحن الرصيد</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="quickDepositForm">
+                        <div class="mb-3">
+                            <label class="form-label">المبلغ ($)</label>
+                            <input type="number" name="amount" class="form-control form-control-modern" placeholder="0.00" min="1" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">طريقة الدفع</label>
+                            <select name="method" class="form-select form-control-modern" required>
+                                <option value="">اختر طريقة الدفع</option>
+                                <option value="bank">تحويل بنكي</option>
+                                <option value="sham">شام</option>
+                                <option value="transfer">حوالة مالية</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary-modern btn-modern w-100">
+                            <i class="fas fa-paper-plane me-2"></i>طلب الشحن
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- المكتبات -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- رسائل التنبيه -->
-    <div id="alertBox"></div>
+    <script>
+        // =================================================================
+        //  نظام البروفايل المتكامل - الإصدار النهائي
+        // =================================================================
 
-    <!-- رأس البروفايل -->
-    <div class="profile-header rounded-3">
-      <div class="container text-center">
-        <div class="avatar-upload">
-          <img src="/assets/default-avatar.png" alt="الصورة الشخصية" class="avatar-img" id="profileAvatar">
-          <label for="avatarInput" class="avatar-upload-label" title="تغيير الصورة">
-            <i class="fas fa-camera"></i>
-          </label>
-          <input type="file" id="avatarInput" accept="image/*" style="display: none;">
-        </div>
-        <h2 class="mt-3" id="profileUsername">اسم المستخدم</h2>
-        <p class="mb-0" id="profileEmail">البريد الإلكتروني</p>
-      </div>
-    </div>
+        let userProfile = null;
+        let userOrders = [];
 
-    <div class="row">
-      <!-- العمود الأيسر: الإحصائيات -->
-      <div class="col-lg-4 mb-4">
-        <div class="card shadow-sm">
-          <div class="card-header bg-primary text-white">
-            <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>إحصائياتي</h5>
-          </div>
-          <div class="card-body">
-            <div class="row text-center">
-              <div class="col-6 mb-3">
-                <div class="stats-card">
-                  <div class="stats-number" id="totalOrders">0</div>
-                  <div class="stats-label">إجمالي الطلبات</div>
-                </div>
-              </div>
-              <div class="col-6 mb-3">
-                <div class="stats-card">
-                  <div class="stats-number" id="completedOrders">0</div>
-                  <div class="stats-label">طلبات مكتملة</div>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="stats-card">
-                  <div class="stats-number" id="pendingOrders">0</div>
-                  <div class="stats-label">طلبات معلقة</div>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="stats-card">
-                  <div class="stats-number" id="totalSpent">$0</div>
-                  <div class="stats-label">إجمالي المنصرف</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        // تحميل البيانات عند فتح الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadUserProfile();
+            setupEventListeners();
+        });
 
-        <!-- معلومات الحساب -->
-        <div class="card shadow-sm mt-4">
-          <div class="card-header bg-info text-white">
-            <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i>معلومات الحساب</h5>
-          </div>
-          <div class="card-body">
-            <div class="mb-3">
-              <label class="form-label fw-bold">الاسم الكامل:</label>
-              <p class="text-muted" id="profileFullName">غير محدد</p>
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-bold">رقم الهاتف:</label>
-              <p class="text-muted" id="profilePhone">غير محدد</p>
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-bold">تاريخ التسجيل:</label>
-              <p class="text-muted" id="profileJoinDate">غير محدد</p>
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-bold">آخر تسجيل دخول:</label>
-              <p class="text-muted" id="profileLastLogin">غير محدد</p>
-            </div>
-          </div>
-        </div>
-      </div>
+        // التحقق من المصادقة
+        function checkAuth() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+        }
 
-      <!-- العمود الأيمن: النشاط -->
-      <div class="col-lg-8">
-        
-        <!-- الرصيد والمعاملات -->
-        <div class="card shadow-sm mb-4">
-          <div class="card-header bg-success text-white">
-            <h5 class="mb-0"><i class="fas fa-wallet me-2"></i>رصيدي والمعاملات</h5>
-          </div>
-          <div class="card-body">
-            <div class="row text-center mb-4">
-              <div class="col-md-6">
-                <h3 class="text-success" id="currentBalance">$0.00</h3>
-                <p class="text-muted">الرصيد الحالي</p>
-              </div>
-              <div class="col-md-6">
-                <button class="btn btn-primary btn-lg" onclick="showDepositModal()">
-                  <i class="fas fa-plus-circle me-2"></i>شحن الرصيد
-                </button>
-              </div>
-            </div>
+        // تحميل بيانات البروفايل
+        async function loadUserProfile() {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/profile', {
+                    headers: { 'x-auth-token': token }
+                });
+
+                if (!response.ok) {
+                    throw new Error('فشل تحميل البيانات');
+                }
+
+                userProfile = await response.json();
+                displayProfileData();
+                
+                // تحميل البيانات الإضافية
+                await loadUserOrders();
+                await loadUserStats();
+
+            } catch (error) {
+                console.error('خطأ في تحميل البروفايل:', error);
+                showAlert('❌ فشل تحميل بيانات البروفايل', 'error');
+            }
+        }
+
+        // عرض بيانات البروفايل
+        function displayProfileData() {
+            if (!userProfile) return;
+
+            // البيانات الأساسية
+            document.getElementById('profileUsername').textContent = userProfile.username;
+            document.getElementById('profileEmail').textContent = userProfile.email;
+            document.getElementById('headerUsername').textContent = userProfile.username;
+            document.getElementById('headerBalance').textContent = `$${userProfile.balance.toFixed(2)}`;
+            document.getElementById('currentBalance').textContent = `$${userProfile.balance.toFixed(2)}`;
             
-            <h6 class="border-bottom pb-2">آخر المعاملات</h6>
-            <div id="transactionsList">
-              <div class="text-center py-4 text-muted">
-                <i class="fas fa-receipt fa-2x mb-3"></i>
-                <p>لا توجد معاملات</p>
-              </div>
-            </div>
-          </div>
-        </div>
+            // المعلومات الإضافية
+            document.getElementById('profileFullName').textContent = userProfile.fullName || 'غير محدد';
+            document.getElementById('profilePhone').textContent = userProfile.phone || 'غير محدد';
+            
+            // تعبئة نموذج التعديل
+            document.getElementById('editFullName').value = userProfile.fullName || '';
+            document.getElementById('editPhone').value = userProfile.phone || '';
+            
+            // التواريخ - ✅ إصلاح: استخدام التاريخ الميلادي
+            if (userProfile.createdAt) {
+                document.getElementById('profileJoinDate').textContent = formatDate(userProfile.createdAt);
+            }
+            if (userProfile.lastLogin) {
+                document.getElementById('profileLastLogin').textContent = formatDate(userProfile.lastLogin);
+            }
 
-        <!-- الطلبات الأخيرة -->
-        <div class="card shadow-sm">
-          <div class="card-header bg-warning text-dark">
-            <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>طلباتي الأخيرة</h5>
-          </div>
-          <div class="card-body">
-            <div id="recentOrders">
-              <div class="text-center py-4 text-muted">
-                <i class="fas fa-shopping-cart fa-2x mb-3"></i>
-                <p>لا توجد طلبات</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+            // الصورة الشخصية
+            if (userProfile.avatar && userProfile.avatar !== '/assets/default-avatar.png') {
+                document.getElementById('profileAvatar').src = userProfile.avatar;
+                document.getElementById('headerAvatar').src = userProfile.avatar;
+            }
+        }
 
-  <!-- نافذة شحن الرصيد -->
-  <div class="modal fade" id="depositModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-wallet me-2"></i>شحن الرصيد</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="quickDepositForm">
-                    <div class="mb-3">
-                        <label class="form-label">المبلغ ($)</label>
-                        <input type="number" name="amount" class="form-control" placeholder="0.00" min="1" step="0.01" required>
+        // ✅ إصلاح: دالة تنسيق التاريخ الميلادي
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // تحميل الطلبات
+        async function loadUserOrders() {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/orders', {
+                    headers: { 'x-auth-token': token }
+                });
+
+                if (response.ok) {
+                    userOrders = await response.json();
+                    displayRecentOrders(userOrders.slice(0, 5));
+                } else {
+                    console.error('فشل تحميل الطلبات:', response.status);
+                }
+            } catch (error) {
+                console.error('خطأ في تحميل الطلبات:', error);
+            }
+        }
+
+        // تحميل الإحصائيات
+        async function loadUserStats() {
+            if (!userProfile) return;
+
+            try {
+                // ✅ إصلاح: استخدام بيانات الطلبات المحملة
+                const totalOrders = userOrders.length;
+                const completedOrders = userOrders.filter(order => order.status === 'completed').length;
+                const pendingOrders = userOrders.filter(order => order.status === 'pending').length;
+                const totalSpent = userOrders
+                    .filter(order => order.status === 'completed')
+                    .reduce((sum, order) => sum + (order.price || 0), 0);
+
+                // عرض الإحصائيات
+                document.getElementById('totalOrders').textContent = totalOrders;
+                document.getElementById('completedOrders').textContent = completedOrders;
+                document.getElementById('pendingOrders').textContent = pendingOrders;
+                document.getElementById('totalSpent').textContent = `$${totalSpent.toFixed(2)}`;
+
+            } catch (error) {
+                console.error('خطأ في تحميل الإحصائيات:', error);
+            }
+        }
+
+        // عرض الطلبات الأخيرة
+        function displayRecentOrders(orders) {
+            const container = document.getElementById('recentOrders');
+            
+            if (!orders || orders.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-shopping-cart fa-2x mb-3"></i>
+                        <p>لا توجد طلبات</p>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">طريقة الدفع</label>
-                        <select name="method" class="form-select" required>
-                            <option value="">اختر طريقة الدفع</option>
-                            <option value="bank">تحويل بنكي</option>
-                            <option value="sham">شام</option>
-                            <option value="transfer">حوالة مالية</option>
-                        </select>
+                `;
+                return;
+            }
+
+            container.innerHTML = orders.map(order => {
+                const statusBadge = getOrderStatusBadge(order.status);
+                return `
+                    <div class="order-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong class="d-block">طلب #${order.id}</strong>
+                                <small class="text-muted">${order.link}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge ${statusBadge.class}">${statusBadge.text}</span>
+                                <div class="fw-bold text-primary">$${order.price?.toFixed(2) || '0.00'}</div>
+                                <small class="text-muted">${formatDate(order.createdAt)}</small>
+                            </div>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="fas fa-paper-plane me-2"></i>طلب الشحن
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-  </div>
-
-  <!-- سكريبت البروفايل -->
-  <script>
-    // =================================================================
-    //  نظام البروفايل المتكامل - شغال 100%
-    // =================================================================
-
-    let userProfile = null;
-    let userTransactions = [];
-    let userOrders = [];
-
-    // تحميل البيانات عند فتح الصفحة
-    document.addEventListener('DOMContentLoaded', function() {
-      loadUserProfile();
-      loadUserHeader();
-      setupEventListeners();
-    });
-
-    // تحميل بيانات البروفايل
-    async function loadUserProfile() {
-      try {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-          window.location.href = '/login.html';
-          return;
+                `;
+            }).join('');
         }
 
-        const response = await fetch('/api/user/profile', {
-          headers: { 'x-auth-token': token }
-        });
-
-        if (!response.ok) {
-          throw new Error('فشل تحميل البيانات');
+        // ✅ إصلاح: رفع الصورة الشخصية وحفظها
+        function setupEventListeners() {
+            // رفع الصورة الشخصية
+            document.getElementById('avatarInput').addEventListener('change', handleAvatarUpload);
+            
+            // نموذج تعديل البيانات
+            document.getElementById('editProfileForm').addEventListener('submit', handleProfileUpdate);
+            
+            // نموذج تغيير كلمة السر
+            document.getElementById('changePasswordForm').addEventListener('submit', handlePasswordChange);
+            
+            // نموذج الشحن
+            document.getElementById('quickDepositForm').addEventListener('submit', handleDepositSubmit);
         }
 
-        userProfile = await response.json();
-        displayProfileData();
-        
-        // تحميل البيانات الإضافية
-        await loadUserTransactions();
-        await loadUserOrders();
-        await loadUserStats();
+        // ✅ إصلاح: رفع وحفظ الصورة الشخصية
+        async function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-      } catch (error) {
-        console.error('خطأ في تحميل البروفايل:', error);
-        showAlert('❌ فشل تحميل بيانات البروفايل', 'error');
-      }
-    }
+            // التحقق من نوع الملف
+            if (!file.type.startsWith('image/')) {
+                showAlert('❌ الرجاء اختيار ملف صورة', 'error');
+                return;
+            }
 
-    // عرض بيانات البروفايل
-    function displayProfileData() {
-      if (!userProfile) return;
+            showAlert('⏳ جاري رفع الصورة...', 'info');
 
-      // البيانات الأساسية
-      document.getElementById('profileUsername').textContent = userProfile.username;
-      document.getElementById('profileEmail').textContent = userProfile.email;
-      document.getElementById('headerUsername').textContent = userProfile.username;
-      document.getElementById('headerBalance').textContent = `$${userProfile.balance.toFixed(2)}`;
-      
-      // المعلومات الإضافية
-      document.getElementById('profileFullName').textContent = userProfile.fullName || 'غير محدد';
-      document.getElementById('profilePhone').textContent = userProfile.phone || 'غير محدد';
-      document.getElementById('currentBalance').textContent = `$${userProfile.balance.toFixed(2)}`;
-      
-      // التواريخ
-      if (userProfile.createdAt) {
-        document.getElementById('profileJoinDate').textContent = new Date(userProfile.createdAt).toLocaleDateString('ar-SA');
-      }
-      if (userProfile.lastLogin) {
-        document.getElementById('profileLastLogin').textContent = new Date(userProfile.lastLogin).toLocaleString('ar-SA');
-      }
+            try {
+                const token = localStorage.getItem('authToken');
+                const formData = new FormData();
+                formData.append('avatar', file);
 
-      // الصورة الشخصية
-      if (userProfile.avatar && userProfile.avatar !== '/assets/default-avatar.png') {
-        document.getElementById('profileAvatar').src = userProfile.avatar;
-        document.getElementById('headerAvatar').src = userProfile.avatar;
-      }
-    }
+                const response = await fetch('/api/user/upload-avatar', {
+                    method: 'POST',
+                    headers: {
+                        'x-auth-token': token
+                    },
+                    body: formData
+                });
 
-    // تحميل الإحصائيات
-    async function loadUserStats() {
-      if (!userProfile) return;
-
-      try {
-        const token = localStorage.getItem('authToken');
-        const response = await fetch('/api/user/orders', {
-          headers: { 'x-auth-token': token }
-        });
-
-        if (response.ok) {
-          const orders = await response.json();
-          userOrders = orders;
-          
-          // حساب الإحصائيات
-          const totalOrders = orders.length;
-          const completedOrders = orders.filter(order => order.status === 'completed').length;
-          const pendingOrders = orders.filter(order => order.status === 'pending').length;
-          const totalSpent = orders
-            .filter(order => order.status === 'completed')
-            .reduce((sum, order) => sum + (order.price || 0), 0);
-
-          // عرض الإحصائيات
-          document.getElementById('totalOrders').textContent = totalOrders;
-          document.getElementById('completedOrders').textContent = completedOrders;
-          document.getElementById('pendingOrders').textContent = pendingOrders;
-          document.getElementById('totalSpent').textContent = `$${totalSpent.toFixed(2)}`;
-        }
-      } catch (error) {
-        console.error('خطأ في تحميل الإحصائيات:', error);
-      }
-    }
-
-    // تحميل المعاملات
-    async function loadUserTransactions() {
-      try {
-        const token = localStorage.getItem('authToken');
-        const response = await fetch('/api/user/transactions', {
-          headers: { 'x-auth-token': token }
-        });
-
-        if (response.ok) {
-          userTransactions = await response.json();
-          displayTransactions();
-        }
-      } catch (error) {
-        console.error('خطأ في تحميل المعاملات:', error);
-      }
-    }
-
-    // تحميل الطلبات
-    async function loadUserOrders() {
-      try {
-        const token = localStorage.getItem('authToken');
-        const response = await fetch('/api/user/orders', {
-          headers: { 'x-auth-token': token }
-        });
-
-        if (response.ok) {
-          const orders = await response.json();
-          displayRecentOrders(orders.slice(0, 5)); // آخر 5 طلبات
-        }
-      } catch (error) {
-        console.error('خطأ في تحميل الطلبات:', error);
-      }
-    }
-
-    // عرض المعاملات
-    function displayTransactions() {
-      const container = document.getElementById('transactionsList');
-      
-      if (!userTransactions || userTransactions.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-4 text-muted">
-            <i class="fas fa-receipt fa-2x mb-3"></i>
-            <p>لا توجد معاملات</p>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = userTransactions.slice(0, 10).map(transaction => {
-        const isDeposit = transaction.type === 'deposit';
-        const amountClass = isDeposit ? 'text-success' : 'text-danger';
-        const amountSign = isDeposit ? '+' : '-';
-        const typeText = isDeposit ? 'شحن' : 'سحب';
-
-        return `
-          <div class="transaction-item ${isDeposit ? '' : 'withdraw'}">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <strong>${typeText} رصيد</strong>
-                <br>
-                <small class="text-muted">${transaction.method || 'نظام'}</small>
-              </div>
-              <div class="text-end">
-                <span class="${amountClass} fw-bold">${amountSign}$${Math.abs(transaction.amount).toFixed(2)}</span>
-                <br>
-                <small class="text-muted">${new Date(transaction.createdAt).toLocaleDateString('ar-SA')}</small>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    // عرض الطلبات الأخيرة
-    function displayRecentOrders(orders) {
-      const container = document.getElementById('recentOrders');
-      
-      if (!orders || orders.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-4 text-muted">
-            <i class="fas fa-shopping-cart fa-2x mb-3"></i>
-            <p>لا توجد طلبات</p>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = orders.map(order => {
-        const statusBadge = getOrderStatusBadge(order.status);
-        return `
-          <div class="border-bottom pb-3 mb-3">
-            <div class="d-flex justify-content-between align-items-start">
-              <div>
-                <strong>طلب #${order.id}</strong>
-                <br>
-                <small class="text-muted">${order.link}</small>
-              </div>
-              <div class="text-end">
-                <span class="badge ${statusBadge.class} order-status-badge">${statusBadge.text}</span>
-                <br>
-                <strong>$${order.price.toFixed(2)}</strong>
-                <br>
-                <small class="text-muted">${new Date(order.createdAt).toLocaleDateString('ar-SA')}</small>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    // دوال مساعدة
-    function getOrderStatusBadge(status) {
-      const statusMap = {
-        'pending': { class: 'bg-warning', text: '⏳ قيد الانتظار' },
-        'processing': { class: 'bg-info', text: '⚙️ قيد التنفيذ' },
-        'completed': { class: 'bg-success', text: '✅ مكتمل' },
-        'rejected': { class: 'bg-danger', text: '❌ مرفوض' }
-      };
-      return statusMap[status] || { class: 'bg-secondary', text: status };
-    }
-
-    function showAlert(message, type = 'info') {
-      const alertBox = document.getElementById('alertBox');
-      const alertClass = type === 'error' ? 'alert-danger' : 
-                        type === 'success' ? 'alert-success' : 'alert-info';
-      
-      alertBox.innerHTML = `
-        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-          ${message}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-      `;
-    }
-
-    // إعداد المستمعين للأحداث
-    function setupEventListeners() {
-      // رفع الصورة الشخصية
-      document.getElementById('avatarInput').addEventListener('change', handleAvatarUpload);
-      
-      // نظام الهيدر (من user.html)
-      document.getElementById('quickDepositBtn').addEventListener('click', showDepositModal);
-      document.getElementById('dropdownDepositBtn').addEventListener('click', showDepositModal);
-      document.getElementById('logoutHeaderBtn').addEventListener('click', logout);
-      
-      // نموذج الشحن
-      document.getElementById('quickDepositForm').addEventListener('submit', handleDepositSubmit);
-    }
-
-    // معالجة رفع الصورة
-    async function handleAvatarUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      // هنا يمكنك إضافة كود لرفع الصورة للسيرفر
-      showAlert('⏳ جاري رفع الصورة...', 'info');
-      
-      // مؤقتاً: عرض معاينة للصورة
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        document.getElementById('profileAvatar').src = e.target.result;
-        document.getElementById('headerAvatar').src = e.target.result;
-        showAlert('✅ تم تغيير الصورة الشخصية', 'success');
-      };
-      reader.readAsDataURL(file);
-    }
-
-    // دوال الهيدر (من user.html)
-    async function loadUserHeader() {
-      try {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-          window.location.href = '/login.html';
-          return;
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // تحديث الصورة في الواجهة
+                    document.getElementById('profileAvatar').src = result.avatar;
+                    document.getElementById('headerAvatar').src = result.avatar;
+                    
+                    showAlert('✅ تم تحديث الصورة الشخصية بنجاح', 'success');
+                    
+                    // تحديث بيانات المستخدم
+                    setTimeout(() => loadUserProfile(), 1000);
+                } else {
+                    throw new Error('فشل رفع الصورة');
+                }
+            } catch (error) {
+                console.error('خطأ في رفع الصورة:', error);
+                showAlert('❌ فشل رفع الصورة', 'error');
+            }
         }
 
-        const response = await fetch('/api/user/profile', {
-          headers: { 'x-auth-token': token }
-        });
+        // ✅ إصلاح: تحديث البيانات الشخصية
+        async function handleProfileUpdate(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
 
-        if (response.ok) {
-          const userData = await response.json();
-          document.getElementById('headerUsername').textContent = userData.username;
-          document.getElementById('headerBalance').textContent = `$${userData.balance.toFixed(2)}`;
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-auth-token': token
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showAlert('✅ تم تحديث البيانات بنجاح', 'success');
+                    loadUserProfile(); // إعادة تحميل البيانات
+                    showSection('overview'); // الرجوع للقسم الرئيسي
+                } else {
+                    throw new Error('فشل تحديث البيانات');
+                }
+            } catch (error) {
+                console.error('خطأ في تحديث البيانات:', error);
+                showAlert('❌ فشل تحديث البيانات', 'error');
+            }
         }
-      } catch (error) {
-        console.error('خطأ في تحميل بيانات الهيدر:', error);
-      }
-    }
 
-    function showDepositModal() {
-      const modalElement = document.getElementById('depositModal');
-      if (modalElement && typeof bootstrap !== 'undefined') {
-        const modal = new bootstrap.Modal(modalElement);
-        modal.show();
-      }
-    }
+        // ✅ إصلاح: تغيير كلمة السر
+        async function handlePasswordChange(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
 
-    async function logout() {
-      if (!confirm('هل أنت متأكد من تسجيل الخروج؟')) return;
-      
-      try {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          headers: { 'x-auth-token': localStorage.getItem('authToken') }
-        });
-      } catch (error) {
-        console.error('خطأ في تسجيل الخروج:', error);
-      } finally {
-        localStorage.removeItem('authToken');
-        window.location.href = '/login.html';
-      }
-    }
+            if (data.newPassword !== data.confirmPassword) {
+                showAlert('❌ كلمات السر غير متطابقة', 'error');
+                return;
+            }
 
-    async function handleDepositSubmit(e) {
-      e.preventDefault();
-      
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData.entries());
-      
-      const submitBtn = e.target.querySelector('button[type="submit"]');
-      const originalText = submitBtn.innerHTML;
-      
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الإرسال...';
-      submitBtn.disabled = true;
-      
-      try {
-        const response = await fetch('/api/user/deposit', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-auth-token': localStorage.getItem('authToken')
-          },
-          body: JSON.stringify(data)
-        });
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/change-password', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-auth-token': token
+                    },
+                    body: JSON.stringify({
+                        currentPassword: data.currentPassword,
+                        newPassword: data.newPassword
+                    })
+                });
 
-        const result = await response.json();
-
-        if (response.ok) {
-          showAlert('✅ تم إرسال طلب الشحن بنجاح', 'success');
-          const modalElement = document.getElementById('depositModal');
-          if (modalElement && typeof bootstrap !== 'undefined') {
-            const modal = bootstrap.Modal.getInstance(modalElement);
-            modal.hide();
-          }
-          e.target.reset();
-          loadUserProfile(); // تحديث البيانات
-        } else {
-          throw new Error(result.error || 'فشل طلب الشحن');
+                if (response.ok) {
+                    showAlert('✅ تم تغيير كلمة السر بنجاح', 'success');
+                    e.target.reset();
+                } else {
+                    const result = await response.json();
+                    throw new Error(result.error || 'فشل تغيير كلمة السر');
+                }
+            } catch (error) {
+                console.error('خطأ في تغيير كلمة السر:', error);
+                showAlert('❌ ' + error.message, 'error');
+            }
         }
-      } catch (error) {
-        showAlert('❌ ' + error.message, 'error');
-      } finally {
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-      }
-    }
 
-    console.log('✅ نظام البروفايل جاهز للعمل');
-  </script>
+        // دوال مساعدة
+        function getOrderStatusBadge(status) {
+            const statusMap = {
+                'pending': { class: 'bg-warning', text: '⏳ قيد الانتظار' },
+                'processing': { class: 'bg-info', text: '⚙️ قيد التنفيذ' },
+                'completed': { class: 'bg-success', text: '✅ مكتمل' },
+                'rejected': { class: 'bg-danger', text: '❌ مرفوض' }
+            };
+            return statusMap[status] || { class: 'bg-secondary', text: status };
+        }
+
+        function showAlert(message, type = 'info') {
+            const alertBox = document.getElementById('alertBox');
+            const alertClass = type === 'error' ? 'alert-danger' : 
+                            type === 'success' ? 'alert-success' : 'alert-info';
+            
+            alertBox.innerHTML = `
+                <div class="alert ${alertClass} alert-modern alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        }
+
+        function showSection(sectionName) {
+            // إخفاء جميع الأقسام
+            document.querySelectorAll('.profile-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // إزالة النشاط من جميع العناصر
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // إظهار القسم المطلوب
+            document.getElementById(sectionName + 'Section').style.display = 'block';
+            
+            // تفعيل العنصر النشط
+            event.target.classList.add('active');
+        }
+
+        // دوال الشحن والتسجيل
+        function showDepositModal() {
+            const modal = new bootstrap.Modal(document.getElementById('depositModal'));
+            modal.show();
+        }
+
+        async function handleDepositSubmit(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الإرسال...';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/user/deposit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-auth-token': localStorage.getItem('authToken')
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showAlert('✅ تم إرسال طلب الشحن بنجاح', 'success');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('depositModal'));
+                    modal.hide();
+                    e.target.reset();
+                    loadUserProfile();
+                } else {
+                    throw new Error(result.error || 'فشل طلب الشحن');
+                }
+            } catch (error) {
+                showAlert('❌ ' + error.message, 'error');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        async function logout() {
+            if (!confirm('هل أنت متأكد من تسجيل الخروج؟')) return;
+            
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: { 'x-auth-token': localStorage.getItem('authToken') }
+                });
+            } catch (error) {
+                console.error('خطأ في تسجيل الخروج:', error);
+            } finally {
+                localStorage.removeItem('authToken');
+                window.location.href = '/login.html';
+            }
+        }
+
+        console.log('✅ نظام البروفايل المتكامل جاهز للعمل');
+    </script>
 </body>
 </html>
