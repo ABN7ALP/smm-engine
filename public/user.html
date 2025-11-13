@@ -1147,8 +1147,7 @@ async function loadUserHeader() {
             const userData = await response.json();
             updateHeader(userData);
             
-            // تحميل الإشعارات فوراً بعد تسجيل الدخول
-            console.log('🔍 جاري تحميل الإشعارات...');
+            // ✅ تأكد من تحميل الإشعارات
             await loadNotifications();
         } else {
             showLoginButton();
@@ -1158,7 +1157,6 @@ async function loadUserHeader() {
         showLoginButton();
     }
 }
-
 // تحديث الهيدر ببيانات المستخدم
 function updateHeader(userData) {
     if (document.getElementById('headerUsername')) {
@@ -1212,27 +1210,35 @@ function showNotifications() {
 }
 
 // تحميل الإشعارات
+// 🔧 إصلاح دالة تحميل الإشعارات
 async function loadNotifications() {
     try {
         const token = localStorage.getItem('authToken');
-        if (!token) return;
+        if (!token) {
+            console.log('⚠️ لا يوجد token - المستخدم غير مسجل دخول');
+            hideNotificationsBadge();
+            return;
+        }
 
+        console.log('🔄 جاري تحميل الإشعارات...');
+        
         const response = await fetch('/api/user/notifications', {
             headers: { 'x-auth-token': token }
         });
 
         if (response.ok) {
             const notifications = await response.json();
+            console.log(`✅ تم تحميل ${notifications.length} إشعار`);
             displayNotifications(notifications);
         } else if (response.status === 404) {
-            // إذا لم يكن API الإشعارات موجوداً، تجاهل الخطأ
-            console.log('API الإشعارات غير متوفر حالياً');
+            console.log('ℹ️ API الإشعارات غير متوفر حالياً');
             hideNotificationsBadge();
         } else {
-            throw new Error('فشل تحميل الإشعارات');
+            console.error('❌ فشل تحميل الإشعارات:', response.status);
+            hideNotificationsBadge();
         }
     } catch (error) {
-        console.error('خطأ في تحميل الإشعارات:', error);
+        console.error('❌ خطأ في تحميل الإشعارات:', error);
         hideNotificationsBadge();
     }
 }
@@ -1246,16 +1252,22 @@ function hideNotificationsBadge() {
 }
 
 // عرض الإشعارات
+// 🔧 إصلاح دالة عرض الإشعارات
 function displayNotifications(notifications) {
     const container = document.getElementById('notificationsList');
     const countElement = document.getElementById('notificationCount');
     
-    if (!container || !countElement) return;
+    if (!container || !countElement) {
+        console.error('❌ عناصر الإشعارات غير موجودة في الصفحة');
+        return;
+    }
     
     // تحديث العداد
     const unreadCount = notifications.filter(n => !n.read).length;
     countElement.textContent = unreadCount;
     countElement.style.display = unreadCount > 0 ? 'block' : 'none';
+    
+    console.log(`📊 ${unreadCount} إشعار غير مقروء من أصل ${notifications.length}`);
     
     // عرض الإشعارات
     if (!notifications || notifications.length === 0) {
@@ -1268,34 +1280,47 @@ function displayNotifications(notifications) {
         return;
     }
     
-    container.innerHTML = notifications.map(notification => `
-        <div class="notification-item ${notification.read ? '' : 'unread'}" 
-             onclick="markNotificationAsRead('${notification._id}')">
+    container.innerHTML = notifications.map(notification => {
+        // ✅ إصلاح: استخدام notification._id بدل notification.id
+        const notificationId = notification._id || notification.id;
+        
+        return `
+        <div class="notification-item ${notification.read ? '' : 'unread'} p-3 border-bottom" 
+             onclick="markNotificationAsRead('${notificationId}')" style="cursor: pointer;">
             <div class="d-flex align-items-start">
                 <i class="fas fa-${getNotificationIcon(notification.type)} text-${getNotificationColor(notification.type)} mt-1 me-3"></i>
                 <div class="flex-grow-1">
-                    <h6 class="mb-1">${notification.title}</h6>
-                    <p class="mb-1 small">${notification.message}</p>
-                    <small class="text-muted">${new Date(notification.createdAt).toLocaleString('ar-SA')}</small>
+                    <h6 class="mb-1">${notification.title || 'إشعار جديد'}</h6>
+                    <p class="mb-1 small">${notification.message || 'لا يوجد محتوى'}</p>
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        ${new Date(notification.createdAt).toLocaleString('ar-SA')}
+                    </small>
                 </div>
-                ${!notification.read ? '<span class="badge bg-primary">جديد</span>' : ''}
+                ${!notification.read ? '<span class="badge bg-primary ms-2">جديد</span>' : ''}
             </div>
         </div>
+        
     `).join('');
 }
 
 // تحديد الإشعار كمقروء
+// 🔧 إصلاح دالة تحديد الإشعار كمقروء
 async function markNotificationAsRead(notificationId) {
     try {
         const token = localStorage.getItem('authToken');
         if (!token) return;
 
+        console.log(`📌 تحديد الإشعار كمقروء: ${notificationId}`);
+        
         const response = await fetch(`/api/user/notifications/${notificationId}`, {
             method: 'PUT',
             headers: { 'x-auth-token': token }
         });
 
         if (response.ok) {
+            console.log('✅ تم تحديث حالة الإشعار');
+            
             // تحديث الواجهة مباشرة
             const notificationElement = document.querySelector(`[onclick="markNotificationAsRead('${notificationId}')"]`);
             if (notificationElement) {
@@ -1312,9 +1337,14 @@ async function markNotificationAsRead(notificationId) {
                     countElement.style.display = newCount > 0 ? 'block' : 'none';
                 }
             }
+            
+            // إعادة تحميل الإشعارات للتأكد
+            setTimeout(() => loadNotifications(), 500);
+        } else {
+            console.error('❌ فشل تحديث حالة الإشعار');
         }
     } catch (error) {
-        console.error('خطأ في تحديث حالة الإشعار:', error);
+        console.error('❌ خطأ في تحديث حالة الإشعار:', error);
     }
 }
 
