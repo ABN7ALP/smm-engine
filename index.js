@@ -1160,7 +1160,190 @@ if (pathname === '/api/user/notifications' && method === 'POST') {
     }
     return;
 }
+// ==================== APIs الملف الشخصي المفقودة ====================
 
+// رفع الصورة الشخصية
+if (pathname === '/api/user/upload-avatar' && method === 'POST') {
+    try {
+        const body = await readBody(req);
+        const { avatar } = JSON.parse(body || '{}');
+
+        if (!avatar) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'صورة غير مرفوعة' }));
+            return;
+        }
+
+        const user = await User.findOne({ username });
+        if (!user) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            return;
+        }
+
+        // حفظ الصورة
+        user.avatar = avatar;
+        user.updatedAt = new Date();
+        await user.save();
+
+        await logAction(username, 'avatar_upload', {}, clientIP);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            success: true,
+            message: 'تم تحديث الصورة الشخصية بنجاح',
+            avatar: user.avatar
+        }));
+
+    } catch (error) {
+        console.error('خطأ في رفع الصورة:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في رفع الصورة' }));
+    }
+    return;
+}
+
+// الحصول على طلبات المستخدم الشخصية
+if (pathname === '/api/user/orders' && method === 'GET') {
+    try {
+        const userOrders = await Order.find({ username }).sort({ createdAt: -1 });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(userOrders));
+    } catch (error) {
+        console.error('خطأ في جلب طلبات المستخدم:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to load user orders' }));
+    }
+    return;
+}
+
+// الحصول على معاملات المستخدم
+if (pathname === '/api/user/transactions' && method === 'GET') {
+    try {
+        const user = await User.findOne({ username });
+        if (!user) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            return;
+        }
+
+        const transactions = await Transaction.find({ username: user.username })
+            .sort({ createdAt: -1 })
+            .limit(50);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(transactions));
+
+    } catch (error) {
+        console.error('خطأ في جلب المعاملات:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في جلب المعاملات' }));
+    }
+    return;
+}
+
+// تحديث الملف الشخصي
+if (pathname === '/api/user/profile' && method === 'PUT') {
+    try {
+        const body = await readBody(req);
+        const updateData = JSON.parse(body || '{}');
+
+        // منع تحديث بعض الحقول
+        delete updateData.username;
+        delete updateData.email;
+        delete updateData.role;
+        delete updateData.balance;
+        delete updateData.status;
+
+        const updatedUser = await User.findOneAndUpdate(
+            { username },
+            { 
+                ...updateData,
+                updatedAt: new Date()
+            },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            return;
+        }
+
+        await logAction(username, 'profile_update', { 
+            updatedFields: Object.keys(updateData) 
+        }, clientIP);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            success: true,
+            message: 'تم تحديث البيانات بنجاح',
+            user: {
+                username: updatedUser.username,
+                email: updatedUser.email,
+                phone: updatedUser.phone,
+                fullName: updatedUser.fullName,
+                avatar: updatedUser.avatar
+            }
+        }));
+
+    } catch (error) {
+        console.error('خطأ في تحديث بيانات المستخدم:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في تحديث البيانات' }));
+    }
+    return;
+}
+
+// تغيير كلمة السر
+if (pathname === '/api/user/change-password' && method === 'PUT') {
+    try {
+        const body = await readBody(req);
+        const { currentPassword, newPassword } = JSON.parse(body || '{}');
+
+        if (!currentPassword || !newPassword) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'جميع الحقول مطلوبة' }));
+            return;
+        }
+
+        const user = await User.findOne({ username });
+        if (!user) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            return;
+        }
+
+        // التحقق من كلمة السر الحالية
+        const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+        if (!isCurrentPasswordValid) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'كلمة السر الحالية غير صحيحة' }));
+            return;
+        }
+
+        // تحديث كلمة السر
+        const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+        user.password = hashedNewPassword;
+        user.lastPasswordChange = new Date();
+        user.updatedAt = new Date();
+        await user.save();
+
+        await logAction(username, 'password_change', {}, clientIP);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            success: true,
+            message: 'تم تغيير كلمة السر بنجاح'
+        }));
+
+    } catch (error) {
+        console.error('خطأ في تغيير كلمة السر:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في تغيير كلمة السر' }));
+    }
+    return;
+}
     // الحصول على معاملات المستخدم
     if (method === 'GET' && pathname === '/api/user/transactions') {
         try {
