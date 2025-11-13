@@ -1530,11 +1530,15 @@ function showQuickNotification(message) {
 }
 
 // 🔧 دالة جديدة لإنشاء إشعار للطلب
+// 🔧 دالة جديدة لإنشاء إشعار للطلب
 async function createOrderNotification(order, service) {
     try {
         const token = localStorage.getItem('authToken');
         if (!token) {
-            console.log('⚠️ المستخدم غير مسجل - لا يمكن إنشاء إشعار');
+            console.log('⚠️ المستخدم غير مسجل - لا يمكن إنشاء إشعار في السيرفر');
+            // ✅ لكن نعرض إشعار محلي فقط
+            showQuickNotification(`✅ تم إنشاء طلبك #${order.id} بنجاح`);
+            updateNotificationBadge(true);
             return;
         }
 
