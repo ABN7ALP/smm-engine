@@ -1118,6 +1118,40 @@ try {
         return;
     }
 
+    // إنشاء إشعار جديد
+if (pathname === '/api/user/notifications' && method === 'POST') {
+    try {
+        const body = await readBody(req);
+        const { title, message, type } = JSON.parse(body || '{}');
+
+        const user = await User.findOne({ username });
+        if (!user) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            return;
+        }
+
+        // إنشاء الإشعار
+        const notification = await Notification.create({
+            userId: user._id,
+            type: type || 'info',
+            title: title || 'إشعار جديد',
+            message: message || 'لا يوجد محتوى',
+            read: false,
+            relatedTo: 'order'
+        });
+
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(notification));
+
+    } catch (error) {
+        console.error('خطأ في إنشاء الإشعار:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to create notification' }));
+    }
+    return;
+}
+
     // الحصول على معاملات المستخدم
     if (method === 'GET' && pathname === '/api/user/transactions') {
         try {
