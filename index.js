@@ -1122,7 +1122,7 @@ try {
 if (pathname === '/api/user/notifications' && method === 'POST') {
     try {
         const body = await readBody(req);
-        const { title, message, type } = JSON.parse(body || '{}');
+        const { title, message, type, relatedTo, relatedId } = JSON.parse(body || '{}');
 
         const user = await User.findOne({ username });
         if (!user) {
@@ -1138,7 +1138,8 @@ if (pathname === '/api/user/notifications' && method === 'POST') {
             title: title || 'إشعار جديد',
             message: message || 'لا يوجد محتوى',
             read: false,
-            relatedTo: 'order'
+            relatedTo: relatedTo || 'order',
+            relatedId: relatedId || null
         });
 
         res.writeHead(201, { 'Content-Type': 'application/json' });
