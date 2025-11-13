@@ -1131,8 +1131,13 @@ if (pathname === '/api/user/notifications' && method === 'POST') {
             return;
         }
 
+        // ✅ إصلاح: إنشاء ID فريد بدل null
+        const maxIdNotification = await Notification.findOne().sort('-id').exec();
+        const newId = (maxIdNotification?.id || 0) + 1;
+
         // إنشاء الإشعار
         const notification = await Notification.create({
+            id: newId, // ✅ إضافة ID فريد
             userId: user._id,
             type: type || 'info',
             title: title || 'إشعار جديد',
@@ -1142,11 +1147,13 @@ if (pathname === '/api/user/notifications' && method === 'POST') {
             relatedId: relatedId || null
         });
 
+        console.log(`✅ تم إنشاء إشعار جديد #${newId} للمستخدم ${username}`);
+
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(notification));
 
     } catch (error) {
-        console.error('خطأ في إنشاء الإشعار:', error);
+        console.error('❌ خطأ في إنشاء الإشعار:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to create notification' }));
     }
