@@ -1891,21 +1891,11 @@ function renderUsers(users) {
                 <small class="text-muted">${new Date(user.createdAt).toLocaleTimeString('ar-SA')}</small>
             </td>
             <td>
-                // في renderUsers - بسيط الأزرار
-
-    <div class="btn-action-group">
-        <button class="btn btn-sm btn-outline-primary" onclick="openEditUserModal('${user._id}')" 
-                title="إدارة المستخدم" data-bs-toggle="tooltip">
-            <i class="fas fa-cog"></i> إدارة
-        </button>
-                    <button class="btn btn-sm btn-outline-warning" onclick="toggleFreezeBalance('${user._id}', ${!isBalanceFrozen})" 
-                            title="${isBalanceFrozen ? 'فك تجميد الرصيد' : 'تجميد الرصيد'}" data-bs-toggle="tooltip">
-                        <i class="fas ${isBalanceFrozen ? 'fa-unlock' : 'fa-lock'}"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-${user.status === 'banned' ? 'success' : 'danger'}" 
-                            onclick="changeUserStatus('${user._id}', '${user.status === 'banned' ? 'active' : 'banned'}')"
-                            title="${user.status === 'banned' ? 'فك الحظر' : 'حظر الحساب'}" data-bs-toggle="tooltip">
-                        <i class="fas ${user.status === 'banned' ? 'fa-user-check' : 'fa-user-slash'}"></i>
+                <div class="btn-action-group">
+                    <!-- 🎯 زر إدارة واحد بدل الأزرار المتعددة -->
+                    <button class="btn btn-sm btn-outline-primary" onclick="openEditUserModal('${user._id}')" 
+                            title="إدارة المستخدم" data-bs-toggle="tooltip">
+                        <i class="fas fa-cog"></i> إدارة
                     </button>
                 </div>
             </td>
