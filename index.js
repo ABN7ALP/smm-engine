@@ -1078,7 +1078,9 @@ try {
     }
 
     // رفع الصورة الشخصية
-    if (method === 'POST' && pathname === '/api/user/upload-avatar') {
+    // رفع الصورة الشخصية
+if (pathname === '/api/user/upload-avatar' && method === 'POST') {
+    try {
         const body = await readBody(req);
         const { avatar } = JSON.parse(body || '{}');
 
@@ -1088,35 +1090,34 @@ try {
             return;
         }
 
-        try {
-            const user = await User.findOne({ username });
-            if (!user) {
-                res.writeHead(404, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
-                return;
-            }
-
-            // حفظ الصورة
-            user.avatar = avatar;
-            user.updatedAt = new Date();
-            await user.save();
-
-            await logAction(username, 'avatar_upload', {}, clientIP);
-
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({
-                success: true,
-                message: 'تم تحديث الصورة الشخصية بنجاح',
-                avatar: user.avatar
-            }));
-
-        } catch (error) {
-            console.error('خطأ في رفع الصورة:', error);
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'خطأ في رفع الصورة' }));
+        const user = await User.findOne({ username });
+        if (!user) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            return;
         }
-        return;
+
+        // حفظ الصورة (في حالتنا نخزنها كـ base64 مباشرة)
+        user.avatar = avatar;
+        user.updatedAt = new Date();
+        await user.save();
+
+        await logAction(username, 'avatar_upload', {}, clientIP);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            success: true,
+            message: 'تم تحديث الصورة الشخصية بنجاح',
+            avatar: user.avatar
+        }));
+
+    } catch (error) {
+        console.error('خطأ في رفع الصورة:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'خطأ في رفع الصورة' }));
     }
+    return;
+}
 
     // إنشاء إشعار جديد
 if (pathname === '/api/user/notifications' && method === 'POST') {
