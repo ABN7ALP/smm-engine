@@ -866,59 +866,82 @@ function updateOrderStats(orders) {
 }
 
 // تحديث دالة رفع الصورة الشخصية
-async function handleAvatarUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
+// 🔧 إصلاح دالة رفع الصورة الشخصية
+function changeAvatar() {
+    // إنشاء input file مخفي
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+    
+    fileInput.addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
 
-    // التحقق من حجم الملف (5MB كحد أقصى)
-    if (file.size > 5 * 1024 * 1024) {
-        showAlert('❌ حجم الصورة يجب أن يكون أقل من 5MB', 'error');
-        return;
-    }
-
-    // التحقق من نوع الملف
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-        showAlert('❌ نوع الملف غير مدعوم. الرجاء استخدام JPG, PNG, أو GIF', 'error');
-        return;
-    }
-
-    try {
-        showLoading('جاري رفع الصورة...');
-        
-        // إنشاء FormData لرفع الملف
-        const formData = new FormData();
-        formData.append('avatar', file);
-
-        const response = await fetch('/api/user/upload-avatar', {
-            method: 'POST',
-            headers: {
-                'x-auth-token': headers['x-auth-token']
-            },
-            body: formData
-        });
-
-        if (response.ok) {
-            const result = await response.json();
-            document.getElementById('userAvatar').src = result.avatar;
-            showAlert('✅ تم تحديث الصورة الشخصية بنجاح', 'success');
-            
-            // تحديث الصورة في الهيدر أيضاً
-            const headerAvatar = document.getElementById('headerAvatar');
-            if (headerAvatar) {
-                headerAvatar.src = result.avatar;
-            }
-        } else {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'فشل رفع الصورة');
+        // التحقق من حجم الملف (5MB كحد أقصى)
+        if (file.size > 5 * 1024 * 1024) {
+            showAlert('❌ حجم الصورة يجب أن يكون أقل من 5MB', 'error');
+            return;
         }
-    } catch (error) {
-        showAlert('❌ ' + error.message, 'error');
-        console.error('خطأ في رفع الصورة:', error);
-    } finally {
-        hideLoading();
-    }
-}    
+
+        // التحقق من نوع الملف
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+            showAlert('❌ نوع الملف غير مدعوم. الرجاء استخدام JPG, PNG, أو GIF', 'error');
+            return;
+        }
+
+        try {
+            showLoading('جاري رفع الصورة...');
+            
+            // تحويل الصورة لـ base64
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                try {
+                    const base64Image = event.target.result;
+                    
+                    const response = await fetch('/api/user/upload-avatar', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-auth-token': headers['x-auth-token']
+                        },
+                        body: JSON.stringify({ avatar: base64Image })
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        document.getElementById('userAvatar').src = result.avatar;
+                        showAlert('✅ تم تحديث الصورة الشخصية بنجاح', 'success');
+                        
+                        // تحديث الصورة في الهيدر أيضاً
+                        const headerAvatar = document.getElementById('headerAvatar');
+                        if (headerAvatar) {
+                            headerAvatar.src = result.avatar;
+                        }
+                    } else {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'فشل رفع الصورة');
+                    }
+                } catch (error) {
+                    showAlert('❌ ' + error.message, 'error');
+                } finally {
+                    hideLoading();
+                }
+            };
+            
+            reader.readAsDataURL(file);
+            
+        } catch (error) {
+            showAlert('❌ ' + error.message, 'error');
+            hideLoading();
+        }
+    });
+    
+    document.body.appendChild(fileInput);
+    fileInput.click();
+    document.body.removeChild(fileInput);
+}
     
 // عرض بيانات المستخدم الحقيقية
 function displayUserData(data) {
@@ -1095,19 +1118,58 @@ async function handleDeposit(e) {
 }
 
 // تحميل المعاملات الحقيقية
+// 🔧 إصلاح دالة تحميل المعاملات لتشمل الطلبات
 async function loadTransactions() {
     try {
-        const response = await fetch('/api/user/transactions', { 
-            headers: headers 
-        });
+        showLoading('جاري تحميل المعاملات...');
         
-        if (response.ok) {
-            const transactions = await response.json();
-            displayTransactions(transactions);
-        } else {
-            throw new Error('فشل تحميل المعاملات');
+        // جلب كل من المعاملات المالية وطلبات SMM
+        const [transactionsResponse, ordersResponse] = await Promise.all([
+            fetch('/api/user/transactions', { headers }),
+            fetch('/api/user/orders', { headers })
+        ]);
+
+        let allTransactions = [];
+
+        // معالجة المعاملات المالية
+        if (transactionsResponse.ok) {
+            const transactions = await transactionsResponse.json();
+            allTransactions = allTransactions.concat(
+                transactions.map(t => ({
+                    ...t,
+                    transactionType: 'financial',
+                    displayType: t.type,
+                    displayAmount: t.amount,
+                    displayDate: t.createdAt,
+                    displayNote: t.userNote || ''
+                }))
+            );
         }
+
+        // معالجة طلبات SMM
+        if (ordersResponse.ok) {
+            const orders = await ordersResponse.json();
+            const orderTransactions = orders.map(order => ({
+                _id: order.id,
+                transactionType: 'order',
+                displayType: 'طلب SMM',
+                displayAmount: -order.price, // سالب لأنها مصاريف
+                displayDate: order.createdAt,
+                displayNote: `طلب #${order.id} - ${order.status}`,
+                orderDetails: order
+            }));
+            
+            allTransactions = allTransactions.concat(orderTransactions);
+        }
+
+        // ترتيب حسب التاريخ
+        allTransactions.sort((a, b) => new Date(b.displayDate) - new Date(a.displayDate));
+
+        displayTransactions(allTransactions);
+        hideLoading();
+        
     } catch (error) {
+        hideLoading();
         console.error('خطأ في تحميل المعاملات:', error);
         document.getElementById('transactionsList').innerHTML = `
             <div class="text-center py-4 text-muted">
@@ -1119,6 +1181,7 @@ async function loadTransactions() {
 }
 
 // عرض المعاملات الحقيقية
+// 🔧 إصلاح دالة عرض المعاملات
 function displayTransactions(transactions) {
     const container = document.getElementById('transactionsList');
     
@@ -1133,39 +1196,50 @@ function displayTransactions(transactions) {
         return;
     }
 
-    container.innerHTML = transactions.map(transaction => `
-        <div class="transaction-item">
-            <div class="transaction-icon">
-                <i class="fas fa-${getTransactionIcon(transaction.type)}"></i>
+    container.innerHTML = transactions.map(transaction => {
+        const isPositive = transaction.displayAmount > 0;
+        const isOrder = transaction.transactionType === 'order';
+        
+        return `
+        <div class="transaction-item" onclick="${isOrder ? `viewOrderDetails('${transaction._id}')` : ''}" style="${isOrder ? 'cursor: pointer;' : ''}">
+            <div class="transaction-icon" style="background: ${isOrder ? 'rgba(108, 122, 224, 0.1)' : 'rgba(0, 180, 216, 0.1)'}; color: ${isOrder ? '#6c7ae0' : '#00b4d8'}">
+                <i class="fas fa-${isOrder ? 'shopping-cart' : getTransactionIcon(transaction.displayType)}"></i>
             </div>
             <div class="transaction-details">
-                <div class="transaction-title">${getTransactionType(transaction.type)}</div>
+                <div class="transaction-title">${isOrder ? 'طلب SMM' : getTransactionType(transaction.displayType)}</div>
                 <div class="transaction-meta">
-                    ${new Date(transaction.createdAt).toLocaleString('ar-SA')} • 
-                    ${getStatusText(transaction.status)}
+                    ${new Date(transaction.displayDate).toLocaleString('ar-SA')} • 
+                    ${isOrder ? (transaction.orderDetails?.status ? getStatusText(transaction.orderDetails.status) : '—') : (transaction.status ? getStatusText(transaction.status) : '—')}
                 </div>
-                ${transaction.userNote ? `
-                    <div class="transaction-note">${transaction.userNote}</div>
-                ` : ''}
+                <div class="transaction-note">${transaction.displayNote || ''}</div>
             </div>
-            <div class="transaction-amount ${transaction.type === 'deposit' ? 'positive' : 'negative'}">
-                ${transaction.type === 'deposit' ? '+' : '-'}$${Math.abs(transaction.amount).toFixed(2)}
+            <div class="transaction-amount ${isPositive ? 'positive' : 'negative'}">
+                ${isPositive ? '+' : ''}$${Math.abs(transaction.displayAmount).toFixed(2)}
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 
     // إضافة ستايل للألوان
-    const style = document.createElement('style');
-    style.textContent = `
-        .transaction-amount.positive { color: var(--success); }
-        .transaction-amount.negative { color: var(--danger); }
-        .transaction-note { 
-            font-size: 0.75rem; 
-            color: var(--text-muted); 
-            margin-top: 4px; 
-        }
-    `;
-    document.head.appendChild(style);
+    if (!document.getElementById('transactions-styles')) {
+        const style = document.createElement('style');
+        style.id = 'transactions-styles';
+        style.textContent = `
+            .transaction-amount.positive { color: var(--success); }
+            .transaction-amount.negative { color: var(--danger); }
+            .transaction-note { 
+                font-size: 0.75rem; 
+                color: var(--text-muted); 
+                margin-top: 4px; 
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// دالة لعرض تفاصيل الطلب
+function viewOrderDetails(orderId) {
+    window.open(`/user.html?trackOrder=${orderId}`, '_blank');
 }
 
 // دوال مساعدة للمعاملات
