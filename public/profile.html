@@ -437,7 +437,7 @@
     <!-- العمود الأيسر: الملف الشخصي -->
     <div class="card profile-card">
       <div class="profile-avatar">
-    <label for="avatarUpload" style="cursor: pointer; position: relative;">
+    <label for="avatarUpload" style="cursor: pointer; position: relative; display: inline-block;">
         <img src="/assets/default-avatar.png" alt="الصورة الشخصية" class="avatar" id="userAvatar">
         <div style="position: absolute; bottom: 5px; right: 5px; background: var(--accent); color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
             <i class="fas fa-camera"></i>
@@ -683,6 +683,11 @@
 //  نظام الملف الشخصي - النسخة المعدلة (بيانات حقيقية)
 // =================================================================
 
+
+// =================================================================
+//  نظام الملف الشخصي - النسخة المصححة
+// =================================================================
+
 let userData = {};
 const headers = {
     'Content-Type': 'application/json',
@@ -696,6 +701,8 @@ if (!headers['x-auth-token']) {
 
 // دوال التنقل
 function showSection(sectionName) {
+    console.log('🔄 تبديل إلى قسم:', sectionName);
+    
     // إخفاء جميع الأقسام
     document.querySelectorAll('.content-section').forEach(section => {
         section.classList.remove('active');
@@ -736,7 +743,7 @@ function showSection(sectionName) {
 function getSectionTitle(sectionName) {
     const titles = {
         'overview': 'نظرة عامة',
-        'edit-profile': 'الملف الشخصي',
+        'edit-profile': 'الملف الشخصي', 
         'security': 'الأمان',
         'deposit': 'شحن الرصيد',
         'transactions': 'المعاملات'
@@ -747,6 +754,11 @@ function getSectionTitle(sectionName) {
 // دوال العرض
 function showAlert(message, type = 'success') {
     const container = document.getElementById('alert-container');
+    if (!container) {
+        console.error('❌ عنصر التنبيهات غير موجود');
+        return;
+    }
+    
     const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
     
     container.innerHTML = `
@@ -763,6 +775,8 @@ function showAlert(message, type = 'success') {
 
 function showLoading(message = 'جاري التحميل...') {
     const container = document.getElementById('alert-container');
+    if (!container) return;
+    
     container.innerHTML = `
         <div class="alert alert-info">
             <i class="fas fa-spinner fa-spin"></i>
@@ -773,6 +787,8 @@ function showLoading(message = 'جاري التحميل...') {
 
 function hideLoading() {
     const container = document.getElementById('alert-container');
+    if (!container) return;
+    
     const loadingAlert = container.querySelector('.alert-info');
     if (loadingAlert) {
         loadingAlert.remove();
@@ -781,30 +797,41 @@ function hideLoading() {
 
 // التهيئة
 document.addEventListener('DOMContentLoaded', function() {
-    // تحميل بيانات المستخدم الحقيقية
+    console.log('🚀 بدء تحميل الملف الشخصي...');
     loadUserData();
-    
-    // إعداد المستمعين للأحداث
     setupEventListeners();
 });
 
 function setupEventListeners() {
     // تحديث الملف الشخصي
-    document.getElementById('profileForm').addEventListener('submit', handleProfileUpdate);
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+        profileForm.addEventListener('submit', handleProfileUpdate);
+    }
     
     // تغيير كلمة السر
-    document.getElementById('securityForm').addEventListener('submit', handlePasswordChange);
+    const securityForm = document.getElementById('securityForm');
+    if (securityForm) {
+        securityForm.addEventListener('submit', handlePasswordChange);
+    }
     
     // شحن الرصيد
-    document.getElementById('depositForm').addEventListener('submit', handleDeposit);
+    const depositForm = document.getElementById('depositForm');
+    if (depositForm) {
+        depositForm.addEventListener('submit', handleDeposit);
+    }
     
     // تسجيل الخروج
-    document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
 }
 
-// تحميل بيانات المستخدم الحقيقية
+// تحميل بيانات المستخدم
 async function loadUserData() {
     try {
+        console.log('📡 جاري جلب بيانات المستخدم...');
         showLoading('جاري تحميل البيانات...');
         
         const response = await fetch('/api/user/profile', { 
@@ -816,16 +843,17 @@ async function loadUserData() {
                 handleSessionExpired();
                 return;
             }
-            throw new Error('فشل تحميل البيانات');
+            throw new Error(`فشل تحميل البيانات (${response.status})`);
         }
 
         userData = await response.json();
-        displayUserData(userData);
+        console.log('✅ بيانات المستخدم:', userData);
         
-        // تحميل الطلبات الشخصية للإحصائيات
+        displayUserData(userData);
         await loadUserOrders();
         
         hideLoading();
+        showAlert('✅ تم تحميل البيانات بنجاح', 'success');
         
     } catch (error) {
         hideLoading();
@@ -834,7 +862,7 @@ async function loadUserData() {
     }
 }
 
-// تحميل طلبات المستخدم للإحصائيات
+// تحميل طلبات المستخدم
 async function loadUserOrders() {
     try {
         const response = await fetch('/api/user/orders', { 
@@ -856,32 +884,86 @@ function updateOrderStats(orders) {
     
     const totalOrders = orders.length;
     const completedOrders = orders.filter(order => order.status === 'completed').length;
-    const pendingOrders = orders.filter(order => order.status === 'pending').length;
     
-    document.getElementById('totalOrders').textContent = totalOrders;
-    document.getElementById('completedOrders').textContent = completedOrders;
+    const totalOrdersElement = document.getElementById('totalOrders');
+    const completedOrdersElement = document.getElementById('completedOrders');
     
-    // تحديث بيانات المستخدم
-    if (userData.orders) {
-        userData.orders.total = totalOrders;
-        userData.orders.completed = completedOrders;
-        userData.orders.pending = pendingOrders;
+    if (totalOrdersElement) totalOrdersElement.textContent = totalOrders;
+    if (completedOrdersElement) completedOrdersElement.textContent = completedOrders;
+}
+
+// عرض بيانات المستخدم
+function displayUserData(data) {
+    console.log('🎯 عرض بيانات المستخدم:', data);
+    
+    // العناصر الأساسية
+    const elements = {
+        'userFullName': data.fullName || data.username,
+        'userUsername': '@' + data.username,
+        'userBalance': '$' + (data.balance || 0).toFixed(2),
+        'overviewUsername': data.username,
+        'overviewEmail': data.email,
+        'overviewPhone': data.phone || 'غير مضبوط',
+        'profileUsername': data.username,
+        'profileEmail': data.email
+    };
+    
+    // تعبئة البيانات
+    for (const [id, value] of Object.entries(elements)) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        } else {
+            console.warn(`⚠️ العنصر غير موجود: ${id}`);
+        }
+    }
+    
+    // تعبئة حقول الإدخال
+    const fullNameInput = document.querySelector('[name="fullName"]');
+    const phoneInput = document.querySelector('[name="phone"]');
+    
+    if (fullNameInput) fullNameInput.value = data.fullName || '';
+    if (phoneInput) phoneInput.value = data.phone || '';
+    
+    // تاريخ الإنضمام
+    const joinDateElement = document.getElementById('overviewJoinDate');
+    if (joinDateElement && data.createdAt) {
+        const joinDate = new Date(data.createdAt).toLocaleDateString('ar-SA');
+        joinDateElement.value = joinDate;
+    }
+    
+    // الصورة الشخصية
+    const avatarElement = document.getElementById('userAvatar');
+    if (avatarElement && data.avatar && data.avatar !== '/assets/default-avatar.png') {
+        avatarElement.src = data.avatar;
+    }
+    
+    // حالة الحساب
+    const statusElement = document.getElementById('userStatus');
+    if (statusElement) {
+        if (data.status === 'active') {
+            statusElement.textContent = 'نشط';
+            statusElement.style.background = 'var(--success)';
+        } else if (data.status === 'suspended') {
+            statusElement.textContent = 'موقوف';
+            statusElement.style.background = 'var(--warning)';
+        } else {
+            statusElement.textContent = 'محظور';
+            statusElement.style.background = 'var(--danger)';
+        }
     }
 }
 
-// تحديث دالة رفع الصورة الشخصية
 // رفع الصورة الشخصية
 async function handleAvatarUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // التحقق من نوع الملف
     if (!file.type.startsWith('image/')) {
         showAlert('❌ الرجاء اختيار ملف صورة', 'error');
         return;
     }
 
-    // التحقق من الحجم (2MB كحد أقصى)
     if (file.size > 2 * 1024 * 1024) {
         showAlert('❌ حجم الصورة يجب أن يكون أقل من 2MB', 'error');
         return;
@@ -890,7 +972,6 @@ async function handleAvatarUpload(event) {
     try {
         showLoading('جاري رفع الصورة...');
         
-        // تحويل الصورة إلى Base64
         const reader = new FileReader();
         reader.onload = async function(e) {
             try {
@@ -904,15 +985,8 @@ async function handleAvatarUpload(event) {
 
                 if (response.ok) {
                     const result = await response.json();
-                    // تحديث الصورة في الواجهة
                     document.getElementById('userAvatar').src = result.avatar;
                     showAlert('✅ تم تحديث الصورة الشخصية بنجاح', 'success');
-                    
-                    // تحديث الصورة في الهيدر أيضاً إذا كان مفتوح
-                    const headerAvatar = document.querySelector('#headerAvatar');
-                    if (headerAvatar) {
-                        headerAvatar.src = result.avatar;
-                    }
                 } else {
                     const errorData = await response.json();
                     throw new Error(errorData.error || 'فشل رفع الصورة');
@@ -929,55 +1003,7 @@ async function handleAvatarUpload(event) {
     } catch (error) {
         hideLoading();
         showAlert('❌ ' + error.message, 'error');
-        console.error('خطأ في رفع الصورة:', error);
     }
-}
-    
-// عرض بيانات المستخدم الحقيقية
-function displayUserData(data) {
-    // المعلومات الأساسية
-    document.getElementById('userFullName').textContent = data.fullName || data.username;
-    document.getElementById('userUsername').textContent = '@' + data.username;
-    document.getElementById('userBalance').textContent = '$' + (data.balance || 0).toFixed(2);
-    document.getElementById('totalOrders').textContent = data.orders?.total || 0;
-    document.getElementById('completedOrders').textContent = data.orders?.completed || 0;
-    
-    // حالة الحساب
-    const statusElement = document.getElementById('userStatus');
-    if (data.status === 'active') {
-        statusElement.className = 'profile-status';
-        statusElement.textContent = 'نشط';
-        statusElement.style.background = 'var(--success)';
-    } else if (data.status === 'suspended') {
-        statusElement.className = 'profile-status';
-        statusElement.textContent = 'موقوف';
-        statusElement.style.background = 'var(--warning)';
-    } else {
-        statusElement.className = 'profile-status';
-        statusElement.textContent = 'محظور';
-        statusElement.style.background = 'var(--danger)';
-    }
-
-    // الصورة الشخصية
-    if (data.avatar && data.avatar !== '/assets/default-avatar.png') {
-        document.getElementById('userAvatar').src = data.avatar;
-    }
-
-    // قسم النظرة العامة
-    document.getElementById('overviewUsername').value = data.username;
-    document.getElementById('overviewEmail').value = data.email;
-    document.getElementById('overviewPhone').value = data.phone || 'غير مضبوط';
-    
-    if (data.createdAt) {
-        const joinDate = new Date(data.createdAt).toLocaleDateString('ar-SA');
-        document.getElementById('overviewJoinDate').value = joinDate;
-    }
-
-    // قسم تعديل الملف
-    document.getElementById('profileUsername').value = data.username;
-    document.getElementById('profileEmail').value = data.email;
-    document.querySelector('[name="fullName"]').value = data.fullName || '';
-    document.querySelector('[name="phone"]').value = data.phone || '';
 }
 
 // تحديث الملف الشخصي
@@ -1002,7 +1028,7 @@ async function handleProfileUpdate(e) {
 
         if (response.ok) {
             showAlert('✅ تم تحديث الملف الشخصي بنجاح', 'success');
-            loadUserData(); // إعادة تحميل البيانات
+            loadUserData();
         } else {
             const errorData = await response.json();
             throw new Error(errorData.error || 'فشل تحديث البيانات');
@@ -1094,8 +1120,7 @@ async function handleDeposit(e) {
         if (response.ok) {
             showAlert('✅ ' + result.message, 'success');
             e.target.reset();
-            loadUserData(); // تحديث الرصيد
-            loadTransactions(); // تحديث المعاملات
+            loadUserData();
         } else {
             throw new Error(result.error || 'فشل طلب الشحن');
         }
@@ -1107,77 +1132,32 @@ async function handleDeposit(e) {
     }
 }
 
-// تحميل المعاملات الحقيقية
-// تحميل المعاملات والطلبات معاً
+// تحميل المعاملات
 async function loadTransactions() {
     try {
         showLoading('جاري تحميل المعاملات...');
         
-        // جلب المعاملات المالية
-        const transactionsResponse = await fetch('/api/user/transactions', { 
+        const response = await fetch('/api/user/transactions', { 
             headers: headers 
         });
         
-        // جلب الطلبات
-        const ordersResponse = await fetch('/api/user/orders', { 
-            headers: headers 
-        });
-
-        let allTransactions = [];
-
-        // معالجة المعاملات المالية
-        if (transactionsResponse.ok) {
-            const transactions = await transactionsResponse.json();
-            allTransactions = allTransactions.concat(transactions.map(t => ({
-                ...t,
-                isOrder: false,
-                displayType: getTransactionType(t.type),
-                displayAmount: t.type === 'deposit' ? `+$${t.amount.toFixed(2)}` : `-$${t.amount.toFixed(2)}`,
-                amountColor: t.type === 'deposit' ? 'positive' : 'negative'
-            })));
+        if (response.ok) {
+            const transactions = await response.json();
+            displayTransactions(transactions);
+        } else {
+            throw new Error('فشل تحميل المعاملات');
         }
-
-        // معالجة الطلبات كمعاملات
-        if (ordersResponse.ok) {
-            const orders = await ordersResponse.json();
-            const orderTransactions = orders.map(order => ({
-                id: order.id,
-                type: 'payment',
-                amount: -order.price, // سالب لأنها مصروف
-                status: order.status,
-                createdAt: order.createdAt,
-                isOrder: true,
-                displayType: `طلب #${order.id}`,
-                displayAmount: `-$${order.price.toFixed(2)}`,
-                amountColor: 'negative',
-                note: `طلب ${order.serviceId} - ${order.link}`
-            }));
-            
-            allTransactions = allTransactions.concat(orderTransactions);
-        }
-
-        // ترتيب حسب التاريخ
-        allTransactions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        
-        displayTransactions(allTransactions);
-        hideLoading();
-        
     } catch (error) {
+        showAlert('❌ ' + error.message, 'error');
+    } finally {
         hideLoading();
-        console.error('خطأ في تحميل المعاملات:', error);
-        document.getElementById('transactionsList').innerHTML = `
-            <div class="text-center py-4 text-muted">
-                <i class="fas fa-exclamation-circle"></i>
-                <p>فشل تحميل المعاملات</p>
-            </div>
-        `;
     }
 }
 
-// عرض المعاملات الحقيقية
-// عرض المعاملات والطلبات
+// عرض المعاملات
 function displayTransactions(transactions) {
     const container = document.getElementById('transactionsList');
+    if (!container) return;
     
     if (!transactions || transactions.length === 0) {
         container.innerHTML = `
@@ -1192,49 +1172,31 @@ function displayTransactions(transactions) {
 
     container.innerHTML = transactions.map(transaction => `
         <div class="transaction-item">
-            <div class="transaction-icon" style="background: ${transaction.isOrder ? 'rgba(108, 122, 224, 0.1)' : 'rgba(0, 180, 216, 0.1)'}; color: ${transaction.isOrder ? '#6c7ae0' : '#00b4d8'}">
-                <i class="fas fa-${transaction.isOrder ? 'shopping-cart' : getTransactionIcon(transaction.type)}"></i>
+            <div class="transaction-icon">
+                <i class="fas fa-${getTransactionIcon(transaction.type)}"></i>
             </div>
             <div class="transaction-details">
-                <div class="transaction-title">${transaction.displayType}</div>
+                <div class="transaction-title">${getTransactionType(transaction.type)}</div>
                 <div class="transaction-meta">
                     ${new Date(transaction.createdAt).toLocaleString('ar-SA')} • 
                     ${getStatusText(transaction.status)}
-                    ${transaction.isOrder ? '• طلب' : ''}
                 </div>
-                ${transaction.note ? `
-                    <div class="transaction-note">${transaction.note}</div>
-                ` : ''}
                 ${transaction.userNote ? `
                     <div class="transaction-note">${transaction.userNote}</div>
                 ` : ''}
             </div>
-            <div class="transaction-amount ${transaction.amountColor}">
-                ${transaction.displayAmount}
+            <div class="transaction-amount ${transaction.type === 'deposit' ? 'positive' : 'negative'}">
+                ${transaction.type === 'deposit' ? '+' : '-'}$${Math.abs(transaction.amount).toFixed(2)}
             </div>
         </div>
     `).join('');
-
-
-    // إضافة ستايل للألوان
-    const style = document.createElement('style');
-    style.textContent = `
-        .transaction-amount.positive { color: var(--success); }
-        .transaction-amount.negative { color: var(--danger); }
-        .transaction-note { 
-            font-size: 0.75rem; 
-            color: var(--text-muted); 
-            margin-top: 4px; 
-        }
-    `;
-    document.head.appendChild(style);
 }
 
-// دوال مساعدة للمعاملات
+// دوال مساعدة
 function getTransactionIcon(type) {
     const icons = {
         'deposit': 'plus-circle',
-        'withdraw': 'minus-circle',
+        'withdraw': 'minus-circle', 
         'payment': 'shopping-cart',
         'refund': 'undo'
     };
@@ -1265,9 +1227,7 @@ function getStatusText(status) {
 async function handleLogout(e) {
     e.preventDefault();
     
-    if (!confirm('هل أنت متأكد من تسجيل الخروج؟')) {
-        return;
-    }
+    if (!confirm('هل أنت متأكد من تسجيل الخروج؟')) return;
 
     try {
         await fetch('/api/auth/logout', {
@@ -1282,7 +1242,7 @@ async function handleLogout(e) {
     }
 }
 
-// التعامل مع انتهاء الجلسة
+// انتهاء الجلسة
 function handleSessionExpired() {
     showAlert('❌ انتهت الجلسة، يرجى تسجيل الدخول مرة أخرى', 'error');
     setTimeout(() => {
@@ -1291,22 +1251,10 @@ function handleSessionExpired() {
     }, 2000);
 }
 
-// التحقق من الجلسة بشكل دوري
-setInterval(async () => {
-    try {
-        const response = await fetch('/api/user/profile', { 
-            headers: headers 
-        });
-        if (!response.ok) {
-            handleSessionExpired();
-        }
-    } catch (error) {
-        console.error('خطأ في التحقق من الجلسة:', error);
-    }
-}, 5 * 60 * 1000);
+console.log('✅ نظام الملف الشخصي جاهز للعمل');
 
-console.log('✅ نظام الملف الشخصي جاهز للعمل - بيانات حقيقية');
-      
+
+
   </script>
 </body>
 </html>
