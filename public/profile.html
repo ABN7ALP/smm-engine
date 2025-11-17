@@ -879,17 +879,45 @@ async function loadUserOrders() {
 }
 
 // تحديث إحصائيات الطلبات
+// تحديث إحصائيات الطلبات
 function updateOrderStats(orders) {
-    if (!orders || !Array.isArray(orders)) return;
+    console.log('📊 تحديث إحصائيات الطلبات:', orders);
+    
+    if (!orders || !Array.isArray(orders)) {
+        console.warn('⚠️ لا توجد طلبات أو البيانات غير صحيحة');
+        return;
+    }
     
     const totalOrders = orders.length;
     const completedOrders = orders.filter(order => order.status === 'completed').length;
+    const pendingOrders = orders.filter(order => order.status === 'pending').length;
     
+    console.log(`📈 الإحصائيات - الكل: ${totalOrders}, مكتمل: ${completedOrders}, معلق: ${pendingOrders}`);
+    
+    // تحديث العناصر في الواجهة
     const totalOrdersElement = document.getElementById('totalOrders');
     const completedOrdersElement = document.getElementById('completedOrders');
     
-    if (totalOrdersElement) totalOrdersElement.textContent = totalOrders;
-    if (completedOrdersElement) completedOrdersElement.textContent = completedOrders;
+    if (totalOrdersElement) {
+        totalOrdersElement.textContent = totalOrders;
+        console.log('✅ تم تحديث إجمالي الطلبات:', totalOrders);
+    } else {
+        console.error('❌ عنصر totalOrders غير موجود');
+    }
+    
+    if (completedOrdersElement) {
+        completedOrdersElement.textContent = completedOrders;
+        console.log('✅ تم تحديث الطلبات المكتملة:', completedOrders);
+    } else {
+        console.error('❌ عنصر completedOrders غير موجود');
+    }
+    
+    // تحديث بيانات المستخدم
+    if (userData.orders) {
+        userData.orders.total = totalOrders;
+        userData.orders.completed = completedOrders;
+        userData.orders.pending = pendingOrders;
+    }
 }
 
 // عرض بيانات المستخدم
@@ -926,11 +954,12 @@ function displayUserData(data) {
     if (phoneInput) phoneInput.value = data.phone || '';
     
     // تاريخ الإنضمام
-    const joinDateElement = document.getElementById('overviewJoinDate');
-    if (joinDateElement && data.createdAt) {
-        const joinDate = new Date(data.createdAt).toLocaleDateString('ar-SA');
-        joinDateElement.value = joinDate;
-    }
+    // تاريخ الإنضمام
+const joinDateElement = document.getElementById('overviewJoinDate');
+if (joinDateElement && data.createdAt) {
+    const joinDate = new Date(data.createdAt).toLocaleDateString('en-US');
+    joinDateElement.value = joinDate;
+}
     
     // الصورة الشخصية
     const avatarElement = document.getElementById('userAvatar');
@@ -1155,6 +1184,7 @@ async function loadTransactions() {
 }
 
 // عرض المعاملات
+// عرض المعاملات
 function displayTransactions(transactions) {
     const container = document.getElementById('transactionsList');
     if (!container) return;
@@ -1170,7 +1200,18 @@ function displayTransactions(transactions) {
         return;
     }
 
-    container.innerHTML = transactions.map(transaction => `
+    container.innerHTML = transactions.map(transaction => {
+        // تنسيق التاريخ ميلادي
+        const transactionDate = new Date(transaction.createdAt);
+        const formattedDate = transactionDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        return `
         <div class="transaction-item">
             <div class="transaction-icon">
                 <i class="fas fa-${getTransactionIcon(transaction.type)}"></i>
@@ -1178,7 +1219,7 @@ function displayTransactions(transactions) {
             <div class="transaction-details">
                 <div class="transaction-title">${getTransactionType(transaction.type)}</div>
                 <div class="transaction-meta">
-                    ${new Date(transaction.createdAt).toLocaleString('ar-SA')} • 
+                    ${formattedDate} • 
                     ${getStatusText(transaction.status)}
                 </div>
                 ${transaction.userNote ? `
@@ -1189,9 +1230,9 @@ function displayTransactions(transactions) {
                 ${transaction.type === 'deposit' ? '+' : '-'}$${Math.abs(transaction.amount).toFixed(2)}
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
-
 // دوال مساعدة
 function getTransactionIcon(type) {
     const icons = {
@@ -1251,6 +1292,37 @@ function handleSessionExpired() {
     }, 2000);
 }
 
+
+    
+    // تحميل تلقائي للطلبات كل 30 ثانية
+setInterval(async () => {
+    try {
+        const response = await fetch('/api/user/orders', { 
+            headers: headers 
+        });
+        
+        if (response.ok) {
+            const orders = await response.json();
+            updateOrderStats(orders);
+            console.log('🔄 تم تحديث إحصائيات الطلبات تلقائياً');
+        }
+    } catch (error) {
+        console.error('❌ خطأ في التحديث التلقائي:', error);
+    }
+}, 30000); // كل 30 ثانية
+
+// تحديث الطلبات عند فتح قسم المعاملات
+const originalShowSection = window.showSection;
+window.showSection = function(sectionName) {
+    originalShowSection(sectionName);
+    
+    if (sectionName === 'transactions' || sectionName === 'overview') {
+        // إعادة تحميل الطلبات عند فتح هذه الأقسام
+        setTimeout(() => {
+            loadUserOrders();
+        }, 500);
+    }
+};
 console.log('✅ نظام الملف الشخصي جاهز للعمل');
 
 
