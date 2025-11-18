@@ -589,7 +589,7 @@ if (authUsername) {
 await logAction(username, 'order_create', { id: order.id }, clientIP);
 
 // إرسال إشعار للمستخدم إذا كان مسجلاً
-// إنشاء طلب جديد
+// إنشاء طلب جديد (مصحح)
 if (method === 'POST' && pathname === '/api/orders') {
     const body = await readBody(req);
     const data = JSON.parse(body || '{}');
@@ -604,22 +604,22 @@ if (method === 'POST' && pathname === '/api/orders') {
         const maxIdOrder = await Order.findOne().sort('-id').exec();
         const newId = (maxIdOrder?.id || 0) + 1;
         
-        // 🔧 التحقق من المستخدم المسجل (باستخدام authUsername بدل username)
-        let username = 'public';
+        // استخدام authUser بدل username
+        const authUser = checkAuth(req);
+        let orderUsername = 'public';
         let userId = null;
         let userInfo = 'مستخدم عام';
         
-        const authUsername = checkAuth(req); // ⬅️ المتغير الجديد
-        if (authUsername) {
-            const user = await User.findOne({ username: authUsername });
+        if (authUser) {
+            const user = await User.findOne({ username: authUser });
             if (user) {
-                username = user.username;
+                orderUsername = user.username;
                 userId = user._id;
                 userInfo = `${user.username} (${user.fullName || 'لا يوجد اسم'})`;
             }
         }
         
-        // 🔧 إنشاء الطلب مع معلومات المستخدم
+        // إنشاء الطلب مع معلومات المستخدم
         const order = await Order.create({
             id: newId,
             serviceId: data.serviceId,
@@ -627,16 +627,16 @@ if (method === 'POST' && pathname === '/api/orders') {
             quantity: data.quantity,
             price: data.price,
             status: 'pending',
-            username: username,
+            username: orderUsername,
             userId: userId,
             userInfo: userInfo
         });
 
         console.log(`🎯 تم إنشاء طلب جديد #${order.id} من: ${userInfo}`);
         
-        await logAction(username, 'order_create', { id: order.id }, clientIP);
+        await logAction(orderUsername, 'order_create', { id: order.id }, clientIP);
         
-        // 🔧 إرسال إشعار للمستخدم إذا كان مسجلاً
+        // إرسال إشعار للمستخدم إذا كان مسجلاً
         if (userId) {
             await Notification.create({
                 userId: userId,
@@ -656,7 +656,7 @@ if (method === 'POST' && pathname === '/api/orders') {
             });
         }
 
-        // 🔧 إرسال إشعار للأدمن مع معلومات المستخدم
+        // إرسال إشعار للأدمن مع معلومات المستخدم
         const adminUsers = await User.find({ role: 'admin' });
         for (const admin of adminUsers) {
             await Notification.create({
