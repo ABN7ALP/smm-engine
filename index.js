@@ -589,7 +589,7 @@ if (authUsername) {
 await logAction(username, 'order_create', { id: order.id }, clientIP);
 
 // إرسال إشعار للمستخدم إذا كان مسجلاً
-// إنشاء طلب جديد (مصحح)
+// إنشاء طلب جديد
 if (method === 'POST' && pathname === '/api/orders') {
     const body = await readBody(req);
     const data = JSON.parse(body || '{}');
@@ -604,22 +604,30 @@ if (method === 'POST' && pathname === '/api/orders') {
         const maxIdOrder = await Order.findOne().sort('-id').exec();
         const newId = (maxIdOrder?.id || 0) + 1;
         
-        // استخدام authUser بدل username
-        const authUser = checkAuth(req);
-        let orderUsername = 'public';
+        // 🔧 التحقق من المستخدم المسجل
+        let username = 'public';
         let userId = null;
-        let userInfo = 'مستخدم عام';
         
-        if (authUser) {
-            const user = await User.findOne({ username: authUser });
+        const authUsername = checkAuth(req);
+        if (authUsername) {
+            const user = await User.findOne({ username: authUsername });
             if (user) {
-                orderUsername = user.username;
+                username = user.username;
                 userId = user._id;
-                userInfo = `${user.username} (${user.fullName || 'لا يوجد اسم'})`;
+                console.log(`🔐 طلب من مستخدم مسجل: ${username}`);
+                
+                // التحقق من الرصيد إذا كان الطلب مدفوع
+                if (user.balanceFrozen) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'لا يمكن إنشاء طلب - الرصيد مجمد' }));
+                    return;
+                }
             }
+        } else {
+            console.log('🌐 طلب من زائر عام');
         }
         
-        // إنشاء الطلب مع معلومات المستخدم
+        // إنشاء الطلب مع بيانات المستخدم
         const order = await Order.create({
             id: newId,
             serviceId: data.serviceId,
@@ -627,43 +635,44 @@ if (method === 'POST' && pathname === '/api/orders') {
             quantity: data.quantity,
             price: data.price,
             status: 'pending',
-            username: orderUsername,
-            userId: userId,
-            userInfo: userInfo
+            username: username,
+            userId: userId, // 🔧 جديد: تخزين ID المستخدم
+            userType: authUsername ? 'registered' : 'public' // 🔧 جديد: نوع المستخدم
         });
 
-        console.log(`🎯 تم إنشاء طلب جديد #${order.id} من: ${userInfo}`);
+        console.log(`✅ تم إنشاء طلب جديد #${order.id} من قبل ${username}`);
         
-        await logAction(orderUsername, 'order_create', { id: order.id }, clientIP);
+        await logAction(username, 'order_create', { id: order.id }, clientIP);
         
-        // إرسال إشعار للمستخدم إذا كان مسجلاً
+        // 🔧 إرسال إشعار للمستخدم إذا كان مسجلاً
         if (userId) {
             await Notification.create({
                 userId: userId,
                 type: 'success',
                 title: 'تم إنشاء طلب جديد',
-                message: `طلبك #${order.id} تم إنشاؤه بنجاح وسيتم معالجته قريباً`,
+                message: `طلبك #${order.id} تم إنشاؤه بنجاح وحالياً قيد الانتظار`,
                 relatedTo: 'order',
                 relatedId: order.id
             });
 
             // تحديث إحصائيات المستخدم
-            await User.findByIdAndUpdate(userId, {
-                $inc: { 
-                    'orders.total': 1,
-                    'orders.pending': 1
-                }
-            });
+            const user = await User.findOne({ username: authUsername });
+            if (user) {
+                user.orders.total = (user.orders.total || 0) + 1;
+                user.orders.pending = (user.orders.pending || 0) + 1;
+                await user.save();
+                console.log(`📊 تم تحديث إحصائيات المستخدم ${username}`);
+            }
         }
 
-        // إرسال إشعار للأدمن مع معلومات المستخدم
+        // إرسال إشعار للأدمن
         const adminUsers = await User.find({ role: 'admin' });
         for (const admin of adminUsers) {
             await Notification.create({
                 userId: admin._id,
                 type: 'info',
                 title: 'طلب جديد',
-                message: `طلب جديد #${order.id} من ${userInfo}`,
+                message: `تم إنشاء طلب جديد #${order.id} من قبل ${username} ${userId ? '(مسجل)' : '(زائر)'}`,
                 relatedTo: 'order',
                 relatedId: order.id
             });
@@ -671,7 +680,6 @@ if (method === 'POST' && pathname === '/api/orders') {
         
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(order));
-        
     } catch (error) {
         console.error('❌ خطأ في إنشاء الطلب:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
