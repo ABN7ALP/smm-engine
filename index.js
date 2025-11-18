@@ -537,8 +537,8 @@ const server = http.createServer(async (req, res) => {
     
     
     // إنشاء طلب جديد مع الإشعارات
+// إنشاء طلب جديد
 if (method === 'POST' && pathname === '/api/orders') {
-  console.log('🎯 تم استلام طلب جديد من:', checkAuth(req) || 'مستخدم عام');
     const body = await readBody(req);
     const data = JSON.parse(body || '{}');
     
@@ -552,101 +552,87 @@ if (method === 'POST' && pathname === '/api/orders') {
         const maxIdOrder = await Order.findOne().sort('-id').exec();
         const newId = (maxIdOrder?.id || 0) + 1;
         
-        // الحصول على المستخدم إذا كان مسجلاً
-let username = 'public';
-let userId = null;
-
-const authUsername = checkAuth(req);
-console.log(`🔍 authUsername: ${authUsername}`); // <-- أضف هذا
-
-if (authUsername) {
-    const user = await User.findOne({ username: authUsername });
-    if (user) {
-        username = user.username;
-        userId = user._id.toString(); // ✅ تأكد من تحويله لـ string
-        console.log(`🔍 تم العثور على المستخدم: ${username}, userId: ${userId}`);
+        // 🔧 التحقق من المستخدم المسجل
+        let username = 'public';
+        let userId = null;
+        let userEmail = null;
+        let userPhone = null;
         
-        // التحقق من الرصيد إذا كان الطلب مدفوع
-        if (user.balanceFrozen) {
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'لا يمكن إنشاء طلب - الرصيد مجمد' }));
-            return;
+        const authUsername = checkAuth(req);
+        if (authUsername) {
+            const user = await User.findOne({ username: authUsername });
+            if (user) {
+                username = user.username;
+                userId = user._id;
+                userEmail = user.email;
+                userPhone = user.phone;
+                
+                console.log(`🔐 طلب من مستخدم مسجل: ${username} (${userEmail})`);
+            }
+        } else {
+            console.log('🌐 طلب من زائر عام');
         }
-    }
-}
         
+        // 🔧 حفظ الطلب مع بيانات المستخدم الكاملة
         const order = await Order.create({
-    id: newId,
-    serviceId: data.serviceId,
-    link: data.link,
-    quantity: data.quantity,
-    price: data.price,
-    status: 'pending',
-    username: username,
-    userId: userId
-});
-
-await logAction(username, 'order_create', { id: order.id }, clientIP);
-
-// إرسال إشعار للمستخدم إذا كان مسجلاً
-console.log(`🔍 debugging - userId: ${userId}, username: ${username}`);
-
-if (userId) {
-    console.log(`🔍 جاري إنشاء إشعار للمستخدم: ${username}`);
-    try {
-        const notification = await Notification.create({
-            id: Date.now(),
+            id: newId,
+            serviceId: data.serviceId,
+            link: data.link,
+            quantity: data.quantity,
+            price: data.price,
+            status: 'pending',
+            username: username,
             userId: userId,
-            type: 'success', 
-            title: 'تم إنشاء طلب جديد',
-            message: `تم إنشاء طلبك #${order.id} بنجاح. سيتم معالجته قريباً.`,
-            relatedTo: 'order',
-            relatedId: order.id,
-            read: false,
-            createdAt: new Date()
+            userEmail: userEmail,
+            userPhone: userPhone,
+            userIP: clientIP
         });
-        console.log(`✅ تم إنشاء الإشعار بنجاح:`, notification);
-    } catch (error) {
-        console.error('❌ خطأ في إنشاء الإشعار:', error);
-    }
 
-    // تحديث إحصائيات المستخدم
-    const user = await User.findOne({ username: authUsername });
-    if (user) {
-        user.orders.total = (user.orders.total || 0) + 1;
-        user.orders.pending = (user.orders.pending || 0) + 1;
-        await user.save();
-    }
-} else {
-    console.log('🔍 المستخدم غير مسجل دخول - لا إشعارات');
-}
+        console.log(`📦 تم إنشاء طلب جديد #${order.id} من قبل: ${username}`);
 
-// إرسال إشعار للأدمن
-try {
-    const adminUsers = await User.find({ role: 'admin' });
-    for (let i = 0; i < adminUsers.length; i++) {
-        const admin = adminUsers[i];
-        await Notification.create({
-            id: Date.now() + i, // ✅ نستخدم index لتجنب التكرار
-            userId: admin._id,
-            type: 'info',
-            title: 'طلب جديد',
-            message: `تم إنشاء طلب جديد #${order.id} من قبل ${username}`,
-            relatedTo: 'order',
-            relatedId: order.id,
-            read: false,
-            createdAt: new Date()
-        });
-    }
-    console.log(`✅ تم إرسال إشعارات للأدمن بخصوص الطلب #${order.id}`);
-} catch (error) {
-    console.error('❌ خطأ في إرسال إشعارات الأدمن:', error);
-}
+        await logAction(username, 'order_create', { 
+            id: order.id, 
+            service: data.serviceId,
+            userType: userId ? 'registered' : 'public'
+        }, clientIP);
+        
+        // 🔧 إرسال إشعار للمستخدم إذا كان مسجلاً
+        if (userId) {
+            await Notification.create({
+                userId: userId,
+                type: 'success',
+                title: 'تم إنشاء طلب جديد',
+                message: `طلبك #${order.id} تم إنشاؤه بنجاح وسيتم معالجته قريباً`,
+                relatedTo: 'order',
+                relatedId: order.id
+            });
+
+            // تحديث إحصائيات المستخدم
+            await User.findByIdAndUpdate(userId, {
+                $inc: { 
+                    'orders.total': 1,
+                    'orders.pending': 1
+                }
+            });
+        }
+
+        // 🔧 إرسال إشعار للأدمن مع تفاصيل المستخدم
+        const adminUsers = await User.find({ role: 'admin' });
+        for (const admin of adminUsers) {
+            await Notification.create({
+                userId: admin._id,
+                type: 'info',
+                title: 'طلب جديد',
+                message: `طلب جديد #${order.id} من ${username} ${userId ? '(مسجل)' : '(زائر)'}`,
+                relatedTo: 'order',
+                relatedId: order.id
+            });
+        }
         
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(order));
     } catch (error) {
-        console.error('خطأ في إنشاء الطلب:', error);
+        console.error('❌ خطأ في إنشاء الطلب:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to create order' }));
     }
