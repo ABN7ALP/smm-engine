@@ -604,12 +604,12 @@ if (method === 'POST' && pathname === '/api/orders') {
         const maxIdOrder = await Order.findOne().sort('-id').exec();
         const newId = (maxIdOrder?.id || 0) + 1;
         
-        // 🔧 التحقق من المستخدم المسجل
+        // 🔧 التحقق من المستخدم المسجل (باستخدام authUsername بدل username)
         let username = 'public';
         let userId = null;
         let userInfo = 'مستخدم عام';
         
-        const authUsername = checkAuth(req);
+        const authUsername = checkAuth(req); // ⬅️ المتغير الجديد
         if (authUsername) {
             const user = await User.findOne({ username: authUsername });
             if (user) {
@@ -629,7 +629,7 @@ if (method === 'POST' && pathname === '/api/orders') {
             status: 'pending',
             username: username,
             userId: userId,
-            userInfo: userInfo // ⬅️ جديد: معلومات المستخدم الكاملة
+            userInfo: userInfo
         });
 
         console.log(`🎯 تم إنشاء طلب جديد #${order.id} من: ${userInfo}`);
@@ -937,12 +937,15 @@ if (method === 'POST' && pathname === '/api/orders') {
     }
 
     // ==================== المسارات المحمية (تحتاج مصادقة) ====================
-    const username = checkAuth(req);
-    if (!username) {
-      res.writeHead(401, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'غير مصرح: يلزم تسجيل الدخول' }));
-      return;
-    }
+    // في جميع الـ endpoints المحمية، استخدم هذا النمط:
+const currentUser = checkAuth(req);
+if (!currentUser) {
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'غير مصرح: يلزم تسجيل الدخول' }));
+    return;
+}
+
+// ثم استخدم currentUser بدل username في باقي الكود
 
     // الحصول على بيانات المستخدم
     if (pathname === '/api/user/profile' && method === 'GET') {
