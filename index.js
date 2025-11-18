@@ -589,64 +589,91 @@ if (authUsername) {
 await logAction(username, 'order_create', { id: order.id }, clientIP);
 
 // إرسال إشعار للمستخدم إذا كان مسجلاً
-console.log(`🔍 debugging - userId: ${userId}, username: ${username}`);
+// إنشاء طلب جديد
+if (method === 'POST' && pathname === '/api/orders') {
+    const body = await readBody(req);
+    const data = JSON.parse(body || '{}');
+    
+    if (!data.serviceId || !data.link || !isValidUrl(data.link)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Missing or invalid fields' }));
+        return;
+    }
 
-if (userId) {
-    console.log(`🔍 جاري إنشاء إشعار للمستخدم: ${username}`);
     try {
-        const notification = await Notification.create({
-            id: Date.now(),
+        const maxIdOrder = await Order.findOne().sort('-id').exec();
+        const newId = (maxIdOrder?.id || 0) + 1;
+        
+        // 🔧 التحقق من المستخدم المسجل
+        let username = 'public';
+        let userId = null;
+        let userInfo = 'مستخدم عام';
+        
+        const authUsername = checkAuth(req);
+        if (authUsername) {
+            const user = await User.findOne({ username: authUsername });
+            if (user) {
+                username = user.username;
+                userId = user._id;
+                userInfo = `${user.username} (${user.fullName || 'لا يوجد اسم'})`;
+            }
+        }
+        
+        // 🔧 إنشاء الطلب مع معلومات المستخدم
+        const order = await Order.create({
+            id: newId,
+            serviceId: data.serviceId,
+            link: data.link,
+            quantity: data.quantity,
+            price: data.price,
+            status: 'pending',
+            username: username,
             userId: userId,
-            type: 'success', 
-            title: 'تم إنشاء طلب جديد',
-            message: `تم إنشاء طلبك #${order.id} بنجاح. سيتم معالجته قريباً.`,
-            relatedTo: 'order',
-            relatedId: order.id,
-            read: false,
-            createdAt: new Date()
+            userInfo: userInfo // ⬅️ جديد: معلومات المستخدم الكاملة
         });
-        console.log(`✅ تم إنشاء الإشعار بنجاح:`, notification);
-    } catch (error) {
-        console.error('❌ خطأ في إنشاء الإشعار:', error);
-    }
 
-    // تحديث إحصائيات المستخدم
-    const user = await User.findOne({ username: authUsername });
-    if (user) {
-        user.orders.total = (user.orders.total || 0) + 1;
-        user.orders.pending = (user.orders.pending || 0) + 1;
-        await user.save();
-    }
-} else {
-    console.log('🔍 المستخدم غير مسجل دخول - لا إشعارات');
-}
+        console.log(`🎯 تم إنشاء طلب جديد #${order.id} من: ${userInfo}`);
+        
+        await logAction(username, 'order_create', { id: order.id }, clientIP);
+        
+        // 🔧 إرسال إشعار للمستخدم إذا كان مسجلاً
+        if (userId) {
+            await Notification.create({
+                userId: userId,
+                type: 'success',
+                title: 'تم إنشاء طلب جديد',
+                message: `طلبك #${order.id} تم إنشاؤه بنجاح وسيتم معالجته قريباً`,
+                relatedTo: 'order',
+                relatedId: order.id
+            });
 
-// إرسال إشعار للأدمن
-try {
-    const adminUsers = await User.find({ role: 'admin' });
-    for (let i = 0; i < adminUsers.length; i++) {
-        const admin = adminUsers[i];
-        await Notification.create({
-            id: Date.now() + i, // ✅ نستخدم index لتجنب التكرار
-            userId: admin._id,
-            type: 'info',
-            title: 'طلب جديد',
-            message: `تم إنشاء طلب جديد #${order.id} من قبل ${username}`,
-            relatedTo: 'order',
-            relatedId: order.id,
-            read: false,
-            createdAt: new Date()
-        });
-    }
-    console.log(`✅ تم إرسال إشعارات للأدمن بخصوص الطلب #${order.id}`);
-} catch (error) {
-    console.error('❌ خطأ في إرسال إشعارات الأدمن:', error);
-}
+            // تحديث إحصائيات المستخدم
+            await User.findByIdAndUpdate(userId, {
+                $inc: { 
+                    'orders.total': 1,
+                    'orders.pending': 1
+                }
+            });
+        }
+
+        // 🔧 إرسال إشعار للأدمن مع معلومات المستخدم
+        const adminUsers = await User.find({ role: 'admin' });
+        for (const admin of adminUsers) {
+            await Notification.create({
+                userId: admin._id,
+                type: 'info',
+                title: 'طلب جديد',
+                message: `طلب جديد #${order.id} من ${userInfo}`,
+                relatedTo: 'order',
+                relatedId: order.id
+            });
+        }
         
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(order));
+        
     } catch (error) {
-        console.error('خطأ في إنشاء الطلب:', error);
+        console.error('❌ خطأ في إنشاء الطلب:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to create order' }));
     }
