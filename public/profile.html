@@ -444,7 +444,7 @@
         </div>
     </label>
     <input type="file" id="avatarUpload" accept="image/*" style="display: none;" onchange="handleAvatarUpload(event)">
-    <div class="profile-name" id="userFullName">محمد أحمد</div>
+    <div class="profile-name" id="userFullName">جاري تحميل البيانات</div>
       
 
       <div class="profile-stats">
@@ -461,6 +461,15 @@
           <span class="stat-value" id="completedOrders">18</span>
         </div>
       </div>
+
+      
+<!-- أضف هذا الزر -->
+<div style="text-align: center; margin-top: 20px;">
+    <button class="btn btn-primary" onclick="forceRefreshData()" style="background: var(--accent-2);">
+        <i class="fas fa-sync-alt"></i>
+        تحديث البيانات
+    </button>
+
 
       <button class="btn btn-primary btn-block" onclick="showSection('edit-profile')">
         <i class="fas fa-edit"></i>
@@ -862,19 +871,59 @@ async function loadUserData() {
     }
 }
 
+// تحميل فوري للبيانات عند فتح البروفايل
+async function loadAllDataImmediately() {
+    console.log('🚀 تحميل فوري لجميع البيانات...');
+    
+    await loadUserData(); // بيانات المستخدم الأساسية
+    
+    // تحميل إضافي للطلبات بعد ثانيتين
+    setTimeout(async () => {
+        await loadUserOrders();
+        await loadTransactions();
+    }, 2000);
+    
+    // تحميل إضافي بعد 5 ثواني للتأكد
+    setTimeout(async () => {
+        await loadUserOrders();
+    }, 5000);
+}
+
+// في التهيئة - استبدل loadUserData بـ loadAllDataImmediately
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 بدء تحميل الملف الشخصي...');
+    loadAllDataImmediately();
+    setupEventListeners();
+});
+    
 // تحميل طلبات المستخدم
+// تحميل طلبات المستخدم مع التحقق من البيانات
 async function loadUserOrders() {
     try {
+        console.log('📡 جاري جلب طلبات المستخدم...');
+        
         const response = await fetch('/api/user/orders', { 
             headers: headers 
         });
         
-        if (response.ok) {
-            const orders = await response.json();
-            updateOrderStats(orders);
+        if (!response.ok) {
+            throw new Error(`فشل تحميل الطلبات (${response.status})`);
         }
+
+        const orders = await response.json();
+        console.log('✅ تم جلب الطلبات:', orders);
+        
+        // التحقق من صحة البيانات
+        if (!Array.isArray(orders)) {
+            console.error('❌ بيانات الطلبات غير صالحة:', orders);
+            return;
+        }
+        
+        updateOrderStats(orders);
+        
     } catch (error) {
-        console.error('خطأ في تحميل الطلبات:', error);
+        console.error('❌ خطأ في تحميل الطلبات:', error);
+        // لا نعرض تنبيه للمستخدم لأن هذه وظيفة خلفية
     }
 }
 
@@ -1292,7 +1341,26 @@ function handleSessionExpired() {
     }, 2000);
 }
 
-
+// تحديث قسري للبيانات
+async function forceRefreshData() {
+    console.log('🔄 تحديث قسري للبيانات...');
+    showLoading('جاري تحديث جميع البيانات...');
+    
+    try {
+        await Promise.all([
+            loadUserData(),
+            loadUserOrders(),
+            loadTransactions()
+        ]);
+        
+        showAlert('✅ تم تحديث جميع البيانات بنجاح', 'success');
+    } catch (error) {
+        showAlert('❌ فشل تحديث بعض البيانات', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+    
     
     // تحميل تلقائي للطلبات كل 30 ثانية
 setInterval(async () => {
@@ -1311,6 +1379,31 @@ setInterval(async () => {
     }
 }, 30000); // كل 30 ثانية
 
+// التحقق من اتصال الـ APIs
+async function checkAPIConnection() {
+    console.log('🔍 التحقق من اتصال الـ APIs...');
+    
+    const endpoints = [
+        '/api/user/profile',
+        '/api/user/orders',
+        '/api/user/transactions'
+    ];
+    
+    for (const endpoint of endpoints) {
+        try {
+            const response = await fetch(endpoint, { headers });
+            console.log(`${endpoint}: ${response.status === 200 ? '✅' : '❌'} (${response.status})`);
+        } catch (error) {
+            console.error(`❌ ${endpoint}:`, error.message);
+        }
+    }
+}
+
+// استدعاء التحقق بعد التحميل
+setTimeout(() => {
+    checkAPIConnection();
+}, 3000);
+    
 // تحديث الطلبات عند فتح قسم المعاملات
 const originalShowSection = window.showSection;
 window.showSection = function(sectionName) {
