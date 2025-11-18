@@ -1433,17 +1433,78 @@ if (pathname === '/api/user/change-password' && method === 'PUT') {
     }
 
     // طلبات المستخدم الشخصية
-    if (pathname === '/api/user/orders' && method === 'GET') {
-      try {
+    // طلبات المستخدم الشخصية
+if (pathname === '/api/user/orders' && method === 'GET') {
+    try {
         const userOrders = await Order.find({ username }).sort({ createdAt: -1 });
+        console.log(`📦 جلب ${userOrders.length} طلب للمستخدم ${username}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(userOrders));
-      } catch (error) {
+    } catch (error) {
+        console.error('❌ خطأ في جلب طلبات المستخدم:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to load user orders' }));
-      }
-      return;
     }
+    return;
+}
+
+// تحديث حالة الطلب (للأدمن)
+if (pathname.startsWith('/api/orders/') && method === 'PUT') {
+    try {
+        const id = parseInt(pathname.split('/').pop(), 10);
+        const body = await readBody(req);
+        const data = JSON.parse(body || '{}');
+        
+        console.log(`🔄 تحديث حالة الطلب #${id} إلى: ${data.status}`);
+        
+        const order = await Order.findOne({ id });
+        if (!order) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Order not found' }));
+            return;
+        }
+
+        const updatedOrder = await Order.findOneAndUpdate(
+            { id },
+            { 
+                status: data.status,
+                updatedAt: new Date()
+            },
+            { new: true }
+        );
+
+        if (updatedOrder) {
+            console.log(`✅ تم تحديث الطلب #${id} بنجاح`);
+            
+            // إرسال إشعار للمستخدم إذا كان مسجل
+            if (order.username !== 'public') {
+                const user = await User.findOne({ username: order.username });
+                if (user) {
+                    await Notification.create({
+                        userId: user._id,
+                        type: data.status === 'completed' ? 'success' : 'info',
+                        title: `تم تحديث حالة الطلب #${order.id}`,
+                        message: `حالة الطلب أصبحت: ${getOrderStatusText(data.status)}`,
+                        relatedTo: 'order',
+                        relatedId: order.id
+                    });
+                    console.log(`📢 تم إرسال إشعار للمستخدم ${order.username}`);
+                }
+            }
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(updatedOrder));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Order not found' }));
+        }
+    } catch (error) {
+        console.error('❌ خطأ في تحديث الطلب:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to update order' }));
+    }
+    return;
+}
 
     // تسجيل الخروج
     if (method === 'POST' && pathname === '/api/auth/logout') {
