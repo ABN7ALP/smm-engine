@@ -483,6 +483,7 @@
       <div class="tabs">
         <button class="tab active" onclick="showSection('overview')">نظرة عامة</button>
         <button class="tab" onclick="showSection('edit-profile')">الملف الشخصي</button>
+        <button class="tab" onclick="showSection('orders')">طلباتي</button> <!-- ⬅️ جديد -->
         <button class="tab" onclick="showSection('security')">الأمان</button>
         <button class="tab" onclick="showSection('deposit')">شحن الرصيد</button>
         <button class="tab" onclick="showSection('transactions')">المعاملات</button>
@@ -519,6 +520,55 @@
           </div>
         </div>
       </div>
+      
+<div class="nav-section">
+    <div class="nav-title">الطلبات</div>
+    <a href="#" class="nav-link" onclick="showSection('orders')">
+        <i class="fas fa-shopping-cart"></i>
+        طلباتي
+    </a>
+</div>
+      <!-- قسم الطلبات -->
+<div class="content-section" id="orders-section">
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-shopping-cart"></i>
+            <h2>طلباتي</h2>
+            <div style="margin-right: auto;">
+                <select id="ordersFilter" onchange="filterOrders()" class="form-control" style="width: 200px; display: inline-block;">
+                    <option value="all">جميع الطلبات</option>
+                    <option value="pending">قيد الانتظار</option>
+                    <option value="processing">قيد التنفيذ</option>
+                    <option value="completed">مكتمل</option>
+                    <option value="rejected">مرفوض</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="orders-stats" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
+            <div class="stat-card" style="text-align: center; padding: 15px; background: rgba(0, 180, 216, 0.1); border-radius: 10px;">
+                <div style="font-size: 1.5rem; font-weight: bold; color: var(--accent);" id="statsTotal">0</div>
+                <div style="font-size: 0.875rem; color: var(--text-muted);">إجمالي الطلبات</div>
+            </div>
+            <div class="stat-card" style="text-align: center; padding: 15px; background: rgba(16, 185, 129, 0.1); border-radius: 10px;">
+                <div style="font-size: 1.5rem; font-weight: bold; color: var(--success);" id="statsCompleted">0</div>
+                <div style="font-size: 0.875rem; color: var(--text-muted);">مكتمل</div>
+            </div>
+            <div class="stat-card" style="text-align: center; padding: 15px; background: rgba(245, 158, 11, 0.1); border-radius: 10px;">
+                <div style="font-size: 1.5rem; font-weight: bold; color: var(--warning);" id="statsPending">0</div>
+                <div style="font-size: 0.875rem; color: var(--text-muted);">قيد التنفيذ</div>
+            </div>
+            <div class="stat-card" style="text-align: center; padding: 15px; background: rgba(239, 68, 68, 0.1); border-radius: 10px;">
+                <div style="font-size: 1.5rem; font-weight: bold; color: var(--danger);" id="statsRejected">0</div>
+                <div style="font-size: 0.875rem; color: var(--text-muted);">مرفوض</div>
+            </div>
+        </div>
+        
+        <div class="orders-list" id="ordersList">
+            <!-- الطلبات تظهر هنا -->
+        </div>
+    </div>
+</div>
 
       <!-- قسم تعديل الملف -->
       <div class="content-section" id="edit-profile-section">
@@ -744,9 +794,11 @@ function showSection(sectionName) {
     if (activeNav) activeNav.classList.add('active');
 
     // تحميل بيانات إضافية حسب القسم
-    if (sectionName === 'transactions') {
-        loadTransactions();
-    }
+    // تحديث الطلبات عند فتح قسم المعاملات أو الطلبات
+if (sectionName === 'transactions' || sectionName === 'orders' || sectionName === 'overview') {
+    setTimeout(() => {
+        loadUserOrders(); // ⬅️ جديد
+    }, 300);
 }
 
 function getSectionTitle(sectionName) {
@@ -875,20 +927,14 @@ async function loadUserData() {
 async function loadAllDataImmediately() {
     console.log('🚀 تحميل فوري لجميع البيانات...');
     
-    await loadUserData(); // بيانات المستخدم الأساسية
+    await loadUserData();
     
-    // تحميل إضافي للطلبات بعد ثانيتين
+    // تحميل الطلبات والمعاملات
     setTimeout(async () => {
-        await loadUserOrders();
+        await loadUserOrders(); // ⬅️ جديد
         await loadTransactions();
-    }, 2000);
-    
-    // تحميل إضافي بعد 5 ثواني للتأكد
-    setTimeout(async () => {
-        await loadUserOrders();
-    }, 5000);
+    }, 1000);
 }
-
 // في التهيئة - استبدل loadUserData بـ loadAllDataImmediately
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 بدء تحميل الملف الشخصي...');
@@ -1281,6 +1327,180 @@ function displayTransactions(transactions) {
         </div>
         `;
     }).join('');
+}
+
+    // =================================================================
+//  نظام الطلبات في البروفايل
+// =================================================================
+
+let allOrders = [];
+let filteredOrders = [];
+
+// تحميل الطلبات
+async function loadUserOrders() {
+    try {
+        console.log('📡 جاري جلب طلبات المستخدم...');
+        
+        const response = await fetch('/api/user/orders', { 
+            headers: headers 
+        });
+        
+        if (!response.ok) {
+            throw new Error(`فشل تحميل الطلبات (${response.status})`);
+        }
+
+        const orders = await response.json();
+        console.log('✅ تم جلب الطلبات:', orders);
+        
+        if (!Array.isArray(orders)) {
+            console.error('❌ بيانات الطلبات غير صالحة');
+            return;
+        }
+        
+        allOrders = orders;
+        filteredOrders = [...orders];
+        
+        updateOrderStats(orders);
+        displayOrders(orders);
+        
+        // تحديث الإحصائيات في الأعلى أيضاً
+        updateProfileOrderStats(orders);
+        
+    } catch (error) {
+        console.error('❌ خطأ في تحميل الطلبات:', error);
+        document.getElementById('ordersList').innerHTML = `
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-exclamation-circle fa-2x mb-3"></i>
+                <h5>فشل تحميل الطلبات</h5>
+                <p>${error.message}</p>
+            </div>
+        `;
+    }
+}
+
+// عرض الطلبات
+function displayOrders(orders) {
+    const container = document.getElementById('ordersList');
+    if (!container) return;
+    
+    if (!orders || orders.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-shopping-cart fa-2x mb-3 opacity-50"></i>
+                <h5>لا توجد طلبات</h5>
+                <p class="mb-0">لم تقم بأي طلبات حتى الآن</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = orders.map(order => {
+        const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        return `
+        <div class="order-item" style="border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 15px; background: rgba(30, 41, 59, 0.5);">
+            <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 15px;">
+                <div>
+                    <h4 style="margin: 0; color: var(--accent);">طلب #${order.id}</h4>
+                    <p style="margin: 5px 0; color: var(--text-muted); font-size: 0.875rem;">${orderDate}</p>
+                </div>
+                <span class="order-status ${order.status}" style="padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; background: ${getStatusColor(order.status)}; color: white;">
+                    ${getOrderStatusText(order.status)}
+                </span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div>
+                    <strong>الرابط:</strong>
+                    <div style="word-break: break-all; margin-top: 5px;">
+                        <a href="${order.link}" target="_blank" style="color: var(--accent); text-decoration: none;">${order.link}</a>
+                    </div>
+                </div>
+                <div>
+                    <strong>التكلفة:</strong>
+                    <div style="margin-top: 5px; font-weight: bold; color: var(--accent);">$${order.price?.toFixed(2) || '0.00'}</div>
+                </div>
+            </div>
+            
+            ${order.quantity ? `
+            <div style="margin-bottom: 10px;">
+                <strong>الكمية:</strong>
+                <span>${order.quantity}</span>
+            </div>
+            ` : ''}
+            
+            <div style="border-top: 1px solid var(--border); padding-top: 10px; font-size: 0.875rem; color: var(--text-muted);">
+                <strong>رقم الخدمة:</strong> ${order.serviceId}
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+// تصفية الطلبات
+function filterOrders() {
+    const filter = document.getElementById('ordersFilter').value;
+    
+    if (filter === 'all') {
+        filteredOrders = [...allOrders];
+    } else {
+        filteredOrders = allOrders.filter(order => order.status === filter);
+    }
+    
+    displayOrders(filteredOrders);
+}
+
+// تحديث إحصائيات الطلبات في قسم الطلبات
+function updateOrderStats(orders) {
+    const total = orders.length;
+    const completed = orders.filter(o => o.status === 'completed').length;
+    const pending = orders.filter(o => o.status === 'pending' || o.status === 'processing').length;
+    const rejected = orders.filter(o => o.status === 'rejected').length;
+    
+    document.getElementById('statsTotal').textContent = total;
+    document.getElementById('statsCompleted').textContent = completed;
+    document.getElementById('statsPending').textContent = pending;
+    document.getElementById('statsRejected').textContent = rejected;
+}
+
+// تحديث إحصائيات الطلبات في البروفايل الرئيسي
+function updateProfileOrderStats(orders) {
+    const totalOrdersElement = document.getElementById('totalOrders');
+    const completedOrdersElement = document.getElementById('completedOrders');
+    
+    if (totalOrdersElement) {
+        totalOrdersElement.textContent = orders.length;
+    }
+    if (completedOrdersElement) {
+        completedOrdersElement.textContent = orders.filter(o => o.status === 'completed').length;
+    }
+}
+
+// دوال مساعدة للطلبات
+function getStatusColor(status) {
+    const colors = {
+        'pending': 'var(--warning)',
+        'processing': 'var(--accent)',
+        'completed': 'var(--success)',
+        'rejected': 'var(--danger)'
+    };
+    return colors[status] || 'var(--text-muted)';
+}
+
+function getOrderStatusText(status) {
+    const texts = {
+        'pending': '⏳ قيد الانتظار',
+        'processing': '⚙️ قيد التنفيذ',
+        'completed': '✅ مكتمل',
+        'rejected': '❌ مرفوض'
+    };
+    return texts[status] || status;
 }
 // دوال مساعدة
 function getTransactionIcon(type) {
