@@ -938,8 +938,8 @@ if (method === 'POST' && pathname === '/api/orders') {
 
     // ==================== المسارات المحمية (تحتاج مصادقة) ====================
     // في جميع الـ endpoints المحمية، استخدم هذا النمط:
-const currentUser = checkAuth(req);
-if (!currentUser) {
+const username = checkAuth(req);
+if (!username) {
     res.writeHead(401, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'غير مصرح: يلزم تسجيل الدخول' }));
     return;
