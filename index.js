@@ -604,19 +604,18 @@ if (method === 'POST' && pathname === '/api/orders') {
         const maxIdOrder = await Order.findOne().sort('-id').exec();
         const newId = (maxIdOrder?.id || 0) + 1;
         
-        // 🔧 التحقق من المستخدم المسجل
-        let username = 'public';
+        // 🔧 استخدام اسم متغير مختلف
+        let orderUsername = 'public';
         let userId = null;
         
-        const authUsername = checkAuth(req);
+        const authUsername = checkAuth(req); // هذا يرجع username أو null
         if (authUsername) {
             const user = await User.findOne({ username: authUsername });
             if (user) {
-                username = user.username;
+                orderUsername = user.username; // 🔧 استخدم orderUsername بدل username
                 userId = user._id;
-                console.log(`🔐 طلب من مستخدم مسجل: ${username}`);
+                console.log(`🔐 طلب من مستخدم مسجل: ${orderUsername}`);
                 
-                // التحقق من الرصيد إذا كان الطلب مدفوع
                 if (user.balanceFrozen) {
                     res.writeHead(400, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ error: 'لا يمكن إنشاء طلب - الرصيد مجمد' }));
@@ -627,7 +626,7 @@ if (method === 'POST' && pathname === '/api/orders') {
             console.log('🌐 طلب من زائر عام');
         }
         
-        // إنشاء الطلب مع بيانات المستخدم
+        // إنشاء الطلب مع البيانات المصححة
         const order = await Order.create({
             id: newId,
             serviceId: data.serviceId,
@@ -635,16 +634,15 @@ if (method === 'POST' && pathname === '/api/orders') {
             quantity: data.quantity,
             price: data.price,
             status: 'pending',
-            username: username,
-            userId: userId, // 🔧 جديد: تخزين ID المستخدم
-            userType: authUsername ? 'registered' : 'public' // 🔧 جديد: نوع المستخدم
+            username: orderUsername, // 🔧 استخدم orderUsername هنا
+            userId: userId,
+            userType: authUsername ? 'registered' : 'public'
         });
 
-        console.log(`✅ تم إنشاء طلب جديد #${order.id} من قبل ${username}`);
+        console.log(`✅ تم إنشاء طلب جديد #${order.id} من قبل ${orderUsername}`);
         
-        await logAction(username, 'order_create', { id: order.id }, clientIP);
+        await logAction(orderUsername, 'order_create', { id: order.id }, clientIP);
         
-        // 🔧 إرسال إشعار للمستخدم إذا كان مسجلاً
         if (userId) {
             await Notification.create({
                 userId: userId,
@@ -661,7 +659,7 @@ if (method === 'POST' && pathname === '/api/orders') {
                 user.orders.total = (user.orders.total || 0) + 1;
                 user.orders.pending = (user.orders.pending || 0) + 1;
                 await user.save();
-                console.log(`📊 تم تحديث إحصائيات المستخدم ${username}`);
+                console.log(`📊 تم تحديث إحصائيات المستخدم ${orderUsername}`);
             }
         }
 
@@ -672,7 +670,7 @@ if (method === 'POST' && pathname === '/api/orders') {
                 userId: admin._id,
                 type: 'info',
                 title: 'طلب جديد',
-                message: `تم إنشاء طلب جديد #${order.id} من قبل ${username} ${userId ? '(مسجل)' : '(زائر)'}`,
+                message: `تم إنشاء طلب جديد #${order.id} من قبل ${orderUsername} ${userId ? '(مسجل)' : '(زائر)'}`,
                 relatedTo: 'order',
                 relatedId: order.id
             });
@@ -1242,13 +1240,23 @@ if (pathname === '/api/user/upload-avatar' && method === 'POST') {
 }
 
 // الحصول على طلبات المستخدم الشخصية
+// طلبات المستخدم الشخصية
 if (pathname === '/api/user/orders' && method === 'GET') {
     try {
-        const userOrders = await Order.find({ username }).sort({ createdAt: -1 });
+        // 🔧 استخدام authUsername بدل username
+        const authUsername = checkAuth(req);
+        if (!authUsername) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'غير مصرح' }));
+            return;
+        }
+
+        const userOrders = await Order.find({ username: authUsername }).sort({ createdAt: -1 });
+        console.log(`📦 جلب ${userOrders.length} طلب للمستخدم ${authUsername}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(userOrders));
     } catch (error) {
-        console.error('خطأ في جلب طلبات المستخدم:', error);
+        console.error('❌ خطأ في جلب طلبات المستخدم:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to load user orders' }));
     }
@@ -1566,40 +1574,47 @@ if (pathname.startsWith('/api/orders/') && method === 'PUT') {
     }
 
     // الإحصائيات
-    if (pathname === '/api/stats' && method === 'GET') {
-      try {
+    // الإحصائيات
+if (pathname === '/api/stats' && method === 'GET') {
+    try {
         const totalServices = await Service.countDocuments();
         const totalOrders = await Order.countDocuments();
         const pendingOrders = await Order.countDocuments({ status: 'pending' });
         
-        // حساب متوسط السعر
+        // 🔧 إحصائيات إضافية عن المستخدمين
+        const registeredUsersOrders = await Order.countDocuments({ userType: 'registered' });
+        const publicUsersOrders = await Order.countDocuments({ userType: 'public' });
+        
         const services = await Service.find({});
         const priceValues = services.map(s => {
-          if (s.type === 'fixed') return parseFloat(s.price) || 0;
-          if (s.type === 'quantity') return parseFloat(s.rate) || 0;
-          return 0;
+            if (s.type === 'fixed') return parseFloat(s.price) || 0;
+            if (s.type === 'quantity') return parseFloat(s.rate) || 0;
+            return 0;
         }).filter(v => v > 0);
         
         const avgPrice = priceValues.length > 0 
-          ? (priceValues.reduce((a, b) => a + b, 0) / priceValues.length).toFixed(2)
-          : 0;
+            ? (priceValues.reduce((a, b) => a + b, 0) / priceValues.length).toFixed(2)
+            : 0;
 
         const stats = {
-          totalServices,
-          totalOrders,
-          pendingOrders,
-          avgPrice: parseFloat(avgPrice)
+            totalServices,
+            totalOrders,
+            pendingOrders,
+            registeredUsersOrders, // 🔧 جديد
+            publicUsersOrders,     // 🔧 جديد
+            avgPrice: parseFloat(avgPrice)
         };
 
+        console.log('📊 الإحصائيات:', stats);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(stats));
-      } catch (error) {
+    } catch (error) {
         console.error('Stats error:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to load stats' }));
-      }
-      return;
     }
+    return;
+}
 
     // جميع الطلبات (للأدمن)
     if (pathname === '/api/orders' && method === 'GET') {
