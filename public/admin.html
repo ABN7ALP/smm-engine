@@ -761,6 +761,16 @@ body.dark-mode .input-group-text {
     <section id="orders-section" class="section" style="display: none;">
       <h2 class="mb-4"><i class="fas fa-shopping-cart"></i> إدارة الطلبات</h2>
       
+      <div class="filter-area">
+    <!-- 🔧 فلتر جديد للمستخدمين -->
+    <select id="userFilter" class="form-select" style="max-width: 200px;">
+        <option value="all">جميع المستخدمين</option>
+        <option value="registered">المستخدمين المسجلين فقط</option>
+        <option value="public">المستخدمين العامين فقط</option>
+    </select>
+    
+    
+</div>
       <div class="card">
         <div class="card-header">
           <h5 class="mb-0">قائمة الطلبات</h5>
@@ -1093,6 +1103,30 @@ async function loadStats() {
     }
 }
 
+  // تحديث الإحصائيات في لوحة التحكم
+async function updateAdminStats() {
+    try {
+        // إحصائيات الطلبات
+        const totalOrders = allOrdersData.length;
+        const registeredUserOrders = allOrdersData.filter(order => order.username !== 'public').length;
+        const publicUserOrders = allOrdersData.filter(order => order.username === 'public').length;
+        
+        // إحصائيات المستخدمين
+        const totalUsers = await (await fetchWithAuth('/api/admin/users')).json();
+        const activeUsers = totalUsers.filter(user => user.status === 'active').length;
+        
+        // عرض الإحصائيات (يمكن إضافتها في واجهة الأدمن)
+        console.log('📊 إحصائيات الطلبات:', {
+            'إجمالي الطلبات': totalOrders,
+            'طلبات مسجلين': registeredUserOrders,
+            'طلبات عامة': publicUserOrders,
+            'المستخدمين النشطين': activeUsers
+        });
+        
+    } catch (error) {
+        console.error('❌ خطأ في تحديث الإحصائيات:', error);
+    }
+}
 // ========== نظام الخدمات ==========
 
 async function loadServices() {
@@ -1170,7 +1204,7 @@ async function loadOrders() {
         console.error('❌ خطأ في تحميل الطلبات:', error);
     }
 }
-
+// عرض الطلبات في لوحة التحكم مع معلومات المستخدم
 function renderOrders(ordersList) {
     const tbody = document.getElementById('ordersTable');
     if (!tbody) {
@@ -1181,36 +1215,36 @@ function renderOrders(ordersList) {
     console.log('🎯 جاري عرض الطلبات:', ordersList);
     tbody.innerHTML = '';
     
-    // التحقق من صحة البيانات
-    if (!Array.isArray(ordersList)) {
-        console.error('❌ بيانات الطلبات ليست مصفوفة:', ordersList);
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">خطأ في تحميل البيانات</td></tr>';
-        return;
-    }
-    
-    if (ordersList.length === 0) {
-        console.log('ℹ️ لا توجد طلبات لعرضها');
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">لا توجد طلبات</td></tr>';
+    if (!Array.isArray(ordersList) || ordersList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">لا توجد طلبات</td></tr>';
         return;
     }
     
     // عرض كل طلب
-    ordersList.forEach(order => {
-        console.log('📦 معالجة الطلب:', order);
-        
+    tbody.innerHTML = ordersList.map(order => {
         // البحث عن الخدمة المرتبطة بالطلب
-        const service = allServices.find(s => {
-            const serviceId = String(s.id);
-            const orderServiceId = String(order.serviceId);
-            return serviceId === orderServiceId;
-        });
-        
+        const service = allServices.find(s => String(s.id) === String(order.serviceId));
         const serviceName = service ? service.name : `خدمة ${order.serviceId}`;
         
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${order.id || 'N/A'}</td>
+        // 🔧 معلومات المستخدم
+        const userInfo = order.userInfo || (order.username === 'public' ? 'مستخدم عام' : order.username);
+        const userBadge = order.username === 'public' ? 
+            '<span class="badge bg-secondary">عام</span>' : 
+            '<span class="badge bg-primary">مسجل</span>';
+        
+        return `
+        <tr>
+            <td>
+                <strong>#${order.id}</strong>
+                ${userBadge}
+            </td>
             <td>${serviceName}</td>
+            <td>
+                <div>
+                    <div><strong>${userInfo}</strong></div>
+                    <small class="text-muted">${order.username}</small>
+                </div>
+            </td>
             <td>
                 <a href="${order.link}" target="_blank" class="text-truncate d-inline-block" style="max-width: 150px;">
                     ${order.link}
@@ -1226,17 +1260,18 @@ function renderOrders(ordersList) {
                     <option value="rejected" ${order.status === 'rejected' ? 'selected' : ''}>❌ مرفوض</option>
                 </select>
             </td>
-            <td>${new Date(order.createdAt).toLocaleString('ar-SA')}</td>
+            <td>
+                <small>${new Date(order.createdAt).toLocaleDateString('en-US')}</small>
+                <br>
+                <small class="text-muted">${new Date(order.createdAt).toLocaleTimeString('en-US')}</small>
+            </td>
+        </tr>
         `;
-        tbody.appendChild(tr);
-    });
-    
-    console.log(`✅ تم عرض ${ordersList.length} طلب بنجاح`);
+    }).join('');
     
     // إضافة أحداث لتغيير حالة الطلبات
     setupOrderStatusEvents();
 }
-
 function setupOrderStatusEvents() {
     document.querySelectorAll('.order-status').forEach(select => {
         select.addEventListener('change', function() {
@@ -2230,6 +2265,27 @@ function getUserStatusText(status) {
     };
     return texts[status] || status;
 }
+  // 🔧 فلتر الطلبات حسب المستخدم
+function setupUserFilter() {
+    const userFilter = document.getElementById('userFilter');
+    if (userFilter) {
+        userFilter.addEventListener('change', function() {
+            const filterValue = this.value;
+            let filteredOrders = allOrdersData;
+            
+            if (filterValue === 'registered') {
+                filteredOrders = allOrdersData.filter(order => order.username !== 'public');
+            } else if (filterValue === 'public') {
+                filteredOrders = allOrdersData.filter(order => order.username === 'public');
+            }
+            
+            renderOrders(filteredOrders);
+        });
+    }
+}
+
+// في التهيئة أضف:
+setupUserFilter();
 
 // تحديث التهيئة الرئيسية
 const originalInitializeApp = window.initializeApp;
