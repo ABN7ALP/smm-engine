@@ -462,13 +462,6 @@
         </div>
       </div>
 
-      
-<!-- أضف هذا الزر -->
-<div style="text-align: center; margin-top: 20px;">
-    <button class="btn btn-primary" onclick="forceRefreshData()" style="background: var(--accent-2);">
-        <i class="fas fa-sync-alt"></i>
-        تحديث البيانات
-    </button>
 
 
       <button class="btn btn-primary btn-block" onclick="showSection('edit-profile')">
@@ -738,16 +731,16 @@
   <script>
     
       
-      // =================================================================
+// =================================================================
 //  نظام الملف الشخصي - النسخة المعدلة (بيانات حقيقية)
 // =================================================================
-
-
 // =================================================================
-//  نظام الملف الشخصي - النسخة المصححة
+//  نظام الملف الشخصي - النسخة المصححة كاملة
 // =================================================================
 
 let userData = {};
+let allOrders = [];
+let filteredOrders = [];
 const headers = {
     'Content-Type': 'application/json',
     'x-auth-token': localStorage.getItem('authToken')
@@ -794,17 +787,21 @@ function showSection(sectionName) {
     if (activeNav) activeNav.classList.add('active');
 
     // تحميل بيانات إضافية حسب القسم
-    // تحديث الطلبات عند فتح قسم المعاملات أو الطلبات
-if (sectionName === 'transactions' || sectionName === 'orders' || sectionName === 'overview') {
-    setTimeout(() => {
-        loadUserOrders(); // ⬅️ جديد
-    }, 300);
+    if (sectionName === 'transactions') {
+        loadTransactions();
+    }
+    if (sectionName === 'orders' || sectionName === 'overview') {
+        setTimeout(() => {
+            loadUserOrders();
+        }, 300);
+    }
 }
 
 function getSectionTitle(sectionName) {
     const titles = {
         'overview': 'نظرة عامة',
         'edit-profile': 'الملف الشخصي', 
+        'orders': 'طلباتي',
         'security': 'الأمان',
         'deposit': 'شحن الرصيد',
         'transactions': 'المعاملات'
@@ -859,7 +856,7 @@ function hideLoading() {
 // التهيئة
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 بدء تحميل الملف الشخصي...');
-    loadUserData();
+    loadAllDataImmediately();
     setupEventListeners();
 });
 
@@ -889,6 +886,19 @@ function setupEventListeners() {
     }
 }
 
+// تحميل فوري للبيانات
+async function loadAllDataImmediately() {
+    console.log('🚀 تحميل فوري لجميع البيانات...');
+    
+    await loadUserData();
+    
+    // تحميل الطلبات والمعاملات
+    setTimeout(async () => {
+        await loadUserOrders();
+        await loadTransactions();
+    }, 1000);
+}
+
 // تحميل بيانات المستخدم
 async function loadUserData() {
     try {
@@ -911,10 +921,8 @@ async function loadUserData() {
         console.log('✅ بيانات المستخدم:', userData);
         
         displayUserData(userData);
-        await loadUserOrders();
         
         hideLoading();
-        showAlert('✅ تم تحميل البيانات بنجاح', 'success');
         
     } catch (error) {
         hideLoading();
@@ -923,27 +931,7 @@ async function loadUserData() {
     }
 }
 
-// تحميل فوري للبيانات عند فتح البروفايل
-async function loadAllDataImmediately() {
-    console.log('🚀 تحميل فوري لجميع البيانات...');
-    
-    await loadUserData();
-    
-    // تحميل الطلبات والمعاملات
-    setTimeout(async () => {
-        await loadUserOrders(); // ⬅️ جديد
-        await loadTransactions();
-    }, 1000);
-}
-// في التهيئة - استبدل loadUserData بـ loadAllDataImmediately
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 بدء تحميل الملف الشخصي...');
-    loadAllDataImmediately();
-    setupEventListeners();
-});
-    
 // تحميل طلبات المستخدم
-// تحميل طلبات المستخدم مع التحقق من البيانات
 async function loadUserOrders() {
     try {
         console.log('📡 جاري جلب طلبات المستخدم...');
@@ -959,60 +947,161 @@ async function loadUserOrders() {
         const orders = await response.json();
         console.log('✅ تم جلب الطلبات:', orders);
         
-        // التحقق من صحة البيانات
         if (!Array.isArray(orders)) {
-            console.error('❌ بيانات الطلبات غير صالحة:', orders);
+            console.error('❌ بيانات الطلبات غير صالحة');
             return;
         }
         
+        allOrders = orders;
+        filteredOrders = [...orders];
+        
         updateOrderStats(orders);
+        displayOrders(orders);
+        updateProfileOrderStats(orders);
         
     } catch (error) {
         console.error('❌ خطأ في تحميل الطلبات:', error);
-        // لا نعرض تنبيه للمستخدم لأن هذه وظيفة خلفية
+        const container = document.getElementById('ordersList');
+        if (container) {
+            container.innerHTML = `
+                <div class="text-center py-5 text-muted">
+                    <i class="fas fa-exclamation-circle fa-2x mb-3"></i>
+                    <h5>فشل تحميل الطلبات</h5>
+                    <p>${error.message}</p>
+                </div>
+            `;
+        }
     }
 }
 
-// تحديث إحصائيات الطلبات
-// تحديث إحصائيات الطلبات
-function updateOrderStats(orders) {
-    console.log('📊 تحديث إحصائيات الطلبات:', orders);
+// عرض الطلبات
+function displayOrders(orders) {
+    const container = document.getElementById('ordersList');
+    if (!container) return;
     
-    if (!orders || !Array.isArray(orders)) {
-        console.warn('⚠️ لا توجد طلبات أو البيانات غير صحيحة');
+    if (!orders || orders.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-shopping-cart fa-2x mb-3 opacity-50"></i>
+                <h5>لا توجد طلبات</h5>
+                <p class="mb-0">لم تقم بأي طلبات حتى الآن</p>
+            </div>
+        `;
         return;
     }
+
+    container.innerHTML = orders.map(order => {
+        const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        return `
+        <div class="order-item" style="border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 15px; background: rgba(30, 41, 59, 0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                <div>
+                    <h4 style="margin: 0; color: var(--accent);">طلب #${order.id}</h4>
+                    <p style="margin: 5px 0; color: var(--text-muted); font-size: 0.875rem;">${orderDate}</p>
+                </div>
+                <span class="order-status ${order.status}" style="padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; background: ${getStatusColor(order.status)}; color: white;">
+                    ${getOrderStatusText(order.status)}
+                </span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div>
+                    <strong>الرابط:</strong>
+                    <div style="word-break: break-all; margin-top: 5px;">
+                        <a href="${order.link}" target="_blank" style="color: var(--accent); text-decoration: none;">${order.link}</a>
+                    </div>
+                </div>
+                <div>
+                    <strong>التكلفة:</strong>
+                    <div style="margin-top: 5px; font-weight: bold; color: var(--accent);">$${order.price?.toFixed(2) || '0.00'}</div>
+                </div>
+            </div>
+            
+            ${order.quantity ? `
+            <div style="margin-bottom: 10px;">
+                <strong>الكمية:</strong>
+                <span>${order.quantity}</span>
+            </div>
+            ` : ''}
+            
+            <div style="border-top: 1px solid var(--border); padding-top: 10px; font-size: 0.875rem; color: var(--text-muted);">
+                <strong>رقم الخدمة:</strong> ${order.serviceId}
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+// تصفية الطلبات
+function filterOrders() {
+    const filter = document.getElementById('ordersFilter').value;
     
-    const totalOrders = orders.length;
-    const completedOrders = orders.filter(order => order.status === 'completed').length;
-    const pendingOrders = orders.filter(order => order.status === 'pending').length;
+    if (filter === 'all') {
+        filteredOrders = [...allOrders];
+    } else {
+        filteredOrders = allOrders.filter(order => order.status === filter);
+    }
     
-    console.log(`📈 الإحصائيات - الكل: ${totalOrders}, مكتمل: ${completedOrders}, معلق: ${pendingOrders}`);
+    displayOrders(filteredOrders);
+}
+
+// تحديث إحصائيات الطلبات
+function updateOrderStats(orders) {
+    const total = orders.length;
+    const completed = orders.filter(o => o.status === 'completed').length;
+    const pending = orders.filter(o => o.status === 'pending' || o.status === 'processing').length;
+    const rejected = orders.filter(o => o.status === 'rejected').length;
     
-    // تحديث العناصر في الواجهة
+    const statsTotal = document.getElementById('statsTotal');
+    const statsCompleted = document.getElementById('statsCompleted');
+    const statsPending = document.getElementById('statsPending');
+    const statsRejected = document.getElementById('statsRejected');
+    
+    if (statsTotal) statsTotal.textContent = total;
+    if (statsCompleted) statsCompleted.textContent = completed;
+    if (statsPending) statsPending.textContent = pending;
+    if (statsRejected) statsRejected.textContent = rejected;
+}
+
+// تحديث إحصائيات البروفايل الرئيسي
+function updateProfileOrderStats(orders) {
     const totalOrdersElement = document.getElementById('totalOrders');
     const completedOrdersElement = document.getElementById('completedOrders');
     
     if (totalOrdersElement) {
-        totalOrdersElement.textContent = totalOrders;
-        console.log('✅ تم تحديث إجمالي الطلبات:', totalOrders);
-    } else {
-        console.error('❌ عنصر totalOrders غير موجود');
+        totalOrdersElement.textContent = orders.length;
     }
-    
     if (completedOrdersElement) {
-        completedOrdersElement.textContent = completedOrders;
-        console.log('✅ تم تحديث الطلبات المكتملة:', completedOrders);
-    } else {
-        console.error('❌ عنصر completedOrders غير موجود');
+        completedOrdersElement.textContent = orders.filter(o => o.status === 'completed').length;
     }
-    
-    // تحديث بيانات المستخدم
-    if (userData.orders) {
-        userData.orders.total = totalOrders;
-        userData.orders.completed = completedOrders;
-        userData.orders.pending = pendingOrders;
-    }
+}
+
+// دوال مساعدة للطلبات
+function getStatusColor(status) {
+    const colors = {
+        'pending': 'var(--warning)',
+        'processing': 'var(--accent)',
+        'completed': 'var(--success)',
+        'rejected': 'var(--danger)'
+    };
+    return colors[status] || 'var(--text-muted)';
+}
+
+function getOrderStatusText(status) {
+    const texts = {
+        'pending': '⏳ قيد الانتظار',
+        'processing': '⚙️ قيد التنفيذ',
+        'completed': '✅ مكتمل',
+        'rejected': '❌ مرفوض'
+    };
+    return texts[status] || status;
 }
 
 // عرض بيانات المستخدم
@@ -1049,12 +1138,11 @@ function displayUserData(data) {
     if (phoneInput) phoneInput.value = data.phone || '';
     
     // تاريخ الإنضمام
-    // تاريخ الإنضمام
-const joinDateElement = document.getElementById('overviewJoinDate');
-if (joinDateElement && data.createdAt) {
-    const joinDate = new Date(data.createdAt).toLocaleDateString('en-US');
-    joinDateElement.value = joinDate;
-}
+    const joinDateElement = document.getElementById('overviewJoinDate');
+    if (joinDateElement && data.createdAt) {
+        const joinDate = new Date(data.createdAt).toLocaleDateString('en-US');
+        joinDateElement.value = joinDate;
+    }
     
     // الصورة الشخصية
     const avatarElement = document.getElementById('userAvatar');
@@ -1279,7 +1367,6 @@ async function loadTransactions() {
 }
 
 // عرض المعاملات
-// عرض المعاملات
 function displayTransactions(transactions) {
     const container = document.getElementById('transactionsList');
     if (!container) return;
@@ -1296,7 +1383,6 @@ function displayTransactions(transactions) {
     }
 
     container.innerHTML = transactions.map(transaction => {
-        // تنسيق التاريخ ميلادي
         const transactionDate = new Date(transaction.createdAt);
         const formattedDate = transactionDate.toLocaleDateString('en-US', {
             year: 'numeric',
@@ -1329,179 +1415,6 @@ function displayTransactions(transactions) {
     }).join('');
 }
 
-    // =================================================================
-//  نظام الطلبات في البروفايل
-// =================================================================
-
-let allOrders = [];
-let filteredOrders = [];
-
-// تحميل الطلبات
-async function loadUserOrders() {
-    try {
-        console.log('📡 جاري جلب طلبات المستخدم...');
-        
-        const response = await fetch('/api/user/orders', { 
-            headers: headers 
-        });
-        
-        if (!response.ok) {
-            throw new Error(`فشل تحميل الطلبات (${response.status})`);
-        }
-
-        const orders = await response.json();
-        console.log('✅ تم جلب الطلبات:', orders);
-        
-        if (!Array.isArray(orders)) {
-            console.error('❌ بيانات الطلبات غير صالحة');
-            return;
-        }
-        
-        allOrders = orders;
-        filteredOrders = [...orders];
-        
-        updateOrderStats(orders);
-        displayOrders(orders);
-        
-        // تحديث الإحصائيات في الأعلى أيضاً
-        updateProfileOrderStats(orders);
-        
-    } catch (error) {
-        console.error('❌ خطأ في تحميل الطلبات:', error);
-        document.getElementById('ordersList').innerHTML = `
-            <div class="text-center py-5 text-muted">
-                <i class="fas fa-exclamation-circle fa-2x mb-3"></i>
-                <h5>فشل تحميل الطلبات</h5>
-                <p>${error.message}</p>
-            </div>
-        `;
-    }
-}
-
-// عرض الطلبات
-function displayOrders(orders) {
-    const container = document.getElementById('ordersList');
-    if (!container) return;
-    
-    if (!orders || orders.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-5 text-muted">
-                <i class="fas fa-shopping-cart fa-2x mb-3 opacity-50"></i>
-                <h5>لا توجد طلبات</h5>
-                <p class="mb-0">لم تقم بأي طلبات حتى الآن</p>
-            </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = orders.map(order => {
-        const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        return `
-        <div class="order-item" style="border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 15px; background: rgba(30, 41, 59, 0.5);">
-            <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 15px;">
-                <div>
-                    <h4 style="margin: 0; color: var(--accent);">طلب #${order.id}</h4>
-                    <p style="margin: 5px 0; color: var(--text-muted); font-size: 0.875rem;">${orderDate}</p>
-                </div>
-                <span class="order-status ${order.status}" style="padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; background: ${getStatusColor(order.status)}; color: white;">
-                    ${getOrderStatusText(order.status)}
-                </span>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                <div>
-                    <strong>الرابط:</strong>
-                    <div style="word-break: break-all; margin-top: 5px;">
-                        <a href="${order.link}" target="_blank" style="color: var(--accent); text-decoration: none;">${order.link}</a>
-                    </div>
-                </div>
-                <div>
-                    <strong>التكلفة:</strong>
-                    <div style="margin-top: 5px; font-weight: bold; color: var(--accent);">$${order.price?.toFixed(2) || '0.00'}</div>
-                </div>
-            </div>
-            
-            ${order.quantity ? `
-            <div style="margin-bottom: 10px;">
-                <strong>الكمية:</strong>
-                <span>${order.quantity}</span>
-            </div>
-            ` : ''}
-            
-            <div style="border-top: 1px solid var(--border); padding-top: 10px; font-size: 0.875rem; color: var(--text-muted);">
-                <strong>رقم الخدمة:</strong> ${order.serviceId}
-            </div>
-        </div>
-        `;
-    }).join('');
-}
-
-// تصفية الطلبات
-function filterOrders() {
-    const filter = document.getElementById('ordersFilter').value;
-    
-    if (filter === 'all') {
-        filteredOrders = [...allOrders];
-    } else {
-        filteredOrders = allOrders.filter(order => order.status === filter);
-    }
-    
-    displayOrders(filteredOrders);
-}
-
-// تحديث إحصائيات الطلبات في قسم الطلبات
-function updateOrderStats(orders) {
-    const total = orders.length;
-    const completed = orders.filter(o => o.status === 'completed').length;
-    const pending = orders.filter(o => o.status === 'pending' || o.status === 'processing').length;
-    const rejected = orders.filter(o => o.status === 'rejected').length;
-    
-    document.getElementById('statsTotal').textContent = total;
-    document.getElementById('statsCompleted').textContent = completed;
-    document.getElementById('statsPending').textContent = pending;
-    document.getElementById('statsRejected').textContent = rejected;
-}
-
-// تحديث إحصائيات الطلبات في البروفايل الرئيسي
-function updateProfileOrderStats(orders) {
-    const totalOrdersElement = document.getElementById('totalOrders');
-    const completedOrdersElement = document.getElementById('completedOrders');
-    
-    if (totalOrdersElement) {
-        totalOrdersElement.textContent = orders.length;
-    }
-    if (completedOrdersElement) {
-        completedOrdersElement.textContent = orders.filter(o => o.status === 'completed').length;
-    }
-}
-
-// دوال مساعدة للطلبات
-function getStatusColor(status) {
-    const colors = {
-        'pending': 'var(--warning)',
-        'processing': 'var(--accent)',
-        'completed': 'var(--success)',
-        'rejected': 'var(--danger)'
-    };
-    return colors[status] || 'var(--text-muted)';
-}
-
-function getOrderStatusText(status) {
-    const texts = {
-        'pending': '⏳ قيد الانتظار',
-        'processing': '⚙️ قيد التنفيذ',
-        'completed': '✅ مكتمل',
-        'rejected': '❌ مرفوض'
-    };
-    return texts[status] || status;
-}
 // دوال مساعدة
 function getTransactionIcon(type) {
     const icons = {
@@ -1561,81 +1474,6 @@ function handleSessionExpired() {
     }, 2000);
 }
 
-// تحديث قسري للبيانات
-async function forceRefreshData() {
-    console.log('🔄 تحديث قسري للبيانات...');
-    showLoading('جاري تحديث جميع البيانات...');
-    
-    try {
-        await Promise.all([
-            loadUserData(),
-            loadUserOrders(),
-            loadTransactions()
-        ]);
-        
-        showAlert('✅ تم تحديث جميع البيانات بنجاح', 'success');
-    } catch (error) {
-        showAlert('❌ فشل تحديث بعض البيانات', 'error');
-    } finally {
-        hideLoading();
-    }
-}
-    
-    
-    // تحميل تلقائي للطلبات كل 30 ثانية
-setInterval(async () => {
-    try {
-        const response = await fetch('/api/user/orders', { 
-            headers: headers 
-        });
-        
-        if (response.ok) {
-            const orders = await response.json();
-            updateOrderStats(orders);
-            console.log('🔄 تم تحديث إحصائيات الطلبات تلقائياً');
-        }
-    } catch (error) {
-        console.error('❌ خطأ في التحديث التلقائي:', error);
-    }
-}, 30000); // كل 30 ثانية
-
-// التحقق من اتصال الـ APIs
-async function checkAPIConnection() {
-    console.log('🔍 التحقق من اتصال الـ APIs...');
-    
-    const endpoints = [
-        '/api/user/profile',
-        '/api/user/orders',
-        '/api/user/transactions'
-    ];
-    
-    for (const endpoint of endpoints) {
-        try {
-            const response = await fetch(endpoint, { headers });
-            console.log(`${endpoint}: ${response.status === 200 ? '✅' : '❌'} (${response.status})`);
-        } catch (error) {
-            console.error(`❌ ${endpoint}:`, error.message);
-        }
-    }
-}
-
-// استدعاء التحقق بعد التحميل
-setTimeout(() => {
-    checkAPIConnection();
-}, 3000);
-    
-// تحديث الطلبات عند فتح قسم المعاملات
-const originalShowSection = window.showSection;
-window.showSection = function(sectionName) {
-    originalShowSection(sectionName);
-    
-    if (sectionName === 'transactions' || sectionName === 'overview') {
-        // إعادة تحميل الطلبات عند فتح هذه الأقسام
-        setTimeout(() => {
-            loadUserOrders();
-        }, 500);
-    }
-};
 console.log('✅ نظام الملف الشخصي جاهز للعمل');
 
 
