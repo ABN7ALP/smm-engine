@@ -703,6 +703,11 @@ body.dark-mode .input-group-text {
           <div class="stat-card-title"><i class="fas fa-hourglass-half"></i> طلبات معلقة</div>
           <div class="stat-card-value" id="pending-orders">0</div>
         </div>
+        </div>
+       <div class="stat-card">
+         <div class="stat-card-title"><i class="fas fa-users"></i> مستخدمين مسجلين</div>
+         <div class="stat-card-value" id="registered-users">0</div>
+       </div>
         <div class="stat-card">
           <div class="stat-card-title"><i class="fas fa-dollar-sign"></i> متوسط السعر</div>
           <div class="stat-card-value" id="avg-price">$0</div>
@@ -766,9 +771,21 @@ body.dark-mode .input-group-text {
           <h5 class="mb-0">قائمة الطلبات</h5>
         </div>
         <div class="card-body">
-          <div class="filter-area">
-            <input id="searchOrders" type="text" class="form-control" placeholder="🔍 ابحث عن طلب بالرقم أو الرابط...">
-          </div>
+    <div class="filter-area">
+        <input id="searchOrders" type="text" class="form-control" placeholder="🔍 ابحث عن طلب بالرقم أو الرابط...">
+        <select id="userFilter" class="form-select" style="max-width: 200px;">
+            <option value="all">جميع المستخدمين</option>
+            <option value="registered">المستخدمين المسجلين</option>
+            <option value="public">الزوار</option>
+        </select>
+        <select id="statusFilter" class="form-select" style="max-width: 200px;">
+            <option value="all">جميع الحالات</option>
+            <option value="pending">قيد الانتظار</option>
+            <option value="processing">قيد التنفيذ</option>
+            <option value="completed">مكتمل</option>
+            <option value="rejected">مرفوض</option>
+        </select>
+    </div>
           <div class="table-responsive">
             <table class="table table-striped table-hover">
     <thead>
@@ -1144,14 +1161,13 @@ function renderServices(servicesList) {
 }
 
 // ========== نظام الطلبات ==========
-
 async function loadOrders() {
     try {
         console.log('🔍 جاري تحميل الطلبات...');
         const response = await fetchWithAuth('/api/orders');
         
         if (!response) {
-            console.error('❌ فشل في جلب الطلبات - لا يوجد response');
+            console.error('❌ فشل في جلب الطلبات');
             return;
         }
         
@@ -1165,76 +1181,100 @@ async function loadOrders() {
         
         allOrdersData = ordersData;
         renderOrders(ordersData);
+        updateStats(ordersData);
+        setupOrderFilters(); // 🔧 إعداد الفلاتر
         
     } catch (error) {
         console.error('❌ خطأ في تحميل الطلبات:', error);
     }
 }
 
+// عرض الطلبات مع بيانات المستخدم
 function renderOrders(ordersList) {
     const tbody = document.getElementById('ordersTable');
     if (!tbody) {
-        console.error('❌ عنصر ordersTable غير موجود في الصفحة');
+        console.error('❌ عنصر ordersTable غير موجود');
         return;
     }
     
     console.log('🎯 جاري عرض الطلبات:', ordersList);
     tbody.innerHTML = '';
     
-    // التحقق من صحة البيانات
-    if (!Array.isArray(ordersList)) {
-        console.error('❌ بيانات الطلبات ليست مصفوفة:', ordersList);
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">خطأ في تحميل البيانات</td></tr>';
+    if (!Array.isArray(ordersList) || ordersList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">لا توجد طلبات</td></tr>';
         return;
     }
     
-    if (ordersList.length === 0) {
-        console.log('ℹ️ لا توجد طلبات لعرضها');
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">لا توجد طلبات</td></tr>';
-        return;
-    }
-    
-    // عرض كل طلب
-    ordersList.forEach(order => {
-        console.log('📦 معالجة الطلب:', order);
-        
-        // البحث عن الخدمة المرتبطة بالطلب
-        const service = allServices.find(s => {
-            const serviceId = String(s.id);
-            const orderServiceId = String(order.serviceId);
-            return serviceId === orderServiceId;
-        });
-        
+    tbody.innerHTML = ordersList.map(order => {
+        // البحث عن الخدمة
+        const service = allServices.find(s => String(s.id) === String(order.serviceId));
         const serviceName = service ? service.name : `خدمة ${order.serviceId}`;
         
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${order.id || 'N/A'}</td>
+        // تحديد لون ونص الحالة
+        const statusInfo = getOrderStatusInfo(order.status);
+        
+        // معلومات المستخدم
+        const userType = order.userId ? 'مسجل' : 'زائر';
+        const userBadge = order.userId ? 
+            `<span class="badge bg-success">👤 ${order.username}</span>` :
+            `<span class="badge bg-secondary">🌐 زائر</span>`;
+        
+        return `
+        <tr>
+            <td>
+                <strong>#${order.id}</strong>
+                ${userBadge}
+            </td>
             <td>${serviceName}</td>
             <td>
-                <a href="${order.link}" target="_blank" class="text-truncate d-inline-block" style="max-width: 150px;">
+                <a href="${order.link}" target="_blank" class="text-truncate d-inline-block" style="max-width: 150px;" title="${order.link}">
                     ${order.link}
                 </a>
             </td>
             <td>${order.quantity || '—'}</td>
             <td>$${order.price ? order.price.toFixed(2) : '0.00'}</td>
             <td>
-                <select class="form-select form-select-sm order-status" data-order-id="${order.id}">
-                    <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>⏳ قيد الانتظار</option>
-                    <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>⚙️ قيد التنفيذ</option>
-                    <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>✅ مكتمل</option>
-                    <option value="rejected" ${order.status === 'rejected' ? 'selected' : ''}>❌ مرفوض</option>
-                </select>
+                <span class="badge ${statusInfo.class}">
+                    ${statusInfo.icon} ${statusInfo.text}
+                </span>
             </td>
-            <td>${new Date(order.createdAt).toLocaleString('ar-SA')}</td>
+            <td>
+                <div class="user-info">
+                    <div><strong>${order.username}</strong></div>
+                    <small class="text-muted">${userType}</small>
+                    ${order.userEmail ? `<div><small>${order.userEmail}</small></div>` : ''}
+                </div>
+            </td>
+            <td>
+                <div class="btn-action-group">
+                    <select class="form-select form-select-sm order-status" data-order-id="${order.id}">
+                        <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>⏳ قيد الانتظار</option>
+                        <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>⚙️ قيد التنفيذ</option>
+                        <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>✅ مكتمل</option>
+                        <option value="rejected" ${order.status === 'rejected' ? 'selected' : ''}>❌ مرفوض</option>
+                    </select>
+                    <button class="btn btn-sm btn-outline-info" onclick="viewOrderDetails(${order.id})" title="تفاصيل الطلب">
+                        <i class="fas fa-info-circle"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
         `;
-        tbody.appendChild(tr);
-    });
+    }).join('');
     
-    console.log(`✅ تم عرض ${ordersList.length} طلب بنجاح`);
-    
-    // إضافة أحداث لتغيير حالة الطلبات
+    // إضافة أحداث لتغيير الحالة
     setupOrderStatusEvents();
+}
+
+// دالة مساعدة للحالة
+function getOrderStatusInfo(status) {
+    const statusMap = {
+        'pending': { class: 'bg-warning', icon: '⏳', text: 'قيد الانتظار' },
+        'processing': { class: 'bg-info', icon: '⚙️', text: 'قيد التنفيذ' },
+        'completed': { class: 'bg-success', icon: '✅', text: 'مكتمل' },
+        'rejected': { class: 'bg-danger', icon: '❌', text: 'مرفوض' }
+    };
+    return statusMap[status] || { class: 'bg-secondary', icon: '❓', text: status };
 }
 
 function setupOrderStatusEvents() {
@@ -2203,6 +2243,56 @@ function filterUsers(e) {
     renderUsers(filtered);
 }
 
+  // إعداد الفلاتر
+function setupOrderFilters() {
+    const searchInput = document.getElementById('searchOrders');
+    const userFilter = document.getElementById('userFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', filterOrders);
+    }
+    if (userFilter) {
+        userFilter.addEventListener('change', filterOrders);
+    }
+    if (statusFilter) {
+        statusFilter.addEventListener('change', filterOrders);
+    }
+}
+
+// تصفية الطلبات
+function filterOrders() {
+    const searchQuery = document.getElementById('searchOrders').value.toLowerCase();
+    const userType = document.getElementById('userFilter').value;
+    const statusType = document.getElementById('statusFilter').value;
+    
+    let filtered = allOrdersData;
+    
+    // البحث النصي
+    if (searchQuery) {
+        filtered = filtered.filter(order =>
+            String(order.id).includes(searchQuery) ||
+            order.link.toLowerCase().includes(searchQuery) ||
+            order.username.toLowerCase().includes(searchQuery) ||
+            (allServices.find(s => s.id == order.serviceId)?.name.toLowerCase().includes(searchQuery))
+        );
+    }
+    
+    // فلتر نوع المستخدم
+    if (userType === 'registered') {
+        filtered = filtered.filter(order => order.userId);
+    } else if (userType === 'public') {
+        filtered = filtered.filter(order => !order.userId);
+    }
+    
+    // فلتر الحالة
+    if (statusType !== 'all') {
+        filtered = filtered.filter(order => order.status === statusType);
+    }
+    
+    renderOrders(filtered);
+}
+
 // دوال مساعدة
 function getUserStatusColor(status) {
     const colors = {
@@ -2231,6 +2321,82 @@ function getUserStatusText(status) {
     return texts[status] || status;
 }
 
+  // =================================================================
+//  نظام تصفية الطلبات - الإضافة الجديدة
+// =================================================================
+
+// إعداد الفلاتر
+function setupOrderFilters() {
+    const searchInput = document.getElementById('searchOrders');
+    const userFilter = document.getElementById('userFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    
+    console.log('🔧 جاري إعداد فلاتر الطلبات...');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', filterOrders);
+        console.log('✅ تم إعداد فلتر البحث');
+    } else {
+        console.error('❌ عنصر searchOrders غير موجود');
+    }
+    
+    if (userFilter) {
+        userFilter.addEventListener('change', filterOrders);
+        console.log('✅ تم إعداد فلتر المستخدمين');
+    } else {
+        console.error('❌ عنصر userFilter غير موجود');
+    }
+    
+    if (statusFilter) {
+        statusFilter.addEventListener('change', filterOrders);
+        console.log('✅ تم إعداد فلتر الحالة');
+    } else {
+        console.error('❌ عنصر statusFilter غير موجود');
+    }
+}
+
+// تصفية الطلبات
+function filterOrders() {
+    console.log('🎯 جاري تصفية الطلبات...');
+    
+    const searchQuery = document.getElementById('searchOrders').value.toLowerCase();
+    const userType = document.getElementById('userFilter').value;
+    const statusType = document.getElementById('statusFilter').value;
+    
+    console.log('🔍 معايير التصفية:', { searchQuery, userType, statusType });
+    
+    let filtered = allOrdersData;
+    
+    // البحث النصي
+    if (searchQuery) {
+        filtered = filtered.filter(order =>
+            String(order.id).includes(searchQuery) ||
+            order.link.toLowerCase().includes(searchQuery) ||
+            order.username.toLowerCase().includes(searchQuery) ||
+            (allServices.find(s => s.id == order.serviceId)?.name.toLowerCase().includes(searchQuery))
+        );
+        console.log(`🔎 نتائج البحث: ${filtered.length} طلب`);
+    }
+    
+    // فلتر نوع المستخدم
+    if (userType === 'registered') {
+        filtered = filtered.filter(order => order.userId);
+        console.log(`👤 فلتر المستخدمين المسجلين: ${filtered.length} طلب`);
+    } else if (userType === 'public') {
+        filtered = filtered.filter(order => !order.userId);
+        console.log(`🌐 فلتر الزوار: ${filtered.length} طلب`);
+    }
+    
+    // فلتر الحالة
+    if (statusType !== 'all') {
+        filtered = filtered.filter(order => order.status === statusType);
+        console.log(`📊 فلتر الحالة (${statusType}): ${filtered.length} طلب`);
+    }
+    
+    renderOrders(filtered);
+}
+
+console.log('✅ نظام تصفية الطلبات جاهز للتشغيل');
 // تحديث التهيئة الرئيسية
 const originalInitializeApp = window.initializeApp;
 window.initializeApp = function() {
