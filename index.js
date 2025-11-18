@@ -1,5 +1,5 @@
 // =================================================================
-//  SMM Engine - نظام متكامل 100% (مصحح ومرتب ومؤمن)
+//  SMM Engine - ظ†ط¸ط§ظ… ظ…طھظƒط§ظ…ظ„ 100% (ظ…طµط­ط­ ظˆظ…ط±طھط¨ ظˆظ…ط¤ظ…ظ†)
 // =================================================================
 
 const http = require('http');
@@ -18,27 +18,27 @@ const metascraper = require('metascraper')([
   require('metascraper-image')()
 ]);
 
-// ==================== إعدادات الأمان ====================
+// ==================== ط¥ط¹ط¯ط§ط¯ط§طھ ط§ظ„ط£ظ…ط§ظ† ====================
 const SALT_ROUNDS = 12;
-const SESSION_DURATION = 4 * 60 * 60 * 1000; // 4 ساعات
+const SESSION_DURATION = 4 * 60 * 60 * 1000; // 4 ط³ط§ط¹ط§طھ
 const MAX_LOGIN_ATTEMPTS = 5;
-const LOGIN_TIMEOUT = 15 * 60 * 1000; // 15 دقيقة
+const LOGIN_TIMEOUT = 15 * 60 * 1000; // 15 ط¯ظ‚ظٹظ‚ط©
 
-// ==================== إعدادات قاعدة البيانات ====================
+// ==================== ط¥ط¹ط¯ط§ط¯ط§طھ ظ‚ط§ط¹ط¯ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ ====================
 const MONGODB_URI = "mongodb+srv://ds132z1998_db_user:AL2sG3m1yB6BaoRY@cluster1.ehjwrgc.mongodb.net/smmdb?retryWrites=true&w=majority";
 
-// تخزين محاولات تسجيل الدخول الفاشلة
+// طھط®ط²ظٹظ† ظ…ط­ط§ظˆظ„ط§طھ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„ ط§ظ„ظپط§ط´ظ„ط©
 const loginAttempts = new Map();
 
 /**
- * الاتصال بقاعدة البيانات MongoDB
+ * ط§ظ„ط§طھطµط§ظ„ ط¨ظ‚ط§ط¹ط¯ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ MongoDB
  */
 async function connectDB() {
   try {
     await mongoose.connect(MONGODB_URI);
-    console.log('✅ تم الاتصال بقاعدة البيانات MongoDB بنجاح');
+    console.log('âœ… طھظ… ط§ظ„ط§طھطµط§ظ„ ط¨ظ‚ط§ط¹ط¯ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ MongoDB ط¨ظ†ط¬ط§ط­');
   } catch (error) {
-    console.log('❌ خطأ في الاتصال بقاعدة البيانات:', error.message);
+    console.log('â‌Œ ط®ط·ط£ ظپظٹ ط§ظ„ط§طھطµط§ظ„ ط¨ظ‚ط§ط¹ط¯ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ:', error.message);
     process.exit(1);
   }
 }
@@ -46,11 +46,11 @@ async function connectDB() {
 connectDB();
 
 /**
- * إعادة تعيين كلمة سر الأدمن (تشغيل مرة واحدة فقط)
+ * ط¥ط¹ط§ط¯ط© طھط¹ظٹظٹظ† ظƒظ„ظ…ط© ط³ط± ط§ظ„ط£ط¯ظ…ظ† (طھط´ط؛ظٹظ„ ظ…ط±ط© ظˆط§ط­ط¯ط© ظپظ‚ط·)
  */
 async function resetAdminPassword() {
   try {
-    const newPassword = "Admin123!"; // كلمة السر الجديدة القوية
+    const newPassword = "Admin123!"; // ظƒظ„ظ…ط© ط§ظ„ط³ط± ط§ظ„ط¬ط¯ظٹط¯ط© ط§ظ„ظ‚ظˆظٹط©
     const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
     
     await User.findOneAndUpdate(
@@ -61,18 +61,18 @@ async function resetAdminPassword() {
       }
     );
     
-    console.log('🔑 تم تحديث كلمة سر الأدمن:', newPassword);
+    console.log('ًں”‘ طھظ… طھط­ط¯ظٹط« ظƒظ„ظ…ط© ط³ط± ط§ظ„ط£ط¯ظ…ظ†:', newPassword);
   } catch (error) {
-    console.log('❌ خطأ في تحديث كلمة السر:', error.message);
+    console.log('â‌Œ ط®ط·ط£ ظپظٹ طھط­ط¯ظٹط« ظƒظ„ظ…ط© ط§ظ„ط³ط±:', error.message);
   }
 }
 
-// استدعاء الدالة مرة واحدة ثم تعليقها
+// ط§ط³طھط¯ط¹ط§ط، ط§ظ„ط¯ط§ظ„ط© ظ…ط±ط© ظˆط§ط­ط¯ط© ط«ظ… طھط¹ظ„ظٹظ‚ظ‡ط§
 //resetAdminPassword();
-// ==================== نماذج قاعدة البيانات ====================
+// ==================== ظ†ظ…ط§ط°ط¬ ظ‚ط§ط¹ط¯ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ ====================
 
 /**
- * نموذج المستخدم - تخزين بيانات المستخدمين
+ * ظ†ظ…ظˆط°ط¬ ط§ظ„ظ…ط³طھط®ط¯ظ… - طھط®ط²ظٹظ† ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ†
  */
 const userSchema = new mongoose.Schema({
     username: { 
@@ -82,7 +82,7 @@ const userSchema = new mongoose.Schema({
         trim: true,
         minlength: 3,
         maxlength: 30,
-        match: /^[a-zA-Z0-9_]+$/ // فقط أحرف إنجليزية وأرقام وشرطة سفلية
+        match: /^[a-zA-Z0-9_]+$/ // ظپظ‚ط· ط£ط­ط±ظپ ط¥ظ†ط¬ظ„ظٹط²ظٹط© ظˆط£ط±ظ‚ط§ظ… ظˆط´ط±ط·ط© ط³ظپظ„ظٹط©
     },
     password: { 
         type: String, 
@@ -135,7 +135,7 @@ const userSchema = new mongoose.Schema({
     },
     freezeReason: String,
     
-    // الإحصائيات
+    // ط§ظ„ط¥ط­طµط§ط¦ظٹط§طھ
     orders: {
         total: { type: Number, default: 0 },
         completed: { type: Number, default: 0 },
@@ -143,7 +143,7 @@ const userSchema = new mongoose.Schema({
         rejected: { type: Number, default: 0 }
     },
     
-    // التواريخ
+    // ط§ظ„طھظˆط§ط±ظٹط®
     lastLogin: Date,
     lastPasswordChange: { type: Date, default: Date.now },
     createdAt: { type: Date, default: Date.now },
@@ -151,7 +151,7 @@ const userSchema = new mongoose.Schema({
 });
 
 /**
- * نموذج الخدمة - تخزين خدمات SMM
+ * ظ†ظ…ظˆط°ط¬ ط§ظ„ط®ط¯ظ…ط© - طھط®ط²ظٹظ† ط®ط¯ظ…ط§طھ SMM
  */
 const serviceSchema = new mongoose.Schema({
   id: { type: Number, unique: true },
@@ -165,7 +165,7 @@ const serviceSchema = new mongoose.Schema({
 });
 
 /**
- * نموذج الطلب - تخزين طلبات المستخدمين
+ * ظ†ظ…ظˆط°ط¬ ط§ظ„ط·ظ„ط¨ - طھط®ط²ظٹظ† ط·ظ„ط¨ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ†
  */
 const orderSchema = new mongoose.Schema({
   id: { type: Number, unique: true },
@@ -179,7 +179,7 @@ const orderSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 /**
- * نموذج السجل - تخزين سجلات النظام
+ * ظ†ظ…ظˆط°ط¬ ط§ظ„ط³ط¬ظ„ - طھط®ط²ظٹظ† ط³ط¬ظ„ط§طھ ط§ظ„ظ†ط¸ط§ظ…
  */
 const logSchema = new mongoose.Schema({
   id: { type: Number, unique: true },
@@ -190,7 +190,7 @@ const logSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 /**
- * نموذج المعاملة - تخزين معاملات الرصيد
+ * ظ†ظ…ظˆط°ط¬ ط§ظ„ظ…ط¹ط§ظ…ظ„ط© - طھط®ط²ظٹظ† ظ…ط¹ط§ظ…ظ„ط§طھ ط§ظ„ط±طµظٹط¯
  */
 const transactionSchema = new mongoose.Schema({
     id: { type: Number, unique: true },
@@ -217,7 +217,7 @@ const transactionSchema = new mongoose.Schema({
 });
 
 /**
- * نموذج الإشعار - تخزين إشعارات المستخدمين
+ * ظ†ظ…ظˆط°ط¬ ط§ظ„ط¥ط´ط¹ط§ط± - طھط®ط²ظٹظ† ط¥ط´ط¹ط§ط±ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ†
  */
 const notificationSchema = new mongoose.Schema({
     id: { type: Number, unique: true },
@@ -231,7 +231,7 @@ const notificationSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-// ==================== تعريف النماذج ====================
+// ==================== طھط¹ط±ظٹظپ ط§ظ„ظ†ظ…ط§ط°ط¬ ====================
 const User = mongoose.model('User', userSchema);
 const Service = mongoose.model('Service', serviceSchema);
 const Order = mongoose.model('Order', orderSchema);
@@ -239,17 +239,17 @@ const Log = mongoose.model('Log', logSchema);
 const Transaction = mongoose.model('Transaction', transactionSchema);
 const Notification = mongoose.model('Notification', notificationSchema);
 
-// ==================== الدوال المساعدة ====================
+// ==================== ط§ظ„ط¯ظˆط§ظ„ ط§ظ„ظ…ط³ط§ط¹ط¯ط© ====================
 
 /**
- * الحصول على الوقت الحالي بصيغة ISO
+ * ط§ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ط§ظ„ظˆظ‚طھ ط§ظ„ط­ط§ظ„ظٹ ط¨طµظٹط؛ط© ISO
  */
 function nowISO() { 
     return new Date().toISOString(); 
 }
 
 /**
- * التحقق من صحة الرابط
+ * ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† طµط­ط© ط§ظ„ط±ط§ط¨ط·
  */
 function isValidUrl(urlStr) {
   try {
@@ -261,7 +261,7 @@ function isValidUrl(urlStr) {
 }
 
 /**
- * قراءة body الطلب
+ * ظ‚ط±ط§ط،ط© body ط§ظ„ط·ظ„ط¨
  */
 function readBody(req) {
   return new Promise((resolve) => {
@@ -272,7 +272,7 @@ function readBody(req) {
 }
 
 /**
- * التحقق من قوة كلمة المرور
+ * ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ظ‚ظˆط© ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±
  */
 function isPasswordStrong(password) {
     const minLength = 8;
@@ -289,7 +289,7 @@ function isPasswordStrong(password) {
 }
 
 /**
- * الحصول على IP العميل
+ * ط§ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ IP ط§ظ„ط¹ظ…ظٹظ„
  */
 function getClientIP(req) {
     return req.headers['x-forwarded-for'] || 
@@ -298,11 +298,11 @@ function getClientIP(req) {
            'unknown';
 }
 
-// ==================== نظام المصادقة وإدارة الجلسات ====================
+// ==================== ظ†ط¸ط§ظ… ط§ظ„ظ…طµط§ط¯ظ‚ط© ظˆط¥ط¯ط§ط±ط© ط§ظ„ط¬ظ„ط³ط§طھ ====================
 const sessions = new Map();
 
 /**
- * إنشاء جلسة جديدة للمستخدم
+ * ط¥ظ†ط´ط§ط، ط¬ظ„ط³ط© ط¬ط¯ظٹط¯ط© ظ„ظ„ظ…ط³طھط®ط¯ظ…
  */
 function createSession(username, ip) {
   const token = crypto.randomBytes(32).toString('hex');
@@ -317,7 +317,7 @@ function createSession(username, ip) {
 }
 
 /**
- * التحقق من صحة التوكن
+ * ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† طµط­ط© ط§ظ„طھظˆظƒظ†
  */
 function checkAuth(req) {
   const token = req.headers['x-auth-token'] || null;
@@ -329,25 +329,25 @@ function checkAuth(req) {
     return null;
   }
   
-  // تجديد مدة الجلسة عند النشاط
+  // طھط¬ط¯ظٹط¯ ظ…ط¯ط© ط§ظ„ط¬ظ„ط³ط© ط¹ظ†ط¯ ط§ظ„ظ†ط´ط§ط·
   session.expires = Date.now() + SESSION_DURATION;
   return session.username;
 }
 
 /**
- * التحقق من محاولات تسجيل الدخول
+ * ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ظ…ط­ط§ظˆظ„ط§طھ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„
  */
 function checkLoginAttempts(username, ip) {
     const key = `${username}_${ip}`;
     const attempts = loginAttempts.get(key) || { count: 0, lastAttempt: 0 };
     
-    // إذا تجاوز الحد المسموح وكان الوقت لم ينته بعد
+    // ط¥ط°ط§ طھط¬ط§ظˆط² ط§ظ„ط­ط¯ ط§ظ„ظ…ط³ظ…ظˆط­ ظˆظƒط§ظ† ط§ظ„ظˆظ‚طھ ظ„ظ… ظٹظ†طھظ‡ ط¨ط¹ط¯
     if (attempts.count >= MAX_LOGIN_ATTEMPTS && 
         Date.now() - attempts.lastAttempt < LOGIN_TIMEOUT) {
         return false;
     }
     
-    // إذا انتهى الوقت، إعادة تعيين العداد
+    // ط¥ط°ط§ ط§ظ†طھظ‡ظ‰ ط§ظ„ظˆظ‚طھطŒ ط¥ط¹ط§ط¯ط© طھط¹ظٹظٹظ† ط§ظ„ط¹ط¯ط§ط¯
     if (Date.now() - attempts.lastAttempt >= LOGIN_TIMEOUT) {
         attempts.count = 0;
     }
@@ -356,7 +356,7 @@ function checkLoginAttempts(username, ip) {
 }
 
 /**
- * تسجيل محاولة تسجيل دخول فاشلة
+ * طھط³ط¬ظٹظ„ ظ…ط­ط§ظˆظ„ط© طھط³ط¬ظٹظ„ ط¯ط®ظˆظ„ ظپط§ط´ظ„ط©
  */
 function recordFailedLogin(username, ip) {
     const key = `${username}_${ip}`;
@@ -368,23 +368,23 @@ function recordFailedLogin(username, ip) {
 }
 
 /**
- * مسح محاولات تسجيل الدخول الناجحة
+ * ظ…ط³ط­ ظ…ط­ط§ظˆظ„ط§طھ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„ ط§ظ„ظ†ط§ط¬ط­ط©
  */
 function clearLoginAttempts(username, ip) {
     const key = `${username}_${ip}`;
     loginAttempts.delete(key);
 }
 
-// تنظيف الجلسات والمحاولات المنتهية كل 10 دقائق
+// طھظ†ط¸ظٹظپ ط§ظ„ط¬ظ„ط³ط§طھ ظˆط§ظ„ظ…ط­ط§ظˆظ„ط§طھ ط§ظ„ظ…ظ†طھظ‡ظٹط© ظƒظ„ 10 ط¯ظ‚ط§ط¦ظ‚
 setInterval(() => {
   const now = Date.now();
   
-  // تنظيف الجلسات المنتهية
+  // طھظ†ط¸ظٹظپ ط§ظ„ط¬ظ„ط³ط§طھ ط§ظ„ظ…ظ†طھظ‡ظٹط©
   sessions.forEach((session, token) => {
     if (now > session.expires) sessions.delete(token);
   });
   
-  // تنظيف محاولات تسجيل الدخول المنتهية
+  // طھظ†ط¸ظٹظپ ظ…ط­ط§ظˆظ„ط§طھ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„ ط§ظ„ظ…ظ†طھظ‡ظٹط©
   loginAttempts.forEach((attempts, key) => {
     if (now - attempts.lastAttempt >= LOGIN_TIMEOUT) {
       loginAttempts.delete(key);
@@ -392,10 +392,10 @@ setInterval(() => {
   });
 }, 10 * 60 * 1000);
 
-// ==================== نظام السجلات والكاش ====================
+// ==================== ظ†ط¸ط§ظ… ط§ظ„ط³ط¬ظ„ط§طھ ظˆط§ظ„ظƒط§ط´ ====================
 
 /**
- * تسجيل إجراء في النظام
+ * طھط³ط¬ظٹظ„ ط¥ط¬ط±ط§ط، ظپظٹ ط§ظ„ظ†ط¸ط§ظ…
  */
 async function logAction(user, action, meta = {}, ip = 'unknown') {
   try {
@@ -411,37 +411,37 @@ async function logAction(user, action, meta = {}, ip = 'unknown') {
       createdAt: new Date()
     });
   } catch (error) {
-    console.log('❌ خطأ في حفظ السجل:', error.message);
+    console.log('â‌Œ ط®ط·ط£ ظپظٹ ط­ظپط¸ ط§ظ„ط³ط¬ظ„:', error.message);
   }
 }
 
 const previewCache = new Map();
-const PREVIEW_TTL = 10 * 60 * 1000; // 10 دقائق
+const PREVIEW_TTL = 10 * 60 * 1000; // 10 ط¯ظ‚ط§ط¦ظ‚
 
-// ==================== تهيئة البيانات الافتراضية ====================
+// ==================== طھظ‡ظٹط¦ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ ط§ظ„ط§ظپطھط±ط§ط¶ظٹط© ====================
 
 /**
- * إنشاء البيانات الافتراضية عند التشغيل الأول
+ * ط¥ظ†ط´ط§ط، ط§ظ„ط¨ظٹط§ظ†ط§طھ ط§ظ„ط§ظپطھط±ط§ط¶ظٹط© ط¹ظ†ط¯ ط§ظ„طھط´ط؛ظٹظ„ ط§ظ„ط£ظˆظ„
  */
 async function initializeDefaultData() {
   try {
-    // التحقق من وجود خدمات
+    // ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ظˆط¬ظˆط¯ ط®ط¯ظ…ط§طھ
     const serviceCount = await Service.countDocuments();
     if (serviceCount === 0) {
-      console.log('🔧 جاري إنشاء الخدمات الافتراضية...');
+      console.log('ًں”§ ط¬ط§ط±ظٹ ط¥ظ†ط´ط§ط، ط§ظ„ط®ط¯ظ…ط§طھ ط§ظ„ط§ظپطھط±ط§ط¶ظٹط©...');
       
       const defaultServices = [
-        { id: 1, name: "متابعين انستجرام", category: "انستا", type: "quantity", rate: 5, min: 100, max: 10000 },
-        { id: 2, name: "لايكات انستجرام", category: "انستا", type: "quantity", rate: 2, min: 100, max: 5000 },
-        { id: 3, name: "مشاهدات يوتيوب", category: "يوتيوب", type: "quantity", rate: 3, min: 1000, max: 50000 },
-        { id: 4, name: "إعجابات فيسبوك", category: "فيس بوك", type: "quantity", rate: 4, min: 100, max: 10000 }
+        { id: 1, name: "ظ…طھط§ط¨ط¹ظٹظ† ط§ظ†ط³طھط¬ط±ط§ظ…", category: "ط§ظ†ط³طھط§", type: "quantity", rate: 5, min: 100, max: 10000 },
+        { id: 2, name: "ظ„ط§ظٹظƒط§طھ ط§ظ†ط³طھط¬ط±ط§ظ…", category: "ط§ظ†ط³طھط§", type: "quantity", rate: 2, min: 100, max: 5000 },
+        { id: 3, name: "ظ…ط´ط§ظ‡ط¯ط§طھ ظٹظˆطھظٹظˆط¨", category: "ظٹظˆطھظٹظˆط¨", type: "quantity", rate: 3, min: 1000, max: 50000 },
+        { id: 4, name: "ط¥ط¹ط¬ط§ط¨ط§طھ ظپظٹط³ط¨ظˆظƒ", category: "ظپظٹط³ ط¨ظˆظƒ", type: "quantity", rate: 4, min: 100, max: 10000 }
       ];
       
       await Service.insertMany(defaultServices);
-      console.log('✅ تم إنشاء الخدمات الافتراضية');
+      console.log('âœ… طھظ… ط¥ظ†ط´ط§ط، ط§ظ„ط®ط¯ظ…ط§طھ ط§ظ„ط§ظپطھط±ط§ط¶ظٹط©');
     }
 
-    // التحقق من وجود أدمن
+    // ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ظˆط¬ظˆط¯ ط£ط¯ظ…ظ†
     const adminCount = await User.countDocuments({ username: 'admin' });
     if (adminCount === 0) {
       const hashedPassword = await bcrypt.hash('Admin123!', SALT_ROUNDS);
@@ -453,22 +453,22 @@ async function initializeDefaultData() {
         role: 'admin',
         balance: 0,
         status: 'active',
-        fullName: 'مدير النظام'
+        fullName: 'ظ…ط¯ظٹط± ط§ظ„ظ†ط¸ط§ظ…'
       });
-      console.log('✅ تم إنشاء حساب الأدمن');
+      console.log('âœ… طھظ… ط¥ظ†ط´ط§ط، ط­ط³ط§ط¨ ط§ظ„ط£ط¯ظ…ظ†');
     }
   } catch (error) {
-    console.log('❌ خطأ في تهيئة البيانات:', error.message);
+    console.log('â‌Œ ط®ط·ط£ ظپظٹ طھظ‡ظٹط¦ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ:', error.message);
   }
 }
 
-// تشغيل التهيئة بعد الاتصال بقاعدة البيانات
+// طھط´ط؛ظٹظ„ ط§ظ„طھظ‡ظٹط¦ط© ط¨ط¹ط¯ ط§ظ„ط§طھطµط§ظ„ ط¨ظ‚ط§ط¹ط¯ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ
 mongoose.connection.once('open', async () => {
-  console.log('📊 جاري تهيئة البيانات...');
+  console.log('ًں“ٹ ط¬ط§ط±ظٹ طھظ‡ظٹط¦ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ...');
   await initializeDefaultData();
 });
 
-// ==================== السيرفر الرئيسي ====================
+// ==================== ط§ظ„ط³ظٹط±ظپط± ط§ظ„ط±ط¦ظٹط³ظٹ ====================
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
@@ -476,9 +476,9 @@ const server = http.createServer(async (req, res) => {
     const method = req.method;
     const clientIP = getClientIP(req);
 
-    // ==================== المسارات العامة (لا تحتاج مصادقة) ====================
+    // ==================== ط§ظ„ظ…ط³ط§ط±ط§طھ ط§ظ„ط¹ط§ظ…ط© (ظ„ط§ طھط­طھط§ط¬ ظ…طµط§ط¯ظ‚ط©) ====================
 
-    // خدمة الملفات الثابتة
+    // ط®ط¯ظ…ط© ط§ظ„ظ…ظ„ظپط§طھ ط§ظ„ط«ط§ط¨طھط©
     if (method === 'GET' && !pathname.startsWith('/api/')) {
       const publicDir = path.join(__dirname, 'public');
       const safePath = path.normalize(pathname).replace(/^(\.\.[\/\\])+/, '');
@@ -503,7 +503,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // الحصول على طلب عام (للعرض العام)
+    // ط§ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ط·ظ„ط¨ ط¹ط§ظ… (ظ„ظ„ط¹ط±ط¶ ط§ظ„ط¹ط§ظ…)
     if (method === 'GET' && pathname.startsWith('/api/orders/public/')) {
       const id = parseInt(pathname.split('/').pop(), 10);
       try {
@@ -522,7 +522,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // الحصول على الخدمات
+    // ط§ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ط§ظ„ط®ط¯ظ…ط§طھ
     if (method === 'GET' && pathname === '/api/services') {
       try {
         const services = await Service.find({});
@@ -536,9 +536,9 @@ const server = http.createServer(async (req, res) => {
     }
     
     
-    // إنشاء طلب جديد مع الإشعارات
+    // ط¥ظ†ط´ط§ط، ط·ظ„ط¨ ط¬ط¯ظٹط¯ ظ…ط¹ ط§ظ„ط¥ط´ط¹ط§ط±ط§طھ
 if (method === 'POST' && pathname === '/api/orders') {
-  console.log('🎯 تم استلام طلب جديد من:', checkAuth(req) || 'مستخدم عام');
+  console.log('ًںژ¯ طھظ… ط§ط³طھظ„ط§ظ… ط·ظ„ط¨ ط¬ط¯ظٹط¯ ظ…ظ†:', checkAuth(req) || 'ظ…ط³طھط®ط¯ظ… ط¹ط§ظ…');
     const body = await readBody(req);
     const data = JSON.parse(body || '{}');
     
@@ -552,24 +552,24 @@ if (method === 'POST' && pathname === '/api/orders') {
         const maxIdOrder = await Order.findOne().sort('-id').exec();
         const newId = (maxIdOrder?.id || 0) + 1;
         
-        // الحصول على المستخدم إذا كان مسجلاً
+        // ط§ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ط§ظ„ظ…ط³طھط®ط¯ظ… ط¥ط°ط§ ظƒط§ظ† ظ…ط³ط¬ظ„ط§ظ‹
 let username = 'public';
 let userId = null;
 
 const authUsername = checkAuth(req);
-console.log(`🔍 authUsername: ${authUsername}`); // <-- أضف هذا
+console.log(`ًں”چ authUsername: ${authUsername}`); // <-- ط£ط¶ظپ ظ‡ط°ط§
 
 if (authUsername) {
     const user = await User.findOne({ username: authUsername });
     if (user) {
         username = user.username;
-        userId = user._id.toString(); // ✅ تأكد من تحويله لـ string
-        console.log(`🔍 تم العثور على المستخدم: ${username}, userId: ${userId}`);
+        userId = user._id.toString(); // âœ… طھط£ظƒط¯ ظ…ظ† طھط­ظˆظٹظ„ظ‡ ظ„ظ€ string
+        console.log(`ًں”چ طھظ… ط§ظ„ط¹ط«ظˆط± ط¹ظ„ظ‰ ط§ظ„ظ…ط³طھط®ط¯ظ…: ${username}, userId: ${userId}`);
         
-        // التحقق من الرصيد إذا كان الطلب مدفوع
+        // ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ط§ظ„ط±طµظٹط¯ ط¥ط°ط§ ظƒط§ظ† ط§ظ„ط·ظ„ط¨ ظ…ط¯ظپظˆط¹
         if (user.balanceFrozen) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'لا يمكن إنشاء طلب - الرصيد مجمد' }));
+            res.end(JSON.stringify({ error: 'ظ„ط§ ظٹظ…ظƒظ† ط¥ظ†ط´ط§ط، ط·ظ„ط¨ - ط§ظ„ط±طµظٹط¯ ظ…ط¬ظ…ط¯' }));
             return;
         }
     }
@@ -588,104 +588,71 @@ if (authUsername) {
 
 await logAction(username, 'order_create', { id: order.id }, clientIP);
 
-// إرسال إشعار للمستخدم إذا كان مسجلاً
-// إنشاء طلب جديد
-if (method === 'POST' && pathname === '/api/orders') {
-    const body = await readBody(req);
-    const data = JSON.parse(body || '{}');
-    
-    if (!data.serviceId || !data.link || !isValidUrl(data.link)) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Missing or invalid fields' }));
-        return;
+// ط¥ط±ط³ط§ظ„ ط¥ط´ط¹ط§ط± ظ„ظ„ظ…ط³طھط®ط¯ظ… ط¥ط°ط§ ظƒط§ظ† ظ…ط³ط¬ظ„ط§ظ‹
+console.log(`ًں”چ debugging - userId: ${userId}, username: ${username}`);
+
+if (userId) {
+    console.log(`ًں”چ ط¬ط§ط±ظٹ ط¥ظ†ط´ط§ط، ط¥ط´ط¹ط§ط± ظ„ظ„ظ…ط³طھط®ط¯ظ…: ${username}`);
+    try {
+        const notification = await Notification.create({
+            id: Date.now(),
+            userId: userId,
+            type: 'success', 
+            title: 'طھظ… ط¥ظ†ط´ط§ط، ط·ظ„ط¨ ط¬ط¯ظٹط¯',
+            message: `طھظ… ط¥ظ†ط´ط§ط، ط·ظ„ط¨ظƒ #${order.id} ط¨ظ†ط¬ط§ط­. ط³ظٹطھظ… ظ…ط¹ط§ظ„ط¬طھظ‡ ظ‚ط±ظٹط¨ط§ظ‹.`,
+            relatedTo: 'order',
+            relatedId: order.id,
+            read: false,
+            createdAt: new Date()
+        });
+        console.log(`âœ… طھظ… ط¥ظ†ط´ط§ط، ط§ظ„ط¥ط´ط¹ط§ط± ط¨ظ†ط¬ط§ط­:`, notification);
+    } catch (error) {
+        console.error('â‌Œ ط®ط·ط£ ظپظٹ ط¥ظ†ط´ط§ط، ط§ظ„ط¥ط´ط¹ط§ط±:', error);
     }
 
-    try {
-        const maxIdOrder = await Order.findOne().sort('-id').exec();
-        const newId = (maxIdOrder?.id || 0) + 1;
-        
-        // 🔧 استخدام اسم متغير مختلف
-        let orderUsername = 'public';
-        let userId = null;
-        
-        const authUsername = checkAuth(req); // هذا يرجع username أو null
-        if (authUsername) {
-            const user = await User.findOne({ username: authUsername });
-            if (user) {
-                orderUsername = user.username; // 🔧 استخدم orderUsername بدل username
-                userId = user._id;
-                console.log(`🔐 طلب من مستخدم مسجل: ${orderUsername}`);
-                
-                if (user.balanceFrozen) {
-                    res.writeHead(400, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ error: 'لا يمكن إنشاء طلب - الرصيد مجمد' }));
-                    return;
-                }
-            }
-        } else {
-            console.log('🌐 طلب من زائر عام');
-        }
-        
-        // إنشاء الطلب مع البيانات المصححة
-        const order = await Order.create({
-            id: newId,
-            serviceId: data.serviceId,
-            link: data.link,
-            quantity: data.quantity,
-            price: data.price,
-            status: 'pending',
-            username: orderUsername, // 🔧 استخدم orderUsername هنا
-            userId: userId,
-            userType: authUsername ? 'registered' : 'public'
+    // طھط­ط¯ظٹط« ط¥ط­طµط§ط¦ظٹط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…
+    const user = await User.findOne({ username: authUsername });
+    if (user) {
+        user.orders.total = (user.orders.total || 0) + 1;
+        user.orders.pending = (user.orders.pending || 0) + 1;
+        await user.save();
+    }
+} else {
+    console.log('ًں”چ ط§ظ„ظ…ط³طھط®ط¯ظ… ط؛ظٹط± ظ…ط³ط¬ظ„ ط¯ط®ظˆظ„ - ظ„ط§ ط¥ط´ط¹ط§ط±ط§طھ');
+}
+
+// ط¥ط±ط³ط§ظ„ ط¥ط´ط¹ط§ط± ظ„ظ„ط£ط¯ظ…ظ†
+try {
+    const adminUsers = await User.find({ role: 'admin' });
+    for (let i = 0; i < adminUsers.length; i++) {
+        const admin = adminUsers[i];
+        await Notification.create({
+            id: Date.now() + i, // âœ… ظ†ط³طھط®ط¯ظ… index ظ„طھط¬ظ†ط¨ ط§ظ„طھظƒط±ط§ط±
+            userId: admin._id,
+            type: 'info',
+            title: 'ط·ظ„ط¨ ط¬ط¯ظٹط¯',
+            message: `طھظ… ط¥ظ†ط´ط§ط، ط·ظ„ط¨ ط¬ط¯ظٹط¯ #${order.id} ظ…ظ† ظ‚ط¨ظ„ ${username}`,
+            relatedTo: 'order',
+            relatedId: order.id,
+            read: false,
+            createdAt: new Date()
         });
-
-        console.log(`✅ تم إنشاء طلب جديد #${order.id} من قبل ${orderUsername}`);
-        
-        await logAction(orderUsername, 'order_create', { id: order.id }, clientIP);
-        
-        if (userId) {
-            await Notification.create({
-                userId: userId,
-                type: 'success',
-                title: 'تم إنشاء طلب جديد',
-                message: `طلبك #${order.id} تم إنشاؤه بنجاح وحالياً قيد الانتظار`,
-                relatedTo: 'order',
-                relatedId: order.id
-            });
-
-            // تحديث إحصائيات المستخدم
-            const user = await User.findOne({ username: authUsername });
-            if (user) {
-                user.orders.total = (user.orders.total || 0) + 1;
-                user.orders.pending = (user.orders.pending || 0) + 1;
-                await user.save();
-                console.log(`📊 تم تحديث إحصائيات المستخدم ${orderUsername}`);
-            }
-        }
-
-        // إرسال إشعار للأدمن
-        const adminUsers = await User.find({ role: 'admin' });
-        for (const admin of adminUsers) {
-            await Notification.create({
-                userId: admin._id,
-                type: 'info',
-                title: 'طلب جديد',
-                message: `تم إنشاء طلب جديد #${order.id} من قبل ${orderUsername} ${userId ? '(مسجل)' : '(زائر)'}`,
-                relatedTo: 'order',
-                relatedId: order.id
-            });
-        }
+    }
+    console.log(`âœ… طھظ… ط¥ط±ط³ط§ظ„ ط¥ط´ط¹ط§ط±ط§طھ ظ„ظ„ط£ط¯ظ…ظ† ط¨ط®طµظˆطµ ط§ظ„ط·ظ„ط¨ #${order.id}`);
+} catch (error) {
+    console.error('â‌Œ ط®ط·ط£ ظپظٹ ط¥ط±ط³ط§ظ„ ط¥ط´ط¹ط§ط±ط§طھ ط§ظ„ط£ط¯ظ…ظ†:', error);
+}
         
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(order));
     } catch (error) {
-        console.error('❌ خطأ في إنشاء الطلب:', error);
+        console.error('ط®ط·ط£ ظپظٹ ط¥ظ†ط´ط§ط، ط§ظ„ط·ظ„ط¨:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to create order' }));
     }
     return;
 }
-    // معاينة الرابط
+    // ظ…ط¹ط§ظٹظ†ط© ط§ظ„ط±ط§ط¨ط·
     if (method === 'POST' && pathname === '/api/preview') {
       const body = await readBody(req);
       const { url: link } = JSON.parse(body || '{}');
@@ -724,7 +691,7 @@ if (method === 'POST' && pathname === '/api/orders') {
       return;
     }
 
-    // تحليل الرابط
+    // طھط­ظ„ظٹظ„ ط§ظ„ط±ط§ط¨ط·
     if (method === 'POST' && pathname === '/api/analyze') {
       const body = await readBody(req);
       const { url: linkToAnalyze } = JSON.parse(body || '{}');
@@ -768,16 +735,16 @@ if (method === 'POST' && pathname === '/api/orders') {
       return;
     }
 
-    // تسجيل الدخول (محدث مع نظام الأمان)
+    // طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„ (ظ…ط­ط¯ط« ظ…ط¹ ظ†ط¸ط§ظ… ط§ظ„ط£ظ…ط§ظ†)
     if (method === 'POST' && pathname === '/api/auth/login') {
       const body = await readBody(req);
       const { username, password } = JSON.parse(body || '{}');
       
-      // التحقق من محاولات تسجيل الدخول
+      // ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ظ…ط­ط§ظˆظ„ط§طھ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„
       if (!checkLoginAttempts(username, clientIP)) {
         res.writeHead(429, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ 
-          error: 'تم تجاوز عدد المحاولات المسموحة. الرجاء المحاولة بعد 15 دقيقة.' 
+          error: 'طھظ… طھط¬ط§ظˆط² ط¹ط¯ط¯ ط§ظ„ظ…ط­ط§ظˆظ„ط§طھ ط§ظ„ظ…ط³ظ…ظˆط­ط©. ط§ظ„ط±ط¬ط§ط، ط§ظ„ظ…ط­ط§ظˆظ„ط© ط¨ط¹ط¯ 15 ط¯ظ‚ظٹظ‚ط©.' 
         }));
         return;
       }
@@ -786,12 +753,12 @@ if (method === 'POST' && pathname === '/api/orders') {
         const user = await User.findOne({ username, status: 'active' });
         
         if (user && await bcrypt.compare(password, user.password)) {
-          // تسجيل الدخول ناجح
+          // طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„ ظ†ط§ط¬ط­
           const token = createSession(username, clientIP);
           await logAction(username, 'login_success', {}, clientIP);
           clearLoginAttempts(username, clientIP);
           
-          // تحديث آخر تسجيل دخول
+          // طھط­ط¯ظٹط« ط¢ط®ط± طھط³ط¬ظٹظ„ ط¯ط®ظˆظ„
           await User.updateOne({ username }, { lastLogin: new Date() });
           
           res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -800,25 +767,25 @@ if (method === 'POST' && pathname === '/api/orders') {
             username,
             role: user.role,
             balance: user.balance,
-            message: 'تم تسجيل الدخول بنجاح'
+            message: 'طھظ… طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„ ط¨ظ†ط¬ط§ط­'
           }));
         } else {
-          // تسجيل الدخول فاشل
+          // طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„ ظپط§ط´ظ„
           recordFailedLogin(username, clientIP);
           await logAction(username, 'login_failed', { reason: 'invalid_credentials' }, clientIP);
           
-            // التحقق إذا الحساب محظور
+            // ط§ظ„طھط­ظ‚ظ‚ ط¥ط°ط§ ط§ظ„ط­ط³ط§ط¨ ظ…ط­ط¸ظˆط±
           const bannedUser = await User.findOne({ username, status: 'banned' });
           if (bannedUser) {
             res.writeHead(403, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ 
-              error: 'الحساب محظور', 
-              reason: bannedUser.banReason || 'يرجى الاتصال بالدعم'
+              error: 'ط§ظ„ط­ط³ط§ط¨ ظ…ط­ط¸ظˆط±', 
+              reason: bannedUser.banReason || 'ظٹط±ط¬ظ‰ ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط¯ط¹ظ…'
             }));
           } else {
             res.writeHead(401, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ 
-              error: 'اسم المستخدم أو كلمة السر غير صحيحة',
+              error: 'ط§ط³ظ… ط§ظ„ظ…ط³طھط®ط¯ظ… ط£ظˆ ظƒظ„ظ…ط© ط§ظ„ط³ط± ط؛ظٹط± طµط­ظٹط­ط©',
               remainingAttempts: MAX_LOGIN_ATTEMPTS - (loginAttempts.get(`${username}_${clientIP}`)?.count || 0)
             }));
           }
@@ -826,37 +793,37 @@ if (method === 'POST' && pathname === '/api/orders') {
       } catch (error) {
         await logAction('system', 'login_error', { error: error.message }, clientIP);
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'خطأ في الخادم' }));
+        res.end(JSON.stringify({ error: 'ط®ط·ط£ ظپظٹ ط§ظ„ط®ط§ط¯ظ…' }));
       }
       return;
     }
 
-    // ==================== نظام المستخدمين ====================
+    // ==================== ظ†ط¸ط§ظ… ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ† ====================
 
-    // تسجيل مستخدم جديد (محدث مع تشفير كلمات المرور)
+    // طھط³ط¬ظٹظ„ ظ…ط³طھط®ط¯ظ… ط¬ط¯ظٹط¯ (ظ…ط­ط¯ط« ظ…ط¹ طھط´ظپظٹط± ظƒظ„ظ…ط§طھ ط§ظ„ظ…ط±ظˆط±)
     if (method === 'POST' && pathname === '/api/auth/register') {
         const body = await readBody(req);
         const { username, password, email, phone, fullName } = JSON.parse(body || '{}');
         
         if (!username || !password || !email) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'اسم المستخدم، كلمة السر، والبريد الإلكتروني مطلوبة' }));
+            res.end(JSON.stringify({ error: 'ط§ط³ظ… ط§ظ„ظ…ط³طھط®ط¯ظ…طŒ ظƒظ„ظ…ط© ط§ظ„ط³ط±طŒ ظˆط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ ظ…ط·ظ„ظˆط¨ط©' }));
             return;
         }
 
-        // التحقق من صحة البريد الإلكتروني
+        // ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† طµط­ط© ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'صيغة البريد الإلكتروني غير صحيحة' }));
+            res.end(JSON.stringify({ error: 'طµظٹط؛ط© ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ ط؛ظٹط± طµط­ظٹط­ط©' }));
             return;
         }
 
-        // التحقق من قوة كلمة السر
+        // ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ظ‚ظˆط© ظƒظ„ظ…ط© ط§ظ„ط³ط±
         if (!isPasswordStrong(password)) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ 
-                error: 'كلمة السر ضعيفة',
+                error: 'ظƒظ„ظ…ط© ط§ظ„ط³ط± ط¶ط¹ظٹظپط©',
                 requirements: {
                     minLength: 8,
                     requiresUpperCase: true,
@@ -869,7 +836,7 @@ if (method === 'POST' && pathname === '/api/orders') {
         }
 
         try {
-            // التحقق من عدم وجود مستخدم بنفس الاسم أو البريد
+            // ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ط¹ط¯ظ… ظˆط¬ظˆط¯ ظ…ط³طھط®ط¯ظ… ط¨ظ†ظپط³ ط§ظ„ط§ط³ظ… ط£ظˆ ط§ظ„ط¨ط±ظٹط¯
             const existingUser = await User.findOne({
                 $or: [{ username }, { email }]
             });
@@ -877,14 +844,14 @@ if (method === 'POST' && pathname === '/api/orders') {
             if (existingUser) {
                 res.writeHead(409, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ 
-                    error: 'مستخدم موجود مسبقاً',
+                    error: 'ظ…ط³طھط®ط¯ظ… ظ…ظˆط¬ظˆط¯ ظ…ط³ط¨ظ‚ط§ظ‹',
                     details: existingUser.username === username ? 
-                            'اسم المستخدم مستخدم مسبقاً' : 'البريد الإلكتروني مستخدم مسبقاً'
+                            'ط§ط³ظ… ط§ظ„ظ…ط³طھط®ط¯ظ… ظ…ط³طھط®ط¯ظ… ظ…ط³ط¨ظ‚ط§ظ‹' : 'ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ ظ…ط³طھط®ط¯ظ… ظ…ط³ط¨ظ‚ط§ظ‹'
                 }));
                 return;
             }
 
-            // تشفير كلمة المرور وإنشاء المستخدم الجديد
+            // طھط´ظپظٹط± ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ظˆط¥ظ†ط´ط§ط، ط§ظ„ظ…ط³طھط®ط¯ظ… ط§ظ„ط¬ط¯ظٹط¯
             const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
             
             const newUser = await User.create({
@@ -906,13 +873,13 @@ if (method === 'POST' && pathname === '/api/orders') {
                 lastPasswordChange: new Date()
             });
 
-            // إنشاء إشعار ترحيبي
+            // ط¥ظ†ط´ط§ط، ط¥ط´ط¹ط§ط± طھط±ط­ظٹط¨ظٹ
             await Notification.create({
                 id: Date.now(),
                 userId: newUser._id,
                 type: 'success',
-                title: 'مرحباً بك!',
-                message: 'تم إنشاء حسابك بنجاح. يمكنك الآن استخدام جميع ميزات المنصة.',
+                title: 'ظ…ط±ط­ط¨ط§ظ‹ ط¨ظƒ!',
+                message: 'طھظ… ط¥ظ†ط´ط§ط، ط­ط³ط§ط¨ظƒ ط¨ظ†ط¬ط§ط­. ظٹظ…ظƒظ†ظƒ ط§ظ„ط¢ظ† ط§ط³طھط®ط¯ط§ظ… ط¬ظ…ظٹط¹ ظ…ظٹط²ط§طھ ط§ظ„ظ…ظ†طµط©.',
                 relatedTo: 'system'
             });
 
@@ -924,7 +891,7 @@ if (method === 'POST' && pathname === '/api/orders') {
             res.writeHead(201, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
                 success: true,
-                message: 'تم إنشاء الحساب بنجاح',
+                message: 'طھظ… ط¥ظ†ط´ط§ط، ط§ظ„ط­ط³ط§ط¨ ط¨ظ†ط¬ط§ط­',
                 user: {
                     id: newUser._id,
                     username: newUser.username,
@@ -934,36 +901,33 @@ if (method === 'POST' && pathname === '/api/orders') {
             }));
 
         } catch (error) {
-            console.error('خطأ في إنشاء المستخدم:', error);
+            console.error('ط®ط·ط£ ظپظٹ ط¥ظ†ط´ط§ط، ط§ظ„ظ…ط³طھط®ط¯ظ…:', error);
             await logAction('system', 'register_error', { error: error.message }, clientIP);
             res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'خطأ في إنشاء الحساب' }));
+            res.end(JSON.stringify({ error: 'ط®ط·ط£ ظپظٹ ط¥ظ†ط´ط§ط، ط§ظ„ط­ط³ط§ط¨' }));
         }
         return;
     }
 
-    // ==================== المسارات المحمية (تحتاج مصادقة) ====================
-    // في جميع الـ endpoints المحمية، استخدم هذا النمط:
-const username = checkAuth(req);
-if (!username) {
-    res.writeHead(401, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'غير مصرح: يلزم تسجيل الدخول' }));
-    return;
-}
+    // ==================== ط§ظ„ظ…ط³ط§ط±ط§طھ ط§ظ„ظ…ط­ظ…ظٹط© (طھط­طھط§ط¬ ظ…طµط§ط¯ظ‚ط©) ====================
+    const username = checkAuth(req);
+    if (!username) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'ط؛ظٹط± ظ…طµط±ط­: ظٹظ„ط²ظ… طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„' }));
+      return;
+    }
 
-// ثم استخدم currentUser بدل username في باقي الكود
-
-    // الحصول على بيانات المستخدم
+    // ط§ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…
     if (pathname === '/api/user/profile' && method === 'GET') {
         try {
             const user = await User.findOne({ username });
             if (!user) {
                 res.writeHead(404, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+                res.end(JSON.stringify({ error: 'ط§ظ„ظ…ط³طھط®ط¯ظ… ط؛ظٹط± ظ…ظˆط¬ظˆط¯' }));
                 return;
             }
 
-            // إرجاع بيانات المستخدم بدون كلمة السر
+            // ط¥ط±ط¬ط§ط¹ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ… ط¨ط¯ظˆظ† ظƒظ„ظ…ط© ط§ظ„ط³ط±
             const userData = {
                 id: user._id,
                 username: user.username,
@@ -985,20 +949,20 @@ if (!username) {
             res.end(JSON.stringify(userData));
 
         } catch (error) {
-            console.error('خطأ في جلب بيانات المستخدم:', error);
+            console.error('ط®ط·ط£ ظپظٹ ط¬ظ„ط¨ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…:', error);
             res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'خطأ في جلب البيانات' }));
+            res.end(JSON.stringify({ error: 'ط®ط·ط£ ظپظٹ ط¬ظ„ط¨ ط§ظ„ط¨ظٹط§ظ†ط§طھ' }));
         }
         return;
     }
 
-    // تحديث بيانات المستخدم
+    // طھط­ط¯ظٹط« ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…
     if (pathname === '/api/user/profile' && method === 'PUT') {
         const body = await readBody(req);
         const updateData = JSON.parse(body || '{}');
 
         try {
-            // منع تحديث بعض الحقول
+            // ظ…ظ†ط¹ طھط­ط¯ظٹط« ط¨ط¹ط¶ ط§ظ„ط­ظ‚ظˆظ„
             delete updateData.username;
             delete updateData.email;
             delete updateData.role;
@@ -1016,7 +980,7 @@ if (!username) {
 
             if (!updatedUser) {
                 res.writeHead(404, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+                res.end(JSON.stringify({ error: 'ط§ظ„ظ…ط³طھط®ط¯ظ… ط؛ظٹط± ظ…ظˆط¬ظˆط¯' }));
                 return;
             }
 
@@ -1027,7 +991,7 @@ if (!username) {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
                 success: true,
-                message: 'تم تحديث البيانات بنجاح',
+                message: 'طھظ… طھط­ط¯ظٹط« ط§ظ„ط¨ظٹط§ظ†ط§طھ ط¨ظ†ط¬ط§ط­',
                 user: {
                     username: updatedUser.username,
                     email: updatedUser.email,
@@ -1038,31 +1002,31 @@ if (!username) {
             }));
 
         } catch (error) {
-            console.error('خطأ في تحديث بيانات المستخدم:', error);
+            console.error('ط®ط·ط£ ظپظٹ طھط­ط¯ظٹط« ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…:', error);
             res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'خطأ في تحديث البيانات' }));
+            res.end(JSON.stringify({ error: 'ط®ط·ط£ ظپظٹ طھط­ط¯ظٹط« ط§ظ„ط¨ظٹط§ظ†ط§طھ' }));
         }
         return;
     }
 
-    // ==================== نظام الملف الشخصي المتقدم ====================
+    // ==================== ظ†ط¸ط§ظ… ط§ظ„ظ…ظ„ظپ ط§ظ„ط´ط®طµظٹ ط§ظ„ظ…طھظ‚ط¯ظ… ====================
 
-    // تغيير كلمة السر (محدث مع تشفير)
+    // طھط؛ظٹظٹط± ظƒظ„ظ…ط© ط§ظ„ط³ط± (ظ…ط­ط¯ط« ظ…ط¹ طھط´ظپظٹط±)
     if (method === 'PUT' && pathname === '/api/user/change-password') {
         const body = await readBody(req);
         const { currentPassword, newPassword } = JSON.parse(body || '{}');
 
         if (!currentPassword || !newPassword) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'جميع الحقول مطلوبة' }));
+            res.end(JSON.stringify({ error: 'ط¬ظ…ظٹط¹ ط§ظ„ط­ظ‚ظˆظ„ ظ…ط·ظ„ظˆط¨ط©' }));
             return;
         }
 
-        // التحقق من قوة كلمة السر الجديدة
+        // ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ظ‚ظˆط© ظƒظ„ظ…ط© ط§ظ„ط³ط± ط§ظ„ط¬ط¯ظٹط¯ط©
         if (!isPasswordStrong(newPassword)) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ 
-                error: 'كلمة السر الجديدة ضعيفة',
+                error: 'ظƒظ„ظ…ط© ط§ظ„ط³ط± ط§ظ„ط¬ط¯ظٹط¯ط© ط¶ط¹ظٹظپط©',
                 requirements: {
                     minLength: 8,
                     requiresUpperCase: true,
@@ -1078,19 +1042,19 @@ if (!username) {
             const user = await User.findOne({ username });
             if (!user) {
                 res.writeHead(404, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+                res.end(JSON.stringify({ error: 'ط§ظ„ظ…ط³طھط®ط¯ظ… ط؛ظٹط± ظ…ظˆط¬ظˆط¯' }));
                 return;
             }
 
-            // التحقق من كلمة السر الحالية
+            // ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ظƒظ„ظ…ط© ط§ظ„ط³ط± ط§ظ„ط­ط§ظ„ظٹط©
             const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
             if (!isCurrentPasswordValid) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'كلمة السر الحالية غير صحيحة' }));
+                res.end(JSON.stringify({ error: 'ظƒظ„ظ…ط© ط§ظ„ط³ط± ط§ظ„ط­ط§ظ„ظٹط© ط؛ظٹط± طµط­ظٹط­ط©' }));
                 return;
             }
 
-            // تحديث كلمة السر
+            // طھط­ط¯ظٹط« ظƒظ„ظ…ط© ط§ظ„ط³ط±
             const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
             user.password = hashedNewPassword;
             user.lastPasswordChange = new Date();
@@ -1102,19 +1066,19 @@ if (!username) {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
                 success: true,
-                message: 'تم تغيير كلمة السر بنجاح'
+                message: 'طھظ… طھط؛ظٹظٹط± ظƒظ„ظ…ط© ط§ظ„ط³ط± ط¨ظ†ط¬ط§ط­'
             }));
 
         } catch (error) {
-            console.error('خطأ في تغيير كلمة السر:', error);
+            console.error('ط®ط·ط£ ظپظٹ طھط؛ظٹظٹط± ظƒظ„ظ…ط© ط§ظ„ط³ط±:', error);
             res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'خطأ في تغيير كلمة السر' }));
+            res.end(JSON.stringify({ error: 'ط®ط·ط£ ظپظٹ طھط؛ظٹظٹط± ظƒظ„ظ…ط© ط§ظ„ط³ط±' }));
         }
         return;
     }
 
-    // رفع الصورة الشخصية
-    // رفع الصورة الشخصية
+    // ط±ظپط¹ ط§ظ„طµظˆط±ط© ط§ظ„ط´ط®طµظٹط©
+    // ط±ظپط¹ ط§ظ„طµظˆط±ط© ط§ظ„ط´ط®طµظٹط©
 if (pathname === '/api/user/upload-avatar' && method === 'POST') {
     try {
         const body = await readBody(req);
@@ -1122,18 +1086,18 @@ if (pathname === '/api/user/upload-avatar' && method === 'POST') {
 
         if (!avatar) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'صورة غير مرفوعة' }));
+            res.end(JSON.stringify({ error: 'طµظˆط±ط© ط؛ظٹط± ظ…ط±ظپظˆط¹ط©' }));
             return;
         }
 
         const user = await User.findOne({ username });
         if (!user) {
             res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            res.end(JSON.stringify({ error: 'ط§ظ„ظ…ط³طھط®ط¯ظ… ط؛ظٹط± ظ…ظˆط¬ظˆط¯' }));
             return;
         }
 
-        // حفظ الصورة (في حالتنا نخزنها كـ base64 مباشرة)
+        // ط­ظپط¸ ط§ظ„طµظˆط±ط© (ظپظٹ ط­ط§ظ„طھظ†ط§ ظ†ط®ط²ظ†ظ‡ط§ ظƒظ€ base64 ظ…ط¨ط§ط´ط±ط©)
         user.avatar = avatar;
         user.updatedAt = new Date();
         await user.save();
@@ -1143,19 +1107,19 @@ if (pathname === '/api/user/upload-avatar' && method === 'POST') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
             success: true,
-            message: 'تم تحديث الصورة الشخصية بنجاح',
+            message: 'طھظ… طھط­ط¯ظٹط« ط§ظ„طµظˆط±ط© ط§ظ„ط´ط®طµظٹط© ط¨ظ†ط¬ط§ط­',
             avatar: user.avatar
         }));
 
     } catch (error) {
-        console.error('خطأ في رفع الصورة:', error);
+        console.error('ط®ط·ط£ ظپظٹ ط±ظپط¹ ط§ظ„طµظˆط±ط©:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'خطأ في رفع الصورة' }));
+        res.end(JSON.stringify({ error: 'ط®ط·ط£ ظپظٹ ط±ظپط¹ ط§ظ„طµظˆط±ط©' }));
     }
     return;
 }
 
-    // إنشاء إشعار جديد
+    // ط¥ظ†ط´ط§ط، ط¥ط´ط¹ط§ط± ط¬ط¯ظٹط¯
 if (pathname === '/api/user/notifications' && method === 'POST') {
     try {
         const body = await readBody(req);
@@ -1164,41 +1128,41 @@ if (pathname === '/api/user/notifications' && method === 'POST') {
         const user = await User.findOne({ username });
         if (!user) {
             res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            res.end(JSON.stringify({ error: 'ط§ظ„ظ…ط³طھط®ط¯ظ… ط؛ظٹط± ظ…ظˆط¬ظˆط¯' }));
             return;
         }
 
-        // ✅ إصلاح: إنشاء ID فريد بدل null
+        // âœ… ط¥طµظ„ط§ط­: ط¥ظ†ط´ط§ط، ID ظپط±ظٹط¯ ط¨ط¯ظ„ null
         const maxIdNotification = await Notification.findOne().sort('-id').exec();
         const newId = (maxIdNotification?.id || 0) + 1;
 
-        // إنشاء الإشعار
+        // ط¥ظ†ط´ط§ط، ط§ظ„ط¥ط´ط¹ط§ط±
         const notification = await Notification.create({
-            id: newId, // ✅ إضافة ID فريد
+            id: newId, // âœ… ط¥ط¶ط§ظپط© ID ظپط±ظٹط¯
             userId: user._id,
             type: type || 'info',
-            title: title || 'إشعار جديد',
-            message: message || 'لا يوجد محتوى',
+            title: title || 'ط¥ط´ط¹ط§ط± ط¬ط¯ظٹط¯',
+            message: message || 'ظ„ط§ ظٹظˆط¬ط¯ ظ…ط­طھظˆظ‰',
             read: false,
             relatedTo: relatedTo || 'order',
             relatedId: relatedId || null
         });
 
-        console.log(`✅ تم إنشاء إشعار جديد #${newId} للمستخدم ${username}`);
+        console.log(`âœ… طھظ… ط¥ظ†ط´ط§ط، ط¥ط´ط¹ط§ط± ط¬ط¯ظٹط¯ #${newId} ظ„ظ„ظ…ط³طھط®ط¯ظ… ${username}`);
 
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(notification));
 
     } catch (error) {
-        console.error('❌ خطأ في إنشاء الإشعار:', error);
+        console.error('â‌Œ ط®ط·ط£ ظپظٹ ط¥ظ†ط´ط§ط، ط§ظ„ط¥ط´ط¹ط§ط±:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to create notification' }));
     }
     return;
 }
-// ==================== APIs الملف الشخصي المفقودة ====================
+// ==================== APIs ط§ظ„ظ…ظ„ظپ ط§ظ„ط´ط®طµظٹ ط§ظ„ظ…ظپظ‚ظˆط¯ط© ====================
 
-// رفع الصورة الشخصية
+// ط±ظپط¹ ط§ظ„طµظˆط±ط© ط§ظ„ط´ط®طµظٹط©
 if (pathname === '/api/user/upload-avatar' && method === 'POST') {
     try {
         const body = await readBody(req);
@@ -1206,18 +1170,18 @@ if (pathname === '/api/user/upload-avatar' && method === 'POST') {
 
         if (!avatar) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'صورة غير مرفوعة' }));
+            res.end(JSON.stringify({ error: 'طµظˆط±ط© ط؛ظٹط± ظ…ط±ظپظˆط¹ط©' }));
             return;
         }
 
         const user = await User.findOne({ username });
         if (!user) {
             res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            res.end(JSON.stringify({ error: 'ط§ظ„ظ…ط³طھط®ط¯ظ… ط؛ظٹط± ظ…ظˆط¬ظˆط¯' }));
             return;
         }
 
-        // حفظ الصورة
+        // ط­ظپط¸ ط§ظ„طµظˆط±ط©
         user.avatar = avatar;
         user.updatedAt = new Date();
         await user.save();
@@ -1227,49 +1191,39 @@ if (pathname === '/api/user/upload-avatar' && method === 'POST') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
             success: true,
-            message: 'تم تحديث الصورة الشخصية بنجاح',
+            message: 'طھظ… طھط­ط¯ظٹط« ط§ظ„طµظˆط±ط© ط§ظ„ط´ط®طµظٹط© ط¨ظ†ط¬ط§ط­',
             avatar: user.avatar
         }));
 
     } catch (error) {
-        console.error('خطأ في رفع الصورة:', error);
+        console.error('ط®ط·ط£ ظپظٹ ط±ظپط¹ ط§ظ„طµظˆط±ط©:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'خطأ في رفع الصورة' }));
+        res.end(JSON.stringify({ error: 'ط®ط·ط£ ظپظٹ ط±ظپط¹ ط§ظ„طµظˆط±ط©' }));
     }
     return;
 }
 
-// الحصول على طلبات المستخدم الشخصية
-// طلبات المستخدم الشخصية
+// ط§ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ط·ظ„ط¨ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ… ط§ظ„ط´ط®طµظٹط©
 if (pathname === '/api/user/orders' && method === 'GET') {
     try {
-        // 🔧 استخدام authUsername بدل username
-        const authUsername = checkAuth(req);
-        if (!authUsername) {
-            res.writeHead(401, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'غير مصرح' }));
-            return;
-        }
-
-        const userOrders = await Order.find({ username: authUsername }).sort({ createdAt: -1 });
-        console.log(`📦 جلب ${userOrders.length} طلب للمستخدم ${authUsername}`);
+        const userOrders = await Order.find({ username }).sort({ createdAt: -1 });
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(userOrders));
     } catch (error) {
-        console.error('❌ خطأ في جلب طلبات المستخدم:', error);
+        console.error('ط®ط·ط£ ظپظٹ ط¬ظ„ط¨ ط·ظ„ط¨ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to load user orders' }));
     }
     return;
 }
 
-// الحصول على معاملات المستخدم
+// ط§ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ظ…ط¹ط§ظ…ظ„ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…
 if (pathname === '/api/user/transactions' && method === 'GET') {
     try {
         const user = await User.findOne({ username });
         if (!user) {
             res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            res.end(JSON.stringify({ error: 'ط§ظ„ظ…ط³طھط®ط¯ظ… ط؛ظٹط± ظ…ظˆط¬ظˆط¯' }));
             return;
         }
 
@@ -1281,20 +1235,20 @@ if (pathname === '/api/user/transactions' && method === 'GET') {
         res.end(JSON.stringify(transactions));
 
     } catch (error) {
-        console.error('خطأ في جلب المعاملات:', error);
+        console.error('ط®ط·ط£ ظپظٹ ط¬ظ„ط¨ ط§ظ„ظ…ط¹ط§ظ…ظ„ط§طھ:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'خطأ في جلب المعاملات' }));
+        res.end(JSON.stringify({ error: 'ط®ط·ط£ ظپظٹ ط¬ظ„ط¨ ط§ظ„ظ…ط¹ط§ظ…ظ„ط§طھ' }));
     }
     return;
 }
 
-// تحديث الملف الشخصي
+// طھط­ط¯ظٹط« ط§ظ„ظ…ظ„ظپ ط§ظ„ط´ط®طµظٹ
 if (pathname === '/api/user/profile' && method === 'PUT') {
     try {
         const body = await readBody(req);
         const updateData = JSON.parse(body || '{}');
 
-        // منع تحديث بعض الحقول
+        // ظ…ظ†ط¹ طھط­ط¯ظٹط« ط¨ط¹ط¶ ط§ظ„ط­ظ‚ظˆظ„
         delete updateData.username;
         delete updateData.email;
         delete updateData.role;
@@ -1312,7 +1266,7 @@ if (pathname === '/api/user/profile' && method === 'PUT') {
 
         if (!updatedUser) {
             res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            res.end(JSON.stringify({ error: 'ط§ظ„ظ…ط³طھط®ط¯ظ… ط؛ظٹط± ظ…ظˆط¬ظˆط¯' }));
             return;
         }
 
@@ -1323,7 +1277,7 @@ if (pathname === '/api/user/profile' && method === 'PUT') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
             success: true,
-            message: 'تم تحديث البيانات بنجاح',
+            message: 'طھظ… طھط­ط¯ظٹط« ط§ظ„ط¨ظٹط§ظ†ط§طھ ط¨ظ†ط¬ط§ط­',
             user: {
                 username: updatedUser.username,
                 email: updatedUser.email,
@@ -1334,14 +1288,14 @@ if (pathname === '/api/user/profile' && method === 'PUT') {
         }));
 
     } catch (error) {
-        console.error('خطأ في تحديث بيانات المستخدم:', error);
+        console.error('ط®ط·ط£ ظپظٹ طھط­ط¯ظٹط« ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'خطأ في تحديث البيانات' }));
+        res.end(JSON.stringify({ error: 'ط®ط·ط£ ظپظٹ طھط­ط¯ظٹط« ط§ظ„ط¨ظٹط§ظ†ط§طھ' }));
     }
     return;
 }
 
-// تغيير كلمة السر
+// طھط؛ظٹظٹط± ظƒظ„ظ…ط© ط§ظ„ط³ط±
 if (pathname === '/api/user/change-password' && method === 'PUT') {
     try {
         const body = await readBody(req);
@@ -1349,26 +1303,26 @@ if (pathname === '/api/user/change-password' && method === 'PUT') {
 
         if (!currentPassword || !newPassword) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'جميع الحقول مطلوبة' }));
+            res.end(JSON.stringify({ error: 'ط¬ظ…ظٹط¹ ط§ظ„ط­ظ‚ظˆظ„ ظ…ط·ظ„ظˆط¨ط©' }));
             return;
         }
 
         const user = await User.findOne({ username });
         if (!user) {
             res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            res.end(JSON.stringify({ error: 'ط§ظ„ظ…ط³طھط®ط¯ظ… ط؛ظٹط± ظ…ظˆط¬ظˆط¯' }));
             return;
         }
 
-        // التحقق من كلمة السر الحالية
+        // ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ظƒظ„ظ…ط© ط§ظ„ط³ط± ط§ظ„ط­ط§ظ„ظٹط©
         const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
         if (!isCurrentPasswordValid) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'كلمة السر الحالية غير صحيحة' }));
+            res.end(JSON.stringify({ error: 'ظƒظ„ظ…ط© ط§ظ„ط³ط± ط§ظ„ط­ط§ظ„ظٹط© ط؛ظٹط± طµط­ظٹط­ط©' }));
             return;
         }
 
-        // تحديث كلمة السر
+        // طھط­ط¯ظٹط« ظƒظ„ظ…ط© ط§ظ„ط³ط±
         const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
         user.password = hashedNewPassword;
         user.lastPasswordChange = new Date();
@@ -1380,23 +1334,23 @@ if (pathname === '/api/user/change-password' && method === 'PUT') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
             success: true,
-            message: 'تم تغيير كلمة السر بنجاح'
+            message: 'طھظ… طھط؛ظٹظٹط± ظƒظ„ظ…ط© ط§ظ„ط³ط± ط¨ظ†ط¬ط§ط­'
         }));
 
     } catch (error) {
-        console.error('خطأ في تغيير كلمة السر:', error);
+        console.error('ط®ط·ط£ ظپظٹ طھط؛ظٹظٹط± ظƒظ„ظ…ط© ط§ظ„ط³ط±:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'خطأ في تغيير كلمة السر' }));
+        res.end(JSON.stringify({ error: 'ط®ط·ط£ ظپظٹ طھط؛ظٹظٹط± ظƒظ„ظ…ط© ط§ظ„ط³ط±' }));
     }
     return;
 }
-    // الحصول على معاملات المستخدم
+    // ط§ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ظ…ط¹ط§ظ…ظ„ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…
     if (method === 'GET' && pathname === '/api/user/transactions') {
         try {
             const user = await User.findOne({ username });
             if (!user) {
                 res.writeHead(404, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+                res.end(JSON.stringify({ error: 'ط§ظ„ظ…ط³طھط®ط¯ظ… ط؛ظٹط± ظ…ظˆط¬ظˆط¯' }));
                 return;
             }
 
@@ -1408,21 +1362,21 @@ if (pathname === '/api/user/change-password' && method === 'PUT') {
             res.end(JSON.stringify(transactions));
 
         } catch (error) {
-            console.error('خطأ في جلب المعاملات:', error);
+            console.error('ط®ط·ط£ ظپظٹ ط¬ظ„ط¨ ط§ظ„ظ…ط¹ط§ظ…ظ„ط§طھ:', error);
             res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'خطأ في جلب المعاملات' }));
+            res.end(JSON.stringify({ error: 'ط®ط·ط£ ظپظٹ ط¬ظ„ط¨ ط§ظ„ظ…ط¹ط§ظ…ظ„ط§طھ' }));
         }
         return;
     }
 
-    // طلب شحن رصيد
+    // ط·ظ„ط¨ ط´ط­ظ† ط±طµظٹط¯
     if (method === 'POST' && pathname === '/api/user/deposit') {
         const body = await readBody(req);
         const { amount, method, details } = JSON.parse(body || '{}');
 
         if (!amount || !method || amount <= 0) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'بيانات غير صحيحة' }));
+            res.end(JSON.stringify({ error: 'ط¨ظٹط§ظ†ط§طھ ط؛ظٹط± طµط­ظٹط­ط©' }));
             return;
         }
 
@@ -1430,11 +1384,11 @@ if (pathname === '/api/user/change-password' && method === 'PUT') {
             const user = await User.findOne({ username });
             if (!user) {
                 res.writeHead(404, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+                res.end(JSON.stringify({ error: 'ط§ظ„ظ…ط³طھط®ط¯ظ… ط؛ظٹط± ظ…ظˆط¬ظˆط¯' }));
                 return;
             }
 
-            // إنشاء معاملة جديدة
+            // ط¥ظ†ط´ط§ط، ظ…ط¹ط§ظ…ظ„ط© ط¬ط¯ظٹط¯ط©
             const maxIdTransaction = await Transaction.findOne().sort('-id').exec();
             const newId = (maxIdTransaction?.id || 0) + 1;
 
@@ -1447,16 +1401,16 @@ if (pathname === '/api/user/change-password' && method === 'PUT') {
                 method: method,
                 status: 'pending',
                 details: details || {},
-                userNote: `طلب شحن رصيد بقيمة $${amount}`
+                userNote: `ط·ظ„ط¨ ط´ط­ظ† ط±طµظٹط¯ ط¨ظ‚ظٹظ…ط© $${amount}`
             });
 
-            // إرسال إشعار للأدمن
+            // ط¥ط±ط³ط§ظ„ ط¥ط´ط¹ط§ط± ظ„ظ„ط£ط¯ظ…ظ†
             await Notification.create({
                 id: Date.now(),
                 userId: user._id,
                 type: 'info',
-                title: 'طلب شحن رصيد جديد',
-                message: `المستخدم ${username} طلب شحن رصيد بقيمة $${amount}`,
+                title: 'ط·ظ„ط¨ ط´ط­ظ† ط±طµظٹط¯ ط¬ط¯ظٹط¯',
+                message: `ط§ظ„ظ…ط³طھط®ط¯ظ… ${username} ط·ظ„ط¨ ط´ط­ظ† ط±طµظٹط¯ ط¨ظ‚ظٹظ…ط© $${amount}`,
                 relatedTo: 'transaction',
                 relatedId: transaction.id
             });
@@ -1466,42 +1420,42 @@ if (pathname === '/api/user/change-password' && method === 'PUT') {
             res.writeHead(201, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
                 success: true,
-                message: 'تم إرسال طلب الشحن بنجاح',
+                message: 'طھظ… ط¥ط±ط³ط§ظ„ ط·ظ„ط¨ ط§ظ„ط´ط­ظ† ط¨ظ†ط¬ط§ط­',
                 transaction: transaction
             }));
 
         } catch (error) {
-            console.error('خطأ في طلب الشحن:', error);
+            console.error('ط®ط·ط£ ظپظٹ ط·ظ„ط¨ ط§ظ„ط´ط­ظ†:', error);
             res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'خطأ في طلب الشحن' }));
+            res.end(JSON.stringify({ error: 'ط®ط·ط£ ظپظٹ ط·ظ„ط¨ ط§ظ„ط´ط­ظ†' }));
         }
         return;
     }
 
-    // طلبات المستخدم الشخصية
-    // طلبات المستخدم الشخصية
+    // ط·ظ„ط¨ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ… ط§ظ„ط´ط®طµظٹط©
+    // ط·ظ„ط¨ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ… ط§ظ„ط´ط®طµظٹط©
 if (pathname === '/api/user/orders' && method === 'GET') {
     try {
         const userOrders = await Order.find({ username }).sort({ createdAt: -1 });
-        console.log(`📦 جلب ${userOrders.length} طلب للمستخدم ${username}`);
+        console.log(`ًں“¦ ط¬ظ„ط¨ ${userOrders.length} ط·ظ„ط¨ ظ„ظ„ظ…ط³طھط®ط¯ظ… ${username}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(userOrders));
     } catch (error) {
-        console.error('❌ خطأ في جلب طلبات المستخدم:', error);
+        console.error('â‌Œ ط®ط·ط£ ظپظٹ ط¬ظ„ط¨ ط·ظ„ط¨ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to load user orders' }));
     }
     return;
 }
 
-// تحديث حالة الطلب (للأدمن)
+// طھط­ط¯ظٹط« ط­ط§ظ„ط© ط§ظ„ط·ظ„ط¨ (ظ„ظ„ط£ط¯ظ…ظ†)
 if (pathname.startsWith('/api/orders/') && method === 'PUT') {
     try {
         const id = parseInt(pathname.split('/').pop(), 10);
         const body = await readBody(req);
         const data = JSON.parse(body || '{}');
         
-        console.log(`🔄 تحديث حالة الطلب #${id} إلى: ${data.status}`);
+        console.log(`ًں”„ طھط­ط¯ظٹط« ط­ط§ظ„ط© ط§ظ„ط·ظ„ط¨ #${id} ط¥ظ„ظ‰: ${data.status}`);
         
         const order = await Order.findOne({ id });
         if (!order) {
@@ -1520,21 +1474,21 @@ if (pathname.startsWith('/api/orders/') && method === 'PUT') {
         );
 
         if (updatedOrder) {
-            console.log(`✅ تم تحديث الطلب #${id} بنجاح`);
+            console.log(`âœ… طھظ… طھط­ط¯ظٹط« ط§ظ„ط·ظ„ط¨ #${id} ط¨ظ†ط¬ط§ط­`);
             
-            // إرسال إشعار للمستخدم إذا كان مسجل
+            // ط¥ط±ط³ط§ظ„ ط¥ط´ط¹ط§ط± ظ„ظ„ظ…ط³طھط®ط¯ظ… ط¥ط°ط§ ظƒط§ظ† ظ…ط³ط¬ظ„
             if (order.username !== 'public') {
                 const user = await User.findOne({ username: order.username });
                 if (user) {
                     await Notification.create({
                         userId: user._id,
                         type: data.status === 'completed' ? 'success' : 'info',
-                        title: `تم تحديث حالة الطلب #${order.id}`,
-                        message: `حالة الطلب أصبحت: ${getOrderStatusText(data.status)}`,
+                        title: `طھظ… طھط­ط¯ظٹط« ط­ط§ظ„ط© ط§ظ„ط·ظ„ط¨ #${order.id}`,
+                        message: `ط­ط§ظ„ط© ط§ظ„ط·ظ„ط¨ ط£طµط¨ط­طھ: ${getOrderStatusText(data.status)}`,
                         relatedTo: 'order',
                         relatedId: order.id
                     });
-                    console.log(`📢 تم إرسال إشعار للمستخدم ${order.username}`);
+                    console.log(`ًں“¢ طھظ… ط¥ط±ط³ط§ظ„ ط¥ط´ط¹ط§ط± ظ„ظ„ظ…ط³طھط®ط¯ظ… ${order.username}`);
                 }
             }
 
@@ -1545,78 +1499,71 @@ if (pathname.startsWith('/api/orders/') && method === 'PUT') {
             res.end(JSON.stringify({ error: 'Order not found' }));
         }
     } catch (error) {
-        console.error('❌ خطأ في تحديث الطلب:', error);
+        console.error('â‌Œ ط®ط·ط£ ظپظٹ طھط­ط¯ظٹط« ط§ظ„ط·ظ„ط¨:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to update order' }));
     }
     return;
 }
 
-    // تسجيل الخروج
+    // طھط³ط¬ظٹظ„ ط§ظ„ط®ط±ظˆط¬
     if (method === 'POST' && pathname === '/api/auth/logout') {
       const token = req.headers['x-auth-token'];
       if (token) sessions.delete(token);
       await logAction(username, 'logout', {}, clientIP);
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ ok: true, message: 'تم تسجيل الخروج بنجاح' }));
+      res.end(JSON.stringify({ ok: true, message: 'طھظ… طھط³ط¬ظٹظ„ ط§ظ„ط®ط±ظˆط¬ ط¨ظ†ط¬ط§ط­' }));
       return;
                             }
-    // ==================== مسارات الأدمن ====================
+    // ==================== ظ…ط³ط§ط±ط§طھ ط§ظ„ط£ط¯ظ…ظ† ====================
     
-    // التحقق من صلاحيات الأدمن
+    // ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† طµظ„ط§ط­ظٹط§طھ ط§ظ„ط£ط¯ظ…ظ†
     const currentUser = await User.findOne({ username });
     const isAdmin = currentUser && currentUser.role === 'admin';
 
     if (!isAdmin && pathname.startsWith('/api/admin')) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'ممنوع الوصول: يلزم صلاحيات أدمن' }));
+        res.end(JSON.stringify({ error: 'ظ…ظ…ظ†ظˆط¹ ط§ظ„ظˆطµظˆظ„: ظٹظ„ط²ظ… طµظ„ط§ط­ظٹط§طھ ط£ط¯ظ…ظ†' }));
         return;
     }
 
-    // الإحصائيات
-    // الإحصائيات
-if (pathname === '/api/stats' && method === 'GET') {
-    try {
+    // ط§ظ„ط¥ط­طµط§ط¦ظٹط§طھ
+    if (pathname === '/api/stats' && method === 'GET') {
+      try {
         const totalServices = await Service.countDocuments();
         const totalOrders = await Order.countDocuments();
         const pendingOrders = await Order.countDocuments({ status: 'pending' });
         
-        // 🔧 إحصائيات إضافية عن المستخدمين
-        const registeredUsersOrders = await Order.countDocuments({ userType: 'registered' });
-        const publicUsersOrders = await Order.countDocuments({ userType: 'public' });
-        
+        // ط­ط³ط§ط¨ ظ…طھظˆط³ط· ط§ظ„ط³ط¹ط±
         const services = await Service.find({});
         const priceValues = services.map(s => {
-            if (s.type === 'fixed') return parseFloat(s.price) || 0;
-            if (s.type === 'quantity') return parseFloat(s.rate) || 0;
-            return 0;
+          if (s.type === 'fixed') return parseFloat(s.price) || 0;
+          if (s.type === 'quantity') return parseFloat(s.rate) || 0;
+          return 0;
         }).filter(v => v > 0);
         
         const avgPrice = priceValues.length > 0 
-            ? (priceValues.reduce((a, b) => a + b, 0) / priceValues.length).toFixed(2)
-            : 0;
+          ? (priceValues.reduce((a, b) => a + b, 0) / priceValues.length).toFixed(2)
+          : 0;
 
         const stats = {
-            totalServices,
-            totalOrders,
-            pendingOrders,
-            registeredUsersOrders, // 🔧 جديد
-            publicUsersOrders,     // 🔧 جديد
-            avgPrice: parseFloat(avgPrice)
+          totalServices,
+          totalOrders,
+          pendingOrders,
+          avgPrice: parseFloat(avgPrice)
         };
 
-        console.log('📊 الإحصائيات:', stats);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(stats));
-    } catch (error) {
+      } catch (error) {
         console.error('Stats error:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to load stats' }));
+      }
+      return;
     }
-    return;
-}
 
-    // جميع الطلبات (للأدمن)
+    // ط¬ظ…ظٹط¹ ط§ظ„ط·ظ„ط¨ط§طھ (ظ„ظ„ط£ط¯ظ…ظ†)
     if (pathname === '/api/orders' && method === 'GET') {
       try {
         const orders = await Order.find({}).sort({ createdAt: -1 });
@@ -1631,7 +1578,7 @@ if (pathname === '/api/stats' && method === 'GET') {
     }
 
     
-    // تحديث حالة الطلب مع نظام الخصم
+    // طھط­ط¯ظٹط« ط­ط§ظ„ط© ط§ظ„ط·ظ„ط¨ ظ…ط¹ ظ†ط¸ط§ظ… ط§ظ„ط®طµظ…
 if (pathname.startsWith('/api/orders/') && method === 'PUT') {
     try {
         const id = parseInt(pathname.split('/').pop(), 10);
@@ -1645,34 +1592,34 @@ if (pathname.startsWith('/api/orders/') && method === 'PUT') {
             return;
         }
 
-        // إذا تم تغيير الحالة إلى processing وكانت pending، قم بخصم المبلغ
+        // ط¥ط°ط§ طھظ… طھط؛ظٹظٹط± ط§ظ„ط­ط§ظ„ط© ط¥ظ„ظ‰ processing ظˆظƒط§ظ†طھ pendingطŒ ظ‚ظ… ط¨ط®طµظ… ط§ظ„ظ…ط¨ظ„ط؛
         if (data.status === 'processing' && order.status === 'pending') {
             const user = await User.findOne({ username: order.username });
             if (user) {
-                // التحقق من أن الرصيد كافي وغير مجمد
+                // ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ط£ظ† ط§ظ„ط±طµظٹط¯ ظƒط§ظپظٹ ظˆط؛ظٹط± ظ…ط¬ظ…ط¯
                 if (user.balanceFrozen) {
                     res.writeHead(400, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ error: 'لا يمكن معالجة الطلب - الرصيد مجمد' }));
+                    res.end(JSON.stringify({ error: 'ظ„ط§ ظٹظ…ظƒظ† ظ…ط¹ط§ظ„ط¬ط© ط§ظ„ط·ظ„ط¨ - ط§ظ„ط±طµظٹط¯ ظ…ط¬ظ…ط¯' }));
                     return;
                 }
                 
                 if (user.balance < order.price) {
                     res.writeHead(400, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ error: 'رصيد المستخدم غير كافي' }));
+                    res.end(JSON.stringify({ error: 'ط±طµظٹط¯ ط§ظ„ظ…ط³طھط®ط¯ظ… ط؛ظٹط± ظƒط§ظپظٹ' }));
                     return;
                 }
 
-                // خصم المبلغ من رصيد المستخدم
+                // ط®طµظ… ط§ظ„ظ…ط¨ظ„ط؛ ظ…ظ† ط±طµظٹط¯ ط§ظ„ظ…ط³طھط®ط¯ظ…
                 user.balance -= order.price;
                 user.totalSpent += order.price;
                 
-                // تحديث إحصائيات الطلبات
+                // طھط­ط¯ظٹط« ط¥ط­طµط§ط¦ظٹط§طھ ط§ظ„ط·ظ„ط¨ط§طھ
                 user.orders.total = (user.orders.total || 0) + 1;
                 user.orders.pending = (user.orders.pending || 0) + 1;
                 
                 await user.save();
 
-                // تسجيل المعاملة
+                // طھط³ط¬ظٹظ„ ط§ظ„ظ…ط¹ط§ظ…ظ„ط©
                 const maxIdTransaction = await Transaction.findOne().sort('-id').exec();
                 const newTransactionId = (maxIdTransaction?.id || 0) + 1;
 
@@ -1684,36 +1631,36 @@ if (pathname.startsWith('/api/orders/') && method === 'PUT') {
                     amount: -order.price,
                     method: 'system',
                     status: 'completed',
-                    userNote: `دفع مقابل الطلب #${order.id}`,
+                    userNote: `ط¯ظپط¹ ظ…ظ‚ط§ط¨ظ„ ط§ظ„ط·ظ„ط¨ #${order.id}`,
                     createdAt: new Date()
                 });
 
-                // إرسال إشعار للمستخدم
+                // ط¥ط±ط³ط§ظ„ ط¥ط´ط¹ط§ط± ظ„ظ„ظ…ط³طھط®ط¯ظ…
                 await Notification.create({
                     id: Date.now(),
                     userId: user._id,
                     type: 'info',
-                    title: 'تم خصم المبلغ',
-                    message: `تم خصم $${order.price.toFixed(2)} من رصيدك مقابل الطلب #${order.id}`,
+                    title: 'طھظ… ط®طµظ… ط§ظ„ظ…ط¨ظ„ط؛',
+                    message: `طھظ… ط®طµظ… $${order.price.toFixed(2)} ظ…ظ† ط±طµظٹط¯ظƒ ظ…ظ‚ط§ط¨ظ„ ط§ظ„ط·ظ„ط¨ #${order.id}`,
                     relatedTo: 'order',
                     relatedId: order.id
                 });
 
-                console.log(`✅ تم خصم $${order.price} من رصيد ${user.username}`);
+                console.log(`âœ… طھظ… ط®طµظ… $${order.price} ظ…ظ† ط±طµظٹط¯ ${user.username}`);
             }
         }
 
-        // إذا تم إلغاء الطلب أو رفضه، إرجاع المبلغ
+        // ط¥ط°ط§ طھظ… ط¥ظ„ط؛ط§ط، ط§ظ„ط·ظ„ط¨ ط£ظˆ ط±ظپط¶ظ‡طŒ ط¥ط±ط¬ط§ط¹ ط§ظ„ظ…ط¨ظ„ط؛
         if ((data.status === 'cancelled' || data.status === 'rejected') && 
             (order.status === 'processing' || order.status === 'pending')) {
             const user = await User.findOne({ username: order.username });
             if (user && order.status === 'processing') {
-                // إرجاع المبلغ للمستخدم
+                // ط¥ط±ط¬ط§ط¹ ط§ظ„ظ…ط¨ظ„ط؛ ظ„ظ„ظ…ط³طھط®ط¯ظ…
                 user.balance += order.price;
                 user.totalSpent -= order.price;
                 await user.save();
 
-                // تسجيل معاملة الإرجاع
+                // طھط³ط¬ظٹظ„ ظ…ط¹ط§ظ…ظ„ط© ط§ظ„ط¥ط±ط¬ط§ط¹
                 const maxIdTransaction = await Transaction.findOne().sort('-id').exec();
                 const newTransactionId = (maxIdTransaction?.id || 0) + 1;
 
@@ -1725,24 +1672,24 @@ if (pathname.startsWith('/api/orders/') && method === 'PUT') {
                     amount: order.price,
                     method: 'system',
                     status: 'completed',
-                    userNote: `استرجاع مبلغ الطلب #${order.id}`,
+                    userNote: `ط§ط³طھط±ط¬ط§ط¹ ظ…ط¨ظ„ط؛ ط§ظ„ط·ظ„ط¨ #${order.id}`,
                     createdAt: new Date()
                 });
 
-                // إرسال إشعار للمستخدم
+                // ط¥ط±ط³ط§ظ„ ط¥ط´ط¹ط§ط± ظ„ظ„ظ…ط³طھط®ط¯ظ…
                 await Notification.create({
                     id: Date.now(),
                     userId: user._id,
                     type: 'info',
-                    title: 'تم استرجاع المبلغ',
-                    message: `تم إرجاع $${order.price.toFixed(2)} إلى رصيدك للطلب #${order.id}`,
+                    title: 'طھظ… ط§ط³طھط±ط¬ط§ط¹ ط§ظ„ظ…ط¨ظ„ط؛',
+                    message: `طھظ… ط¥ط±ط¬ط§ط¹ $${order.price.toFixed(2)} ط¥ظ„ظ‰ ط±طµظٹط¯ظƒ ظ„ظ„ط·ظ„ط¨ #${order.id}`,
                     relatedTo: 'order',
                     relatedId: order.id
                 });
             }
         }
 
-        // تحديث حالة الطلب
+        // طھط­ط¯ظٹط« ط­ط§ظ„ط© ط§ظ„ط·ظ„ط¨
         const updatedOrder = await Order.findOneAndUpdate(
             { id },
             { 
@@ -1753,28 +1700,28 @@ if (pathname.startsWith('/api/orders/') && method === 'PUT') {
         );
 
         if (updatedOrder) {
-    // إرسال إشعار بتغيير حالة الطلب
+    // ط¥ط±ط³ط§ظ„ ط¥ط´ط¹ط§ط± ط¨طھط؛ظٹظٹط± ط­ط§ظ„ط© ط§ظ„ط·ظ„ط¨
     const user = await User.findOne({ username: order.username });
     if (user) {
         try {
             await Notification.create({
-                id: Date.now(), // ✅ تأكد من استخدام Date.now() فقط
+                id: Date.now(), // âœ… طھط£ظƒط¯ ظ…ظ† ط§ط³طھط®ط¯ط§ظ… Date.now() ظپظ‚ط·
                 userId: user._id,
                 type: data.status === 'completed' ? 'success' : 
                       data.status === 'rejected' ? 'error' : 'info',
-                title: `تم تحديث حالة الطلب #${order.id}`,
-                message: `حالة الطلب #${order.id} أصبحت: ${getOrderStatusText(data.status)}`,
+                title: `طھظ… طھط­ط¯ظٹط« ط­ط§ظ„ط© ط§ظ„ط·ظ„ط¨ #${order.id}`,
+                message: `ط­ط§ظ„ط© ط§ظ„ط·ظ„ط¨ #${order.id} ط£طµط¨ط­طھ: ${getOrderStatusText(data.status)}`,
                 relatedTo: 'order',
                 relatedId: order.id,
                 read: false,
                 createdAt: new Date()
             });
-            console.log(`✅ تم إرسال إشعار للمستخدم ${order.username} بتحديث حالة الطلب #${order.id}`);
+            console.log(`âœ… طھظ… ط¥ط±ط³ط§ظ„ ط¥ط´ط¹ط§ط± ظ„ظ„ظ…ط³طھط®ط¯ظ… ${order.username} ط¨طھط­ط¯ظٹط« ط­ط§ظ„ط© ط§ظ„ط·ظ„ط¨ #${order.id}`);
         } catch (error) {
-            console.error('❌ خطأ في إرسال إشعار تحديث الحالة:', error);
+            console.error('â‌Œ ط®ط·ط£ ظپظٹ ط¥ط±ط³ط§ظ„ ط¥ط´ط¹ط§ط± طھط­ط¯ظٹط« ط§ظ„ط­ط§ظ„ط©:', error);
         }
 
-        // تحديث إحصائيات المستخدم
+        // طھط­ط¯ظٹط« ط¥ط­طµط§ط¦ظٹط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…
         if (data.status === 'completed') {
             user.orders.completed = (user.orders.completed || 0) + 1;
             user.orders.pending = Math.max(0, (user.orders.pending || 0) - 1);
@@ -1801,19 +1748,19 @@ if (pathname.startsWith('/api/orders/') && method === 'PUT') {
     return;
 }
 
-// دالة مساعدة للحصول على نص حالة الطلب
+// ط¯ط§ظ„ط© ظ…ط³ط§ط¹ط¯ط© ظ„ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ظ†طµ ط­ط§ظ„ط© ط§ظ„ط·ظ„ط¨
 function getOrderStatusText(status) {
     const statusMap = {
-        'pending': 'قيد الانتظار',
-        'processing': 'قيد التنفيذ', 
-        'completed': 'مكتمل',
-        'rejected': 'مرفوض',
-        'cancelled': 'ملغي'
+        'pending': 'ظ‚ظٹط¯ ط§ظ„ط§ظ†طھط¸ط§ط±',
+        'processing': 'ظ‚ظٹط¯ ط§ظ„طھظ†ظپظٹط°', 
+        'completed': 'ظ…ظƒطھظ…ظ„',
+        'rejected': 'ظ…ط±ظپظˆط¶',
+        'cancelled': 'ظ…ظ„ط؛ظٹ'
     };
     return statusMap[status] || status;
                   }
 
-    // السجلات
+    // ط§ظ„ط³ط¬ظ„ط§طھ
     if (pathname === '/api/logs' && method === 'GET') {
       try {
         const logs = await Log.find({}).sort({ createdAt: -1 }).limit(100);
@@ -1827,14 +1774,14 @@ function getOrderStatusText(status) {
       return;
     }
 
-    // تحديث البيانات
+    // طھط­ط¯ظٹط« ط§ظ„ط¨ظٹط§ظ†ط§طھ
     if (pathname === '/api/admin/refresh-data' && method === 'POST') {
       try {
         await logAction(username, 'data_refresh', {}, clientIP);
         
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ 
-          message: 'تم تحديث البيانات بنجاح',
+          message: 'طھظ… طھط­ط¯ظٹط« ط§ظ„ط¨ظٹط§ظ†ط§طھ ط¨ظ†ط¬ط§ط­',
           refreshed: true
         }));
       } catch (error) {
@@ -1845,7 +1792,7 @@ function getOrderStatusText(status) {
       return;
     }
 
-    // إدارة الخدمات
+    // ط¥ط¯ط§ط±ط© ط§ظ„ط®ط¯ظ…ط§طھ
     if (pathname.startsWith('/api/services') && method === 'POST') {
       try {
         const body = await readBody(req);
@@ -1929,15 +1876,15 @@ function getOrderStatusText(status) {
       return;
     }
 
-    // ==================== نظام الإشعارات ====================
+    // ==================== ظ†ط¸ط§ظ… ط§ظ„ط¥ط´ط¹ط§ط±ط§طھ ====================
 
-// الحصول على إشعارات المستخدم
+// ط§ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ط¥ط´ط¹ط§ط±ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…
 if (pathname === '/api/user/notifications' && method === 'GET') {
     try {
         const user = await User.findOne({ username });
         if (!user) {
             res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            res.end(JSON.stringify({ error: 'ط§ظ„ظ…ط³طھط®ط¯ظ… ط؛ظٹط± ظ…ظˆط¬ظˆط¯' }));
             return;
         }
 
@@ -1949,14 +1896,14 @@ if (pathname === '/api/user/notifications' && method === 'GET') {
         res.end(JSON.stringify(notifications));
 
     } catch (error) {
-        console.error('خطأ في جلب الإشعارات:', error);
+        console.error('ط®ط·ط£ ظپظٹ ط¬ظ„ط¨ ط§ظ„ط¥ط´ط¹ط§ط±ط§طھ:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'خطأ في جلب الإشعارات' }));
+        res.end(JSON.stringify({ error: 'ط®ط·ط£ ظپظٹ ط¬ظ„ط¨ ط§ظ„ط¥ط´ط¹ط§ط±ط§طھ' }));
     }
     return;
 }
 
-// تحديث حالة الإشعار كمقروء
+// طھط­ط¯ظٹط« ط­ط§ظ„ط© ط§ظ„ط¥ط´ط¹ط§ط± ظƒظ…ظ‚ط±ظˆط،
 if (pathname.startsWith('/api/user/notifications/') && method === 'PUT') {
     try {
         const notificationId = pathname.split('/').pop();
@@ -1971,20 +1918,20 @@ if (pathname.startsWith('/api/user/notifications/') && method === 'PUT') {
             res.end(JSON.stringify(updatedNotification));
         } else {
             res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'الإشعار غير موجود' }));
+            res.end(JSON.stringify({ error: 'ط§ظ„ط¥ط´ط¹ط§ط± ط؛ظٹط± ظ…ظˆط¬ظˆط¯' }));
         }
     } catch (error) {
-        console.error('خطأ في تحديث الإشعار:', error);
+        console.error('ط®ط·ط£ ظپظٹ طھط­ط¯ظٹط« ط§ظ„ط¥ط´ط¹ط§ط±:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'خطأ في تحديث الإشعار' }));
+        res.end(JSON.stringify({ error: 'ط®ط·ط£ ظپظٹ طھط­ط¯ظٹط« ط§ظ„ط¥ط´ط¹ط§ط±' }));
     }
     return;
 }
 
 
-    // ==================== نظام إدارة المستخدمين (للأدمن فقط) ====================
+    // ==================== ظ†ط¸ط§ظ… ط¥ط¯ط§ط±ط© ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ† (ظ„ظ„ط£ط¯ظ…ظ† ظپظ‚ط·) ====================
 
-// الحصول على جميع المستخدمين
+// ط§ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ط¬ظ…ظٹط¹ ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ†
 if (pathname === '/api/admin/users' && method === 'GET') {
     if (!isAdmin) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
@@ -1994,20 +1941,20 @@ if (pathname === '/api/admin/users' && method === 'GET') {
 
     try {
         const users = await User.find({})
-            .select('-password') // استبعاد كلمة السر
+            .select('-password') // ط§ط³طھط¨ط¹ط§ط¯ ظƒظ„ظ…ط© ط§ظ„ط³ط±
             .sort({ createdAt: -1 });
         
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(users));
     } catch (error) {
-        console.error('خطأ في جلب المستخدمين:', error);
+        console.error('ط®ط·ط£ ظپظٹ ط¬ظ„ط¨ ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ†:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to load users' }));
     }
     return;
 }
 
-// الحصول على مستخدم معين
+// ط§ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ظ…ط³طھط®ط¯ظ… ظ…ط¹ظٹظ†
 if (pathname.startsWith('/api/admin/users/') && method === 'GET') {
     if (!isAdmin) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
@@ -2027,15 +1974,15 @@ if (pathname.startsWith('/api/admin/users/') && method === 'GET') {
             res.end(JSON.stringify({ error: 'User not found' }));
         }
     } catch (error) {
-        console.error('خطأ في جلب المستخدم:', error);
+        console.error('ط®ط·ط£ ظپظٹ ط¬ظ„ط¨ ط§ظ„ظ…ط³طھط®ط¯ظ…:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to load user' }));
     }
     return;
 }
 
-// تحديث بيانات المستخدم
-// تحديث بيانات المستخدم (مبسط)
+// طھط­ط¯ظٹط« ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…
+// طھط­ط¯ظٹط« ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ… (ظ…ط¨ط³ط·)
 if (pathname.startsWith('/api/admin/users/') && method === 'PUT') {
     if (!isAdmin) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
@@ -2048,23 +1995,23 @@ if (pathname.startsWith('/api/admin/users/') && method === 'PUT') {
         const body = await readBody(req);
         const updateData = JSON.parse(body || '{}');
         
-        console.log('🔄 تحديث المستخدم:', userId, updateData);
+        console.log('ًں”„ طھط­ط¯ظٹط« ط§ظ„ظ…ط³طھط®ط¯ظ…:', userId, updateData);
         
         if (!userId) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'User ID مطلوب' }));
+            res.end(JSON.stringify({ error: 'User ID ظ…ط·ظ„ظˆط¨' }));
             return;
         }
 
-        // البحث عن المستخدم
+        // ط§ظ„ط¨ط­ط« ط¹ظ† ط§ظ„ظ…ط³طھط®ط¯ظ…
         const user = await User.findById(userId);
         if (!user) {
             res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            res.end(JSON.stringify({ error: 'ط§ظ„ظ…ط³طھط®ط¯ظ… ط؛ظٹط± ظ…ظˆط¬ظˆط¯' }));
             return;
         }
 
-        // تحديث الحقول الأساسية
+        // طھط­ط¯ظٹط« ط§ظ„ط­ظ‚ظˆظ„ ط§ظ„ط£ط³ط§ط³ظٹط©
         if (updateData.username) user.username = updateData.username;
         if (updateData.email) user.email = updateData.email;
         if (updateData.fullName !== undefined) user.fullName = updateData.fullName;
@@ -2073,7 +2020,7 @@ if (pathname.startsWith('/api/admin/users/') && method === 'PUT') {
         if (updateData.status) user.status = updateData.status;
         if (updateData.balanceFrozen !== undefined) user.balanceFrozen = Boolean(updateData.balanceFrozen);
         
-        // إذا كانت هناك كلمة سر جديدة
+        // ط¥ط°ط§ ظƒط§ظ†طھ ظ‡ظ†ط§ظƒ ظƒظ„ظ…ط© ط³ط± ط¬ط¯ظٹط¯ط©
         if (updateData.newPassword) {
             user.password = await bcrypt.hash(updateData.newPassword, SALT_ROUNDS);
             user.lastPasswordChange = new Date();
@@ -2082,21 +2029,21 @@ if (pathname.startsWith('/api/admin/users/') && method === 'PUT') {
         user.updatedAt = new Date();
         await user.save();
 
-        // إرجاع البيانات المحدثة
+        // ط¥ط±ط¬ط§ط¹ ط§ظ„ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط­ط¯ط«ط©
         const updatedUser = await User.findById(userId).select('-password');
         
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(updatedUser));
         
     } catch (error) {
-        console.error('❌ خطأ في تحديث المستخدم:', error);
+        console.error('â‌Œ ط®ط·ط£ ظپظٹ طھط­ط¯ظٹط« ط§ظ„ظ…ط³طھط®ط¯ظ…:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to update user: ' + error.message }));
     }
     return;
 }
-// تجميد/فك تجميد الرصيد
-// 🔧 إصلاح كامل لتجميد الرصيد
+// طھط¬ظ…ظٹط¯/ظپظƒ طھط¬ظ…ظٹط¯ ط§ظ„ط±طµظٹط¯
+// ًں”§ ط¥طµظ„ط§ط­ ظƒط§ظ…ظ„ ظ„طھط¬ظ…ظٹط¯ ط§ظ„ط±طµظٹط¯
 if (pathname.startsWith('/api/admin/users/') && pathname.includes('/freeze') && method === 'PUT') {
     if (!isAdmin) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
@@ -2108,27 +2055,27 @@ if (pathname.startsWith('/api/admin/users/') && pathname.includes('/freeze') && 
         const pathParts = pathname.split('/');
         const userId = pathParts[4]; // /api/admin/users/{id}/freeze
         
-        console.log(`🔄 تجميد رصيد المستخدم: ${userId}`);
+        console.log(`ًں”„ طھط¬ظ…ظٹط¯ ط±طµظٹط¯ ط§ظ„ظ…ط³طھط®ط¯ظ…: ${userId}`);
         
         const body = await readBody(req);
         const { freeze, reason } = JSON.parse(body || '{}');
         
-        // التحقق من صحة البيانات
+        // ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† طµط­ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ
         if (!userId) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'User ID مطلوب' }));
+            res.end(JSON.stringify({ error: 'User ID ظ…ط·ظ„ظˆط¨' }));
             return;
         }
 
-        // البحث عن المستخدم أولاً للتأكد من وجوده
+        // ط§ظ„ط¨ط­ط« ط¹ظ† ط§ظ„ظ…ط³طھط®ط¯ظ… ط£ظˆظ„ط§ظ‹ ظ„ظ„طھط£ظƒط¯ ظ…ظ† ظˆط¬ظˆط¯ظ‡
         const user = await User.findById(userId);
         if (!user) {
             res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            res.end(JSON.stringify({ error: 'ط§ظ„ظ…ط³طھط®ط¯ظ… ط؛ظٹط± ظ…ظˆط¬ظˆط¯' }));
             return;
         }
 
-        // تحديث حالة التجميد
+        // طھط­ط¯ظٹط« ط­ط§ظ„ط© ط§ظ„طھط¬ظ…ظٹط¯
         user.balanceFrozen = Boolean(freeze);
         user.freezeReason = reason || '';
         user.updatedAt = new Date();
@@ -2140,30 +2087,30 @@ if (pathname.startsWith('/api/admin/users/') && pathname.includes('/freeze') && 
             reason: reason
         }, clientIP);
         
-        // إرسال إشعار للمستخدم
+        // ط¥ط±ط³ط§ظ„ ط¥ط´ط¹ط§ط± ظ„ظ„ظ…ط³طھط®ط¯ظ…
         await Notification.create({
             userId: user._id,
             type: freeze ? 'warning' : 'info',
-            title: freeze ? 'تم تجميد رصيدك' : 'تم فك تجميد رصيدك',
-            message: reason || (freeze ? 'تم تجميد رصيدك من قبل الإدارة' : 'تم فك تجميد رصيدك من قبل الإدارة'),
+            title: freeze ? 'طھظ… طھط¬ظ…ظٹط¯ ط±طµظٹط¯ظƒ' : 'طھظ… ظپظƒ طھط¬ظ…ظٹط¯ ط±طµظٹط¯ظƒ',
+            message: reason || (freeze ? 'طھظ… طھط¬ظ…ظٹط¯ ط±طµظٹط¯ظƒ ظ…ظ† ظ‚ط¨ظ„ ط§ظ„ط¥ط¯ط§ط±ط©' : 'طھظ… ظپظƒ طھط¬ظ…ظٹط¯ ط±طµظٹط¯ظƒ ظ…ظ† ظ‚ط¨ظ„ ط§ظ„ط¥ط¯ط§ط±ط©'),
             relatedTo: 'balance'
         });
 
-        // إرجاع بيانات المستخدم المحدثة
+        // ط¥ط±ط¬ط§ط¹ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ… ط§ظ„ظ…ط­ط¯ط«ط©
         const updatedUser = await User.findById(userId).select('-password');
         
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(updatedUser));
         
     } catch (error) {
-        console.error('❌ خطأ في تجميد/فك تجميد الرصيد:', error);
+        console.error('â‌Œ ط®ط·ط£ ظپظٹ طھط¬ظ…ظٹط¯/ظپظƒ طھط¬ظ…ظٹط¯ ط§ظ„ط±طµظٹط¯:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to update balance status: ' + error.message }));
     }
     return;
 }
-// تغيير حالة الحساب
-// 🔧 إصلاح كامل لتغيير حالة الحساب
+// طھط؛ظٹظٹط± ط­ط§ظ„ط© ط§ظ„ط­ط³ط§ط¨
+// ًں”§ ط¥طµظ„ط§ط­ ظƒط§ظ…ظ„ ظ„طھط؛ظٹظٹط± ط­ط§ظ„ط© ط§ظ„ط­ط³ط§ط¨
 if (pathname.startsWith('/api/admin/users/') && pathname.includes('/status') && method === 'PUT') {
     if (!isAdmin) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
@@ -2175,34 +2122,34 @@ if (pathname.startsWith('/api/admin/users/') && pathname.includes('/status') && 
         const pathParts = pathname.split('/');
         const userId = pathParts[4]; // /api/admin/users/{id}/status
         
-        console.log(`🔄 تغيير حالة المستخدم: ${userId}`);
+        console.log(`ًں”„ طھط؛ظٹظٹط± ط­ط§ظ„ط© ط§ظ„ظ…ط³طھط®ط¯ظ…: ${userId}`);
         
         const body = await readBody(req);
         const { status, reason } = JSON.parse(body || '{}');
         
-        // التحقق من صحة البيانات
+        // ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† طµط­ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ
         if (!userId) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'User ID مطلوب' }));
+            res.end(JSON.stringify({ error: 'User ID ظ…ط·ظ„ظˆط¨' }));
             return;
         }
 
         const validStatuses = ['active', 'suspended', 'banned'];
         if (!validStatuses.includes(status)) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'حالة غير صالحة' }));
+            res.end(JSON.stringify({ error: 'ط­ط§ظ„ط© ط؛ظٹط± طµط§ظ„ط­ط©' }));
             return;
         }
 
-        // البحث عن المستخدم أولاً
+        // ط§ظ„ط¨ط­ط« ط¹ظ† ط§ظ„ظ…ط³طھط®ط¯ظ… ط£ظˆظ„ط§ظ‹
         const user = await User.findById(userId);
         if (!user) {
             res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'المستخدم غير موجود' }));
+            res.end(JSON.stringify({ error: 'ط§ظ„ظ…ط³طھط®ط¯ظ… ط؛ظٹط± ظ…ظˆط¬ظˆط¯' }));
             return;
         }
 
-        // تحديث الحالة
+        // طھط­ط¯ظٹط« ط§ظ„ط­ط§ظ„ط©
         user.status = status;
         if (status === 'banned') {
             user.banReason = reason || '';
@@ -2219,30 +2166,30 @@ if (pathname.startsWith('/api/admin/users/') && pathname.includes('/status') && 
             reason: reason
         }, clientIP);
         
-        // إرسال إشعار للمستخدم
+        // ط¥ط±ط³ط§ظ„ ط¥ط´ط¹ط§ط± ظ„ظ„ظ…ط³طھط®ط¯ظ…
         await Notification.create({
             userId: user._id,
             type: status === 'banned' ? 'error' : 'success',
-            title: status === 'banned' ? 'تم حظر حسابك' : 'تم فك حظر حسابك',
-            message: reason || (status === 'banned' ? 'تم حظر حسابك من قبل الإدارة' : 'تم فك حظر حسابك من قبل الإدارة'),
+            title: status === 'banned' ? 'طھظ… ط­ط¸ط± ط­ط³ط§ط¨ظƒ' : 'طھظ… ظپظƒ ط­ط¸ط± ط­ط³ط§ط¨ظƒ',
+            message: reason || (status === 'banned' ? 'طھظ… ط­ط¸ط± ط­ط³ط§ط¨ظƒ ظ…ظ† ظ‚ط¨ظ„ ط§ظ„ط¥ط¯ط§ط±ط©' : 'طھظ… ظپظƒ ط­ط¸ط± ط­ط³ط§ط¨ظƒ ظ…ظ† ظ‚ط¨ظ„ ط§ظ„ط¥ط¯ط§ط±ط©'),
             relatedTo: 'account'
         });
 
-        // إرجاع بيانات المستخدم المحدثة
+        // ط¥ط±ط¬ط§ط¹ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ… ط§ظ„ظ…ط­ط¯ط«ط©
         const updatedUser = await User.findById(userId).select('-password');
         
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(updatedUser));
         
     } catch (error) {
-        console.error('❌ خطأ في تغيير حالة الحساب:', error);
+        console.error('â‌Œ ط®ط·ط£ ظپظٹ طھط؛ظٹظٹط± ط­ط§ظ„ط© ط§ظ„ط­ط³ط§ط¨:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to update user status: ' + error.message }));
     }
     return;
 }
     
-    // --- المسار غير موجود ---
+    // --- ط§ظ„ظ…ط³ط§ط± ط؛ظٹط± ظ…ظˆط¬ظˆط¯ ---
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'API Endpoint Not Found' }));
 
@@ -2257,6 +2204,6 @@ if (pathname.startsWith('/api/admin/users/') && pathname.includes('/status') && 
   }
 });
 
-// ==================== تشغيل السيرفر ====================
+// ==================== طھط´ط؛ظٹظ„ ط§ظ„ط³ظٹط±ظپط± ====================
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`ًںڑ€ Server running on http://localhost:${PORT}`));
