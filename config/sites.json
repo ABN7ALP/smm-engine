@@ -1,6 +1,13 @@
 {
   "ucuzpanel": {
     "url": "https://ucuzpanel.com/api/v2",
-    "interval": 60
+    "interval": 60,
+    "keyEnvVar": "UCUZ_KEY"
+  },
+  "secsers": {
+    "url": "https://secsers.com/api/v2",
+    "interval": 75,
+    "keyEnvVar": "SECSERS_KEY"
   }
 }
+
