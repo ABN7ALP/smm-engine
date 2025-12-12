@@ -1,26 +1,39 @@
+// watchers/ucuzpanel.js
 const axios = require("axios");
-const fs = require("fs");
-const TelegramBot = require("node-telegram-bot-api");
+const connectDB = require("../db"); // استيراد دالة الاتصال
 
 module.exports = function startUcuzWatcher(config, bot, chatId) {
-    const saveFile = `./data/ucuzpanel.json`;
+    // اسم الـ collection الذي سنخزن فيه البيانات
+    const collectionName = "ucuzpanel_services";
 
     async function check() {
         try {
+            const db = await connectDB();
+            const servicesCollection = db.collection(collectionName);
+
             const response = await axios.post(config.url, {
                 key: config.key,
                 action: "services"
             });
 
             const newData = response.data;
-            let oldData = [];
+            // جلب البيانات القديمة من قاعدة البيانات
+            const oldData = await servicesCollection.find().toArray();
 
-            if (fs.existsSync(saveFile)) {
-                oldData = JSON.parse(fs.readFileSync(saveFile));
+            if (oldData.length === 0) {
+                // إذا كانت هذه هي المرة الأولى، فقط قم بتخزين البيانات
+                if (newData.length > 0) {
+                    await servicesCollection.insertMany(newData);
+                    console.log(`Initialized with ${newData.length} services.`);
+                    bot.sendMessage(chatId, `✅ تم تهيئة قاعدة البيانات بـ ${newData.length} خدمة.`);
+                }
+                return;
             }
 
             const oldMap = {};
             oldData.forEach(s => oldMap[s.service] = s);
+
+            const operations = []; // لتجميع عمليات التحديث
 
             for (const s of newData) {
                 const old = oldMap[s.service];
@@ -29,6 +42,8 @@ module.exports = function startUcuzWatcher(config, bot, chatId) {
                     bot.sendMessage(chatId,
                         `🟢 خدمة جديدة\n${s.name}\nID: ${s.service}\nالسعر: ${s.rate}`
                     );
+                    // إضافة عملية إدراج للخدمة الجديدة
+                    operations.push({ insertOne: { document: s } });
                     continue;
                 }
 
@@ -49,6 +64,14 @@ module.exports = function startUcuzWatcher(config, bot, chatId) {
                         `📂 تغيّر فئة خدمة ${s.name}\n${old.category} → ${s.category}`
                     );
                 }
+
+                // إضافة عملية تحديث للخدمة الحالية
+                operations.push({
+                    updateOne: {
+                        filter: { service: s.service },
+                        update: { $set: s }
+                    }
+                });
             }
 
             const newIds = newData.map(s => s.service);
@@ -57,16 +80,23 @@ module.exports = function startUcuzWatcher(config, bot, chatId) {
                     bot.sendMessage(chatId,
                         `🔴 خدمة محذوفة\n${s.name}\nID: ${s.service}`
                     );
+                    // إضافة عملية حذف للخدمة المحذوفة
+                    operations.push({ deleteOne: { filter: { service: s.service } } });
                 }
             });
 
-            fs.writeFileSync(saveFile, JSON.stringify(newData, null, 2));
+            // تنفيذ جميع التغييرات على قاعدة البيانات دفعة واحدة
+            if (operations.length > 0) {
+                await servicesCollection.bulkWrite(operations);
+            }
 
         } catch (err) {
-            console.log("Error:", err.message);
+            console.log("Error:", err.response?.data || err.message);
+            // يمكنك إضافة إشعار تليجرام هنا لإعلامك بالخطأ
+            bot.sendMessage(chatId, `⚠️ حدث خطأ أثناء التحقق من الخدمات:\n${err.message}`);
         }
     }
 
     setInterval(check, config.interval * 1000);
-    console.log("Ucuzpanel watcher started…");
+    console.log("Ucuzpanel watcher started with MongoDB backend…");
 };
