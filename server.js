@@ -4,6 +4,7 @@ const sitesConfig = require("./config/sites.json");
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
+sitesConfig.ucuzpanel.key = process.env.UCUZ_KEY;
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 
