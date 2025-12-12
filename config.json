@@ -1,6 +1,0 @@
-{
-  "users": [
-    { "username": "admin", "password": "admin123" }
-  ],
-  "sessionTTLMin": 240
-}
