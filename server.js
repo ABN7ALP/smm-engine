@@ -1,5 +1,8 @@
 // server.js
-require('dotenv').config();
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
+
 const TelegramBot = require("node-telegram-bot-api");
 const sitesConfig = require("./config/sites.json");
 const connectDB = require("./db");
