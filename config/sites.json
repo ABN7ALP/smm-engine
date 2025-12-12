@@ -1,0 +1,7 @@
+{
+    "ucuzpanel": {
+        "url": "https://ucuzpanel.com/api/v2",
+        "key": "PUT-YOUR-API-KEY-HERE",
+        "interval": 60
+    }
+}
