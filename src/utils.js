@@ -1,28 +1,22 @@
-function normalizeUrl(url) {
+function isTikTokUrl(text) {
   try {
-    return new URL(url).toString();
+    const u = new URL(text);
+    return u.hostname.includes('tiktok.com');
+  } catch {
+    return false;
+  }
+}
+
+function extractVideoId(url) {
+  try {
+    const m = url.match(/\/video\/(\d+)/);
+    return m ? m[1] : null;
   } catch {
     return null;
   }
 }
 
-function isTikTokUrl(urlStr) {
-  const u = normalizeUrl(urlStr);
-  if (!u) return false;
-  return u.includes('tiktok.com/');
-}
-
-// استخراج video id من روابط شائعة: /video/123...
-function extractVideoKey(urlStr) {
-  const u = normalizeUrl(urlStr);
-  if (!u) return null;
-
-  // مثال: https://www.tiktok.com/@name/video/1234567890
-  const m = u.match(/\/video\/(\d+)/);
-  if (m && m[1]) return m[1];
-
-  // روابط tiktok قصيرة أحياناً لا تحتوي id بشكل مباشر
-  return null;
-}
-
-module.exports = { normalizeUrl, isTikTokUrl, extractVideoKey };
+module.exports = {
+  isTikTokUrl,
+  extractVideoId
+};
