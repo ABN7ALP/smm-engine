@@ -1,5 +1,4 @@
 const Database = require('better-sqlite3');
-
 const db = new Database('bot.sqlite');
 
 db.exec(`
@@ -30,12 +29,14 @@ function upsertUser(from) {
       username=excluded.username,
       last_seen=excluded.last_seen
   `);
+
   stmt.run(
     String(from.id),
     from.first_name || '',
     from.username || '',
     Date.now()
   );
+
   return String(from.id);
 }
 
@@ -44,20 +45,21 @@ function getPendingRequest(telegramId, minutes) {
   return db.prepare(`
     SELECT * FROM requests
     WHERE telegram_id=? AND status='pending' AND created_at >= ?
-    ORDER BY id DESC LIMIT 1
+    LIMIT 1
   `).get(telegramId, since);
 }
 
 function createRequest(telegramId, url, key, amount) {
   const info = db.prepare(`
-    INSERT INTO requests (telegram_id, video_url, video_key, amount, status, created_at)
+    INSERT INTO requests
+    (telegram_id, video_url, video_key, amount, status, created_at)
     VALUES (?, ?, ?, ?, 'pending', ?)
   `).run(telegramId, url, key, amount, Date.now());
+
   return info.lastInsertRowid;
 }
 
 module.exports = {
-  db,
   upsertUser,
   getPendingRequest,
   createRequest
