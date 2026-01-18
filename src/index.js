@@ -1,239 +1,250 @@
 require('dotenv').config();
 const { Telegraf, Markup } = require('telegraf');
-const { makePool, migrate, upsertUser, getPending, createRequest, setRequestStatus } = require('./db');
-const { checkRateLimit, checkCooldown, markFreeUsed } = require('./services/antiAbuse');
-const { isTikTokUrl, extractVideoKey, resolveRedirect } = require('./services/tiktok');
-const { msg, humanMs } = require('./ui/texts');
+const { upsertUser, getPendingRequest, createRequest } = require('./db');
 
+// ================== الإعدادات ==================
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const ADMIN_TELEGRAM_ID = process.env.ADMIN_TELEGRAM_ID;
 const SITE_URL = process.env.SITE_URL || 'https://example.com';
-const FREE_OPTIONS = (process.env.FREE_OPTIONS || '500,1000').split(',').map(x => parseInt(x.trim(), 10)).filter(Number.isFinite);
 const PENDING_MINUTES = parseInt(process.env.PENDING_MINUTES || '10', 10);
-const COOLDOWN_HOURS = parseInt(process.env.COOLDOWN_HOURS || '24', 10);
-const MAX_MSG_PER_MIN = parseInt(process.env.MAX_MSG_PER_MIN || '12', 10);
+const FREE_OPTIONS = (process.env.FREE_OPTIONS || '500,1000')
+  .split(',')
+  .map(n => parseInt(n.trim(), 10))
+  .filter(Boolean);
 
-if (!BOT_TOKEN) throw new Error('Missing BOT_TOKEN');
-if (!ADMIN_TELEGRAM_ID) throw new Error('Missing ADMIN_TELEGRAM_ID');
+if (!BOT_TOKEN) throw new Error('BOT_TOKEN missing');
+if (!ADMIN_TELEGRAM_ID) throw new Error('ADMIN_TELEGRAM_ID missing');
 
 const bot = new Telegraf(BOT_TOKEN);
-const pool = makePool();
 
-// session خفيف بالذاكرة للحالات
-const session = new Map(); // id -> { step, amount, url, key }
+// ================== جلسة خفيفة ==================
+const sessions = new Map();
+// telegramId => { step, amount, url, videoId }
 
-function kbChooseAmount() {
-  return Markup.inlineKeyboard(FREE_OPTIONS.map(n => [Markup.button.callback(`${n} مشاهدة مجاناً`, `AMOUNT_${n}`)]));
-}
-function kbConfirm() {
-  return Markup.inlineKeyboard([[Markup.button.callback('تأكيد', 'CONFIRM'), Markup.button.callback('إلغاء', 'CANCEL')]]);
-}
-function kbYesNo() {
-  return Markup.inlineKeyboard([[Markup.button.callback('نعم', 'YES_MORE'), Markup.button.callback('لا', 'NO_MORE')]]);
-}
-function kbSite() {
-  return Markup.inlineKeyboard([[Markup.button.url('افتح الموقع', SITE_URL)]]);
+// ================== أدوات ==================
+function nameOf(ctx) {
+  return ctx.from?.first_name || 'صاحبي';
 }
 
-async function guard(ctx) {
-  const telegramId = await upsertUser(pool, ctx.from);
-
-  const rl = await checkRateLimit(pool, telegramId, MAX_MSG_PER_MIN);
-  if (!rl.ok) {
-    await ctx.reply(msg.rateLimited(ctx, humanMs(rl.waitMs)));
-    return { ok: false, telegramId };
-  }
-  return { ok: true, telegramId };
+function isTikTokUrl(text) {
+  return text.includes('tiktok.com');
 }
 
+function extractVideoId(url) {
+  const m = url.match(/\/video\/(\d+)/);
+  return m ? m[1] : null;
+}
+
+// ================== لوحات ==================
+const amountKeyboard = Markup.inlineKeyboard(
+  FREE_OPTIONS.map(n => [Markup.button.callback(`${n} مشاهدة مجاناً`, `AMOUNT_${n}`)])
+);
+
+const confirmKeyboard = Markup.inlineKeyboard([
+  [Markup.button.callback('أكيد، نفّذ الطلب', 'CONFIRM')],
+  [Markup.button.callback('إلغاء', 'CANCEL')]
+]);
+
+const yesNoKeyboard = Markup.inlineKeyboard([
+  [Markup.button.callback('نعم أكيد', 'YES_MORE')],
+  [Markup.button.callback('لا شكراً', 'NO_MORE')]
+]);
+
+const siteKeyboard = Markup.inlineKeyboard([
+  [Markup.button.url('الدخول إلى الموقع 🚀', SITE_URL)]
+]);
+
+// ================== /start ==================
 bot.start(async (ctx) => {
-  const g = await guard(ctx);
-  if (!g.ok) return;
+  const telegramId = upsertUser(ctx.from);
 
-  const pending = await getPending(pool, g.telegramId, PENDING_MINUTES);
+  const pending = getPendingRequest(telegramId, PENDING_MINUTES);
   if (pending) {
-    await ctx.reply(msg.pending(ctx, PENDING_MINUTES), kbSite());
+    await ctx.reply(
+      `يا ${nameOf(ctx)}، طلبك السابق لسه قيد التنفيذ ⏳\n` +
+      `خلّينا نخلصه أول وبعدين نكمل براحتنا.\n\n` +
+      `إذا حابب نتائج أسرع وكميات أكبر، الموقع مفتوح قدامك 👇`,
+      siteKeyboard
+    );
     return;
   }
 
-  // cooldown يومي للهدايا
-  const cd = await checkCooldown(pool, g.telegramId, COOLDOWN_HOURS);
-  if (!cd.ok) {
-    await ctx.reply(msg.cooldown(ctx, humanMs(cd.remainingMs)), kbSite());
-    return;
-  }
+  sessions.set(telegramId, { step: 'choose_amount' });
 
-  session.set(g.telegramId.toString(), { step: 'choose_amount', amount: null, url: null, key: null });
-  await ctx.reply(msg.chooseAmount(ctx, FREE_OPTIONS), kbChooseAmount());
+  await ctx.reply(
+    `أهلاً يا ${nameOf(ctx)} 👋\n\n` +
+    `حابب تكبر فيديوهاتك على تيك توك؟\n` +
+    `نقدملك تجربة حقيقية 👌\n\n` +
+    `اختار كمية مشاهدات *مجاناً* كبداية:`,
+    { parse_mode: 'Markdown', ...amountKeyboard }
+  );
 });
 
+// ================== اختيار الكمية ==================
 bot.action(/^AMOUNT_(\d+)$/, async (ctx) => {
-  const g = await guard(ctx);
-  if (!g.ok) return;
   await ctx.answerCbQuery();
+  const telegramId = upsertUser(ctx.from);
 
-  const pending = await getPending(pool, g.telegramId, PENDING_MINUTES);
+  const pending = getPendingRequest(telegramId, PENDING_MINUTES);
   if (pending) {
-    await ctx.reply(msg.pending(ctx, PENDING_MINUTES), kbSite());
-    return;
-  }
-
-  const cd = await checkCooldown(pool, g.telegramId, COOLDOWN_HOURS);
-  if (!cd.ok) {
-    await ctx.reply(msg.cooldown(ctx, humanMs(cd.remainingMs)), kbSite());
+    await ctx.reply(
+      `لسه في طلب شغال يا ${nameOf(ctx)} 😉\n` +
+      `لو بدك أكثر من طلب بنفس الوقت، الموقع هو الحل.`,
+      siteKeyboard
+    );
     return;
   }
 
   const amount = parseInt(ctx.match[1], 10);
-  session.set(g.telegramId.toString(), { step: 'await_url', amount, url: null, key: null });
-  await ctx.reply(msg.sendUrl(ctx));
+  sessions.set(telegramId, { step: 'wait_url', amount });
+
+  await ctx.reply(
+    `تمام 👌\n\n` +
+    `أرسل رابط فيديو تيك توك الآن،\n` +
+    `وسأعرض لك التفاصيل قبل التنفيذ.`
+  );
 });
 
+// ================== استقبال الرابط ==================
 bot.on('text', async (ctx) => {
-  const g = await guard(ctx);
-  if (!g.ok) return;
+  const telegramId = upsertUser(ctx.from);
+  const session = sessions.get(telegramId);
 
-  const pending = await getPending(pool, g.telegramId, PENDING_MINUTES);
+  const pending = getPendingRequest(telegramId, PENDING_MINUTES);
   if (pending) {
-    await ctx.reply(msg.blockedNew(ctx), kbSite());
+    await ctx.reply(
+      `خلّينا نكون أذكى يا ${nameOf(ctx)} 😄\n` +
+      `طلبك الحالي شغال.\n` +
+      `لو حابب توسّع شغلك، الموقع يعطيك حرية أكبر.`,
+      siteKeyboard
+    );
     return;
   }
 
-  const s = session.get(g.telegramId.toString());
-  if (!s || s.step !== 'await_url') {
-    await ctx.reply(`اضغط /start ونمشيها خطوة خطوة.`, kbChooseAmount());
+  if (!session || session.step !== 'wait_url') {
+    await ctx.reply(`ابدأ من هنا 👇`, amountKeyboard);
     return;
   }
 
-  const raw = (ctx.message.text || '').trim();
-  if (!isTikTokUrl(raw)) {
-    await ctx.reply(msg.invalidUrl());
+  const url = ctx.message.text.trim();
+
+  if (!isTikTokUrl(url)) {
+    await ctx.reply(
+      `الرابط ما شكله تيك توك 🤔\n` +
+      `أرسل رابط مثل:\nhttps://www.tiktok.com/@user/video/123456`
+    );
     return;
   }
 
-  // resolve redirect لتقوية دعم vt/vm
-  const resolved = await resolveRedirect(raw, 3);
-  const key = extractVideoKey(resolved);
+  const videoId = extractVideoId(url);
 
-  session.set(g.telegramId.toString(), { ...s, step: 'await_confirm', url: resolved, key });
-  await ctx.reply(msg.preview(ctx, s.amount, resolved, key), kbConfirm());
+  sessions.set(telegramId, {
+    ...session,
+    step: 'confirm',
+    url,
+    videoId
+  });
+
+  await ctx.reply(
+    `🔥 تمام، هذه تفاصيل الطلب:\n\n` +
+    `🎬 الفيديو: ${url}\n` +
+    `🆔 المعرف: ${videoId || 'غير ظاهر'}\n` +
+    `👁 المشاهدات: ${session.amount}\n` +
+    `⏱ التنفيذ: خلال 5–10 دقائق\n\n` +
+    `ننفّذ؟`,
+    confirmKeyboard
+  );
 });
 
-bot.action('CANCEL', async (ctx) => {
-  const g = await guard(ctx);
-  if (!g.ok) return;
-  await ctx.answerCbQuery();
-  session.delete(g.telegramId.toString());
-  await ctx.reply(`تمام يا صاحبي. إذا بدك نرجع من البداية اضغط /start.`);
-});
-
+// ================== تأكيد ==================
 bot.action('CONFIRM', async (ctx) => {
-  const g = await guard(ctx);
-  if (!g.ok) return;
   await ctx.answerCbQuery();
+  const telegramId = upsertUser(ctx.from);
+  const session = sessions.get(telegramId);
 
-  const pending = await getPending(pool, g.telegramId, PENDING_MINUTES);
-  if (pending) {
-    await ctx.reply(msg.pending(ctx, PENDING_MINUTES), kbSite());
+  if (!session || session.step !== 'confirm') {
+    await ctx.reply(`صار خطأ بسيط، نعيد من البداية /start`);
     return;
   }
 
-  const cd = await checkCooldown(pool, g.telegramId, COOLDOWN_HOURS);
-  if (!cd.ok) {
-    await ctx.reply(msg.cooldown(ctx, humanMs(cd.remainingMs)), kbSite());
-    return;
-  }
+  const requestId = createRequest(
+    telegramId,
+    session.url,
+    session.videoId,
+    session.amount
+  );
 
-  const s = session.get(g.telegramId.toString());
-  if (!s || s.step !== 'await_confirm' || !s.url || !s.amount) {
-    await ctx.reply(`صار عدم تطابق بسيط. اضغط /start ونعيدها بسرعة.`);
-    return;
-  }
+  // إشعار الأدمن
+  await ctx.telegram.sendMessage(
+    ADMIN_TELEGRAM_ID,
+    `🚀 طلب جديد\n\n` +
+    `👤 المستخدم: ${ctx.from.first_name}\n` +
+    `🆔 Telegram ID: ${telegramId}\n\n` +
+    `🎬 الرابط: ${session.url}\n` +
+    `👁 الكمية: ${session.amount}\n` +
+    `🧾 الطلب #: ${requestId}`
+  );
 
-  const requestId = await createRequest(pool, g.telegramId, s.url, s.key, s.amount);
-  await markFreeUsed(pool, g.telegramId);
+  sessions.delete(telegramId);
 
-  // رسالة للأدمن + زر تم التنفيذ
-  const adminText =
-`طلب جديد رقم: ${requestId}
-المستخدم: ${ctx.from.first_name || ''} ${ctx.from.last_name || ''}
-username: @${ctx.from.username || 'N/A'}
-telegram_id: ${ctx.from.id}
-
-الرابط: ${s.url}
-video_id: ${s.key || 'N/A'}
-الكمية: ${s.amount}
-`;
-  const adminKb = Markup.inlineKeyboard([
-    [Markup.button.callback(`تم التنفيذ ✅ (${requestId})`, `ADMIN_DONE_${requestId}`)],
-    [Markup.button.callback(`إلغاء الطلب ⛔ (${requestId})`, `ADMIN_CANCEL_${requestId}`)]
-  ]);
-
-  await ctx.telegram.sendMessage(ADMIN_TELEGRAM_ID, adminText, adminKb);
-
-  session.set(g.telegramId.toString(), { step: 'idle', amount: null, url: null, key: null });
-  await ctx.reply(msg.confirmed(ctx), kbYesNo());
+  await ctx.reply(
+    `تم التنفيذ يا ${nameOf(ctx)} ✅\n\n` +
+    `طلبك دخل النظام، وخلال دقائق بتشوف النتيجة 👀\n\n` +
+    `حابب تكمل وتكبر أكثر؟`,
+    yesNoKeyboard
+  );
 });
 
-bot.action('YES_MORE', async (ctx) => {
-  const g = await guard(ctx);
-  if (!g.ok) return;
+// ================== إلغاء ==================
+bot.action('CANCEL', async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(`تمام. هذا رابط الموقع (فيه عروض وطلبات أكثر):`, kbSite());
+  const telegramId = String(ctx.from.id);
+  sessions.delete(telegramId);
+  await ctx.reply(`تمام 👍\nلو حابب نرجع، اضغط /start`);
+});
+
+// ================== تسويق ذكي ==================
+bot.action('YES_MORE', async (ctx) => {
+  await ctx.answerCbQuery();
+  await ctx.reply(
+    `🔥 اختيار ذكي\n\n` +
+    `في الموقع عندك:\n` +
+    `• مشاهدات أكبر\n` +
+    `• لايكات\n` +
+    `• متابعين\n` +
+    `• عروض مجانية أحياناً\n\n` +
+    `ادخل وشوف بنفسك 👇`,
+    siteKeyboard
+  );
 });
 
 bot.action('NO_MORE', async (ctx) => {
-  const g = await guard(ctx);
-  if (!g.ok) return;
   await ctx.answerCbQuery();
-  await ctx.reply(`ولا يهمك. بس تذكير سريع: في عروض مجانية على بعض خدمات تيك توك بالموقع.\nبدك أبعت الرابط؟`,
+  await ctx.reply(
+    `ولا يهمك 👌\n\n` +
+    `بس حابب ألفت نظرك:\n` +
+    `في عروض مجانية لبعض خدمات تيك توك بالموقع.\n\n` +
+    `تحب أبعث الرابط؟`,
     Markup.inlineKeyboard([
-      [Markup.button.callback('نعم ابعت', 'SEND_SITE')],
-      [Markup.button.callback('مو هلق', 'CLOSE')]
+      [Markup.button.callback('ابعت الرابط', 'SEND_SITE')],
+      [Markup.button.callback('لاحقاً', 'CLOSE')]
     ])
   );
 });
 
 bot.action('SEND_SITE', async (ctx) => {
-  const g = await guard(ctx);
-  if (!g.ok) return;
   await ctx.answerCbQuery();
-  await ctx.reply(`تفضل:`, kbSite());
+  await ctx.reply(`تفضل 🚀`, siteKeyboard);
 });
 
 bot.action('CLOSE', async (ctx) => {
-  const g = await guard(ctx);
-  if (!g.ok) return;
   await ctx.answerCbQuery();
-  await ctx.reply(`تمام. بأي وقت بدك ترجع اضغط /start.`);
+  await ctx.reply(`تمام 👍 بأي وقت حابب ترجع اضغط /start`);
 });
 
-// أزرار الأدمن (داخل تيليجرام)
-bot.action(/^ADMIN_DONE_(\d+)$/, async (ctx) => {
-  await ctx.answerCbQuery();
-  if (String(ctx.from.id) !== String(ADMIN_TELEGRAM_ID)) return;
-
-  const id = ctx.match[1];
-  await setRequestStatus(pool, id, 'done');
-  await ctx.reply(`تم تحويل الطلب ${id} إلى DONE.`);
-});
-
-bot.action(/^ADMIN_CANCEL_(\d+)$/, async (ctx) => {
-  await ctx.answerCbQuery();
-  if (String(ctx.from.id) !== String(ADMIN_TELEGRAM_ID)) return;
-
-  const id = ctx.match[1];
-  await setRequestStatus(pool, id, 'cancelled');
-  await ctx.reply(`تم إلغاء الطلب ${id}.`);
-});
-
-bot.catch((e) => console.error('bot error', e));
-
-(async () => {
-  await migrate(pool);
-  await bot.launch();
-  console.log('Bot running');
-})();
+// ================== تشغيل ==================
+bot.launch();
+console.log('Telegram bot is running...');
 
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
