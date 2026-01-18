@@ -16,7 +16,7 @@ const { isTikTokUrl, normalizeUrl, extractVideoKey } = require('./utils');
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const ADMIN_TELEGRAM_ID = process.env.ADMIN_TELEGRAM_ID;
 const SITE_URL = process.env.SITE_URL || 'https://example.com';
-const FREE_OPTIONS = (process.env.FREE_OPTIONS || '500,1000')
+const FREE_OPTIONS = (process.env.FREE_OPTIONS || '5000,10000')
   .split(',')
   .map(x => parseInt(x.trim(), 10))
   .filter(n => Number.isFinite(n));
@@ -82,8 +82,8 @@ function cancelPending(telegramId) {
 
 function mainMenuKeyboard() {
   return Markup.inlineKeyboard([
-    [Markup.button.callback(`500 مشاهدة مجاناً`, 'AMOUNT_500')],
-    [Markup.button.callback(`1000 مشاهدة مجاناً`, 'AMOUNT_1000')]
+    [Markup.button.callback(`5000 مشاهدة مجاناً`, 'AMOUNT_5000')],
+    [Markup.button.callback(`10000 مشاهدة مجاناً`, 'AMOUNT_10000')]
   ]);
 }
 
