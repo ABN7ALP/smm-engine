@@ -1,14 +1,23 @@
 {
   "name": "tiktok-smart-lead-bot",
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "description": "Advanced AI TikTok bot with referral system",
   "main": "src/index.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "install-deps": "npm install"
   },
   "dependencies": {
     "telegraf": "^4.16.3",
     "dotenv": "^16.4.5",
     "better-sqlite3": "^9.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
