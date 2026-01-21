@@ -16,7 +16,23 @@ function extractVideoId(url) {
   }
 }
 
+function clampInt(n, min, max) {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return min;
+  return Math.max(min, Math.min(max, x));
+}
+
+function parseStartRef(payload) {
+  // expecting "ref_<telegramId>"
+  if (!payload) return null;
+  const p = String(payload).trim();
+  const m = p.match(/^ref_(\d+)$/);
+  return m ? m[1] : null;
+}
+
 module.exports = {
   isTikTokUrl,
-  extractVideoId
+  extractVideoId,
+  clampInt,
+  parseStartRef
 };
