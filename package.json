@@ -1,6 +1,6 @@
 {
-  "name": "tiktok-smart-lead-bot-pro",
-  "version": "2.0.0",
+  "name": "tiktok-leadbot-smart-referrals",
+  "version": "3.0.0",
   "main": "src/index.js",
   "type": "commonjs",
   "scripts": {
