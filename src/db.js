@@ -27,7 +27,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS referrals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     referrer_id TEXT NOT NULL,
-    referred_id TEXT NOT NULL UNIQUE,      -- كل مستخدم يمكن أن يكون "مدعو" مرة واحدة فقط
+    referred_id TEXT NOT NULL UNIQUE,
     created_at INTEGER NOT NULL,
     qualified INTEGER DEFAULT 0,
     qualified_at INTEGER
@@ -38,17 +38,16 @@ db.exec(`
 `);
 
 function upsertUser(from) {
-  const stmt = db.prepare(`
+  const telegramId = String(from.id);
+
+  db.prepare(`
     INSERT INTO users (telegram_id, first_name, username, last_seen, free_used, bonus_tokens)
     VALUES (?, ?, ?, ?, 0, 0)
     ON CONFLICT(telegram_id) DO UPDATE SET
       first_name=excluded.first_name,
       username=excluded.username,
       last_seen=excluded.last_seen
-  `);
-
-  const telegramId = String(from.id);
-  stmt.run(
+  `).run(
     telegramId,
     from.first_name || '',
     from.username || '',
@@ -87,6 +86,11 @@ function getPendingRequest(telegramId, minutes) {
   `).get(String(telegramId), since);
 }
 
+function hasAnyRequest(telegramId) {
+  const row = db.prepare(`SELECT 1 AS x FROM requests WHERE telegram_id=? LIMIT 1`).get(String(telegramId));
+  return !!row;
+}
+
 function createRequest(telegramId, url, key, amount, kind) {
   const info = db.prepare(`
     INSERT INTO requests
@@ -97,41 +101,34 @@ function createRequest(telegramId, url, key, amount, kind) {
   return info.lastInsertRowid;
 }
 
-// Referral: تسجيل بداية الدعوة (start param)
+// Referral
 function recordReferralStart(referrerId, referredId) {
-  // منع self-referral
-  if (String(referrerId) === String(referredId)) return { created: false, reason: 'self' };
+  const a = String(referrerId);
+  const b = String(referredId);
 
-  // إذا المدعو مسجل أصلاً كمدعو (referred_id unique)، لا نغيره
-  const existing = db.prepare(`SELECT * FROM referrals WHERE referred_id=?`).get(String(referredId));
+  if (a === b) return { created: false, reason: 'self' };
+
+  const existing = db.prepare(`SELECT * FROM referrals WHERE referred_id=?`).get(b);
   if (existing) return { created: false, reason: 'already_referred' };
 
   db.prepare(`
     INSERT INTO referrals (referrer_id, referred_id, created_at, qualified, qualified_at)
     VALUES (?, ?, ?, 0, NULL)
-  `).run(String(referrerId), String(referredId), Date.now());
+  `).run(a, b, Date.now());
 
   return { created: true };
 }
 
-// Referral: هل يوجد Referral غير مؤهل لهذا المستخدم؟
 function getReferralByReferredId(referredId) {
   return db.prepare(`SELECT * FROM referrals WHERE referred_id=?`).get(String(referredId));
 }
 
-// تأهيل الدعوة عند أول طلب مؤكد للمدعو
 function qualifyReferral(referralId) {
   db.prepare(`
     UPDATE referrals
     SET qualified=1, qualified_at=?
     WHERE id=? AND qualified=0
   `).run(Date.now(), referralId);
-}
-
-// هل هذا أول طلب (مؤكد) للمستخدم؟ نعتمد على وجود طلبات سابقة (أي kind) في requests
-function hasAnyRequest(telegramId) {
-  const row = db.prepare(`SELECT 1 AS x FROM requests WHERE telegram_id=? LIMIT 1`).get(String(telegramId));
-  return !!row;
 }
 
 module.exports = {
@@ -142,9 +139,9 @@ module.exports = {
   addBonusToken,
   consumeBonusToken,
   getPendingRequest,
+  hasAnyRequest,
   createRequest,
   recordReferralStart,
   getReferralByReferredId,
-  qualifyReferral,
-  hasAnyRequest
+  qualifyReferral
 };
