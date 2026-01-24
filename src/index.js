@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { Telegraf, Markup } = require('telegraf');
-
+ 
 const db = require('./db');
 const texts = require('./texts');
 const { isTikTokUrl, extractVideoId, formatCountdown, parseRefFromStart } = require('./utils');
