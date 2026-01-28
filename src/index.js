@@ -11,7 +11,7 @@ const SITE_URL = process.env.SITE_URL;
 
 const BOT_USERNAME = process.env.BOT_USERNAME || ''; // اختياري
 
-const FREE_OPTIONS = (process.env.FREE_OPTIONS || '500,1000')
+const FREE_OPTIONS = (process.env.FREE_OPTIONS || '1000,2000')
   .split(',')
   .map(n => parseInt(n.trim(), 10))
   .filter(Number.isFinite);
@@ -61,7 +61,7 @@ function kbChooseFreeAmount() {
 
 function kbChooseBonusOrSite() {
   return Markup.inlineKeyboard([
-    [Markup.button.callback('5000 مشاهدة مكافأة', 'BONUS_5000')],
+    [Markup.button.callback('1000 مشاهدة مكافأة', 'BONUS_1000')],
     [Markup.button.url('زيارة الموقع الرسمي', SITE_URL)]
   ]);
 }
@@ -200,7 +200,7 @@ bot.start(async (ctx) => {
     if ((user.bonus_tokens || 0) > 0) {
       session.set(userId, { step: 'choose_amount', kind: 'bonus', amount: 5000, url: null, videoId: null });
       await ctx.reply(
-        `يا ${ctx.from.first_name || 'صديقي'}، عندك ${(user.bonus_tokens || 0)} مكافأة جاهزة (كل وحدة = 5000).\nاختر "5000 مشاهدة مكافأة" وابعث رابط الفيديو.`,
+        `يا ${ctx.from.first_name || 'صديقي'}، عندك ${(user.bonus_tokens || 0)} مكافأة جاهزة (كل وحدة = 1000).\nاختر "1000 مشاهدة مكافأة" وابعث رابط الفيديو.`,
         kbChooseBonusOrSite()
       );
       return;
@@ -366,7 +366,7 @@ video_id: ${state.videoId || 'N/A'}
 اسم المدعو: ${ctx.from.first_name || ''} ${ctx.from.last_name || ''}
 username المدعو: @${ctx.from.username || 'N/A'}
 
-مكافأة الداعي: +5000 (توكن)
+مكافأة الداعي: +1000 (توكن)
 `;
       await bot.telegram.sendMessage(ADMIN_ID, refAdmin);
 
